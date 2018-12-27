@@ -4,12 +4,15 @@ local function parse(str)
     local lex = tokenizer(str)
     local token = lex()
     if not token then error { msg = "Can't be empty" } end
+    -- def.a = vector with levels a was the variable
+    -- in a function declaration
+    local def = {}
 
     local function nxt()
         token = token and lex()
     end
 
-    local function recParse()
+    local function recParse(level)
         local root = nil
         while true do
             local node
@@ -17,31 +20,47 @@ local function parse(str)
                 return root
             elseif token.value == '(' then
                 nxt()
-                node = recParse()
+                node = recParse(level)
                 if not token or token.value ~= ')' then error { msg = "Missing close parenthesis" } end
                 nxt()
             elseif token.value == ':' then
                 error { msg = "Invalid ':'", loc = token.loc }
             else -- text
-                local prev = token
+                local name, loc = token.value, token.loc
                 nxt()
                 if token and token.value == ':' then
                     nxt()
-                    if prev.value ~= prev.value:match("[a-z]") then
-                        error{
-                            msg = "Invalid variable name '" .. prev.value .. "'. Must be single lowercase letter",
-                            loc = prev.loc
+                    if name ~= name:match("[a-z]") then
+                        error {
+                            msg = "Invalid variable name '" .. name .. "'. Must be single lowercase letter",
+                            loc = loc
                         }
                     end
+                    def[name] = def[name] or {}
+                    table.insert(def[name], level)
                     node = {
                         type = 'function',
-                        var  = prev.value,
-                        body = recParse()
+                        -- Use this var name if possible
+                        hint = name,
+                        body = recParse(level + 1)
                     }
+                    assert(table.remove(def[name]) == level)
                 else
+                    -- variable
+                    if name == name:match("[a-z]") then
+                        if not def[name] or not def[name][1] then
+                            error {
+                                msg = "Unbound var '" .. name .. "'",
+                                loc = loc
+                            }
+                        end
+                        name = level - def[name][#def[name]] - 1
+                    else
+                        -- check if you're allowed to use that constant
+                    end
                     node = {
                         type = 'identifier',
-                        name = prev.value
+                        name = name
                     }
                 end
             end
@@ -53,7 +72,7 @@ local function parse(str)
         end
     end
 
-    local root = recParse()
+    local root = recParse(0)
     if token then
         error {
             msg = "Extra closing parenthesis",
