@@ -38,18 +38,23 @@ local function exhaust(fn)
 end
 
 local tests = {
-    { "(x: x x x) (y: y) oi", "oi" },
-    { "(z: (x : z : x) z) aaa", "z: aaa" },
-    { "(a:b: b a) aaa bbb", "bbb aaa" },
-    { "(a:b:c: c a b) aaa bbb (a: b: a)", "aaa" },
-    { "(a:b:c: c a b) aaa bbb (a: b: b)", "bbb" },
+    { "id A", "A" },
+    { "id id A", "A" },
+    { "swap A B", "B A" },
+    { "swap A A", "A A" },
+    { "swap A id B", "A B" },
+    { "(x: x x x) (y: y) A", "A" },
+    { "(z: (x : z : x) z) A", "z: A" },
+    { "(a:b: b a) A B", "B A" },
+    { "(a:b:c: c a b) A B (a: b: a)", "A" },
+    { "(a:b:c: c a b) A B (a: b: b)", "B" },
 }
 
 local all_ok = true
 
 for i, t in ipairs(tests) do
-    local ok, ans = pcall(exhaust, function() return interpret(t[1]) end)
-    local ok2, parsed_correct = pcall(parse, t[2])
+    local ok, ans = pcall(exhaust, function() return interpret(t[1], 1000) end)
+    local ok2, parsed_correct = pcall(parse, t[2], 1000)
     if not ok then
         io.write("Test #", i, ' "', t[1], '" failed: ERROR!\n')
         io.write("  ", type(ans) == 'string' and ans or ans.msg, "\n\n")

@@ -1,6 +1,13 @@
 local tokenizer = require "tokenizer"
+local utils     = require "utils"
 
-local function parse(str)
+local constants = {
+    id = "x:x",
+    swap = "x:y: y x",
+}
+
+local function parse(str, known_cts)
+    known_cts = known_cts or 0
     local lex = tokenizer(str)
     local token = lex()
     if not token then error { msg = "Can't be empty" } end
@@ -55,10 +62,20 @@ local function parse(str)
                             }
                         end
                         name = level - def[name][#def[name]] - 1
-                    else
+                    -- single uppercase letter is not a constant
+                    elseif name ~= name:match("[A-Z]") then
                         -- check if you're allowed to use that constant
+                        if not constants[name] or constants[name].pos > known_cts then
+                            error {
+                                msg = "Unknown constant '" .. name .. "'",
+                                loc = loc
+                            }
+                        end
+                        -- contants have no unbound variables
+                        -- so no shifting will happen
+                        node = utils.deepCopyAndShift(constants[name].code, 0, 0)
                     end
-                    node = {
+                    node = node or {
                         type = 'identifier',
                         name = name
                     }
@@ -81,5 +98,17 @@ local function parse(str)
     end
     return root
 end
+
+-- initializing constants in correct order
+for i, const in ipairs {
+    "id",
+    "swap",
+} do
+    constants[const] = {
+        pos  = i,
+        code = parse(constants[const], i - 1)
+    }
+end
+
 
 return parse
