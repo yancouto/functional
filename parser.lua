@@ -1,8 +1,8 @@
-local tokenizer = require "tokenizer"
-local utils     = require "utils"
+local tokenizer        = require "tokenizer"
+local deepCopyAndShift = require("utils").deepCopyAndShift
 
 local constants = {
-    id = "x:x",
+    id   = "x:x",
     swap = "x:y: y x",
 }
 
@@ -73,7 +73,7 @@ local function parse(str, known_cts)
                         end
                         -- contants have no unbound variables
                         -- so no shifting will happen
-                        node = utils.deepCopyAndShift(constants[name].code, 0, 0)
+                        node = deepCopyAndShift(constants[name].code, 0, 0)
                     end
                     node = node or {
                         type = 'identifier',
