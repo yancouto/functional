@@ -45,6 +45,7 @@ end
 
 local function interpret(str)
     local all = { parse(str) }
+    coroutine.yield(all[1])
 
     local function read(obj, k)
         local node = obj[k]
@@ -52,16 +53,15 @@ local function interpret(str)
             read(node, 'left')
             read(node, 'right')
             if node.left and node.left.type == 'function' then
-                print('subs ', node.left.hint, gen(node.right))
                 obj[k] = substitute(node.left.body, 0, node.right)
-                print(gen(all[1]))
+                coroutine.yield(all[1])
                 read(obj, k)
             end
         end
     end
 
-    print(gen(all[1]))
     read(all, 1)
+    return all[1]
 end
 
 return interpret
