@@ -100,13 +100,13 @@ local function parse(str, known_cts)
 end
 
 -- initializing constants in correct order
-for i, const in ipairs {
+for i, const_ in ipairs {
     "id",
     "swap",
 } do
-    constants[const] = {
+    constants[const_] = {
         pos  = i,
-        code = parse(constants[const], i - 1)
+        code = parse(constants[const_], i - 1)
     }
 end
 
