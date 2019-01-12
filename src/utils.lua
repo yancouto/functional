@@ -46,7 +46,7 @@ local function exhaust(fn)
 	local co = coroutine.create(fn)
 	local function aux(ok, ...)
 		if not ok then
-			error(...)
+			error(debug.traceback(co, (...)), 0)
 		else
 			return select('#', ...), ...
 		end

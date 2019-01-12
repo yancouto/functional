@@ -2,9 +2,19 @@ local tokenizer        = require "tokenizer"
 local deepCopyAndShift = require("utils").deepCopyAndShift
 
 local constants = {
-	id   = "x:x",
-	swap = "x:y: y x",
+	id        = "x:x",
+	swap      = "x:y: y x",
+	['true']  = "x:y: x",
+	['false'] = "x:y: y",
+	['if']    = "c:a:b: c a b",
+	['and']   = "a:b: a b false",
+	['or']    = "a:b: a true b",
+	pair      = "x:y:a: a x y",
+	fst       = "true",
+	snd       = "false",
 }
+
+local order = {"id", "swap", "true", "false", "if", "and", "or", "pair", "fst", "snd"}
 
 local function parse(str, known_cts)
 	known_cts = known_cts or 0
@@ -100,14 +110,17 @@ local function parse(str, known_cts)
 end
 
 -- initializing constants in correct order
-for i, const_ in ipairs {
-	"id",
-	"swap",
-} do
+for i, const_ in ipairs(order) do
 	constants[const_] = {
 		pos  = i,
 		code = parse(constants[const_], i - 1)
 	}
+end
+
+for const_, v in pairs(constants) do
+	if type(v) == 'string' then
+		error("Missing order for constant '" .. const_ .. "'")
+	end
 end
 
 

@@ -4,6 +4,12 @@ local interpret = require "interpreter"
 local utils     = require "utils"
 
 local tests = {
+	-- general
+	{ "(x: x x x) (y: y) A", "A" },
+	{ "(z: (x : z : x) z) A", "z: A" },
+	{ "(a:b: b a) A B", "B A" },
+	{ "(a:b:c: c a b) A B (a: b: a)", "A" },
+	{ "(a:b:c: c a b) A B (a: b: b)", "B" },
 	-- id
 	{ "id A", "A" },
 	{ "id B", "B" },
@@ -14,12 +20,30 @@ local tests = {
 	{ "swap A id B", "A B" },
 	{ "swap C swap D", "D C" },
 	{ "swap swap C D", "C swap D" },
-	-- general
-	{ "(x: x x x) (y: y) A", "A" },
-	{ "(z: (x : z : x) z) A", "z: A" },
-	{ "(a:b: b a) A B", "B A" },
-	{ "(a:b:c: c a b) A B (a: b: a)", "A" },
-	{ "(a:b:c: c a b) A B (a: b: b)", "B" },
+	-- if/true/false
+	{ "true A B", "A" },
+	{ "false A B", "B" },
+	{ "if true A B", "A" },
+	{ "if false A B", "B" },
+	{ "if true (if true C D) B", "C" },
+	{ "if (if true false true) A B", "B"},
+	-- and
+	{ "and true true", "true" },
+	{ "and false true", "false" },
+	{ "and true false", "false" },
+	{ "and false false", "false" },
+	-- or
+	{ "or true true", "true" },
+	{ "or false true", "true" },
+	{ "or true false", "true" },
+	{ "or false false", "false" },
+	{ "and (or false false) (or true true)", "false" },
+	{ "or (or false false) (or true true)", "true" },
+	-- pair/fst/snd
+	{ "pair A B fst", "A" },
+	{ "pair A B snd", "B" },
+	{ "pair (pair A B) (pair C D) fst snd", "B"},
+
 }
 
 local all_ok = true
