@@ -1,0 +1,26 @@
+{
+  "name": "functional",
+  "version": "0.0.1",
+  "description": "Programming game",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "lua-features": "0.0.1"
+  },
+  "scripts": {
+    "test": "cd src && luajit test.lua",
+    "build": "rm -rf build && lua-features transpile src build -c",
+    "check": "lua-features check src -c",
+    "love": "npm run build && love build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yancouto/functional.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yancouto/functional/issues"
+  },
+  "homepage": "https://github.com/yancouto/functional#readme"
+}
