@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["esnext"],
+    "moduleResolution": "node",
+    "outDir": "build",
+    "rootDir": "src",
+    "types": [
+        "love-typescript-definitions"
+    ],
+    "strict": true
+  },
+  "tstl": {
+    "luaTarget": "JIT"
+  }
+}
