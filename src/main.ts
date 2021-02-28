@@ -1,3 +1,3 @@
 love.draw = () => {
-    love.graphics.print("hello world", 100, 100)
+    love.graphics.print("hello world", 100, 100);
 }

@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "love-typescript-definitions": "^0.22.1",
+    "lua-types": "^2.8.0",
     "typescript-to-lua": "^0.38.1"
   },
   "devDependencies": {},
@@ -12,7 +13,8 @@
     "start": "npm run build && npm run love",
     "love": "love build/",
     "build": "tstl",
-    "dev": "tstl --watch"
+    "dev": "tstl --watch",
+    "test": "npm run build && luajit build/interpreters/test.lua"
   },
   "repository": {
     "type": "git",

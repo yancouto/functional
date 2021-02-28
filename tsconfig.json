@@ -6,7 +6,8 @@
     "outDir": "build",
     "rootDir": "src",
     "types": [
-        "love-typescript-definitions"
+        "love-typescript-definitions",
+        "lua-types/jit"
     ],
     "strict": true
   },
