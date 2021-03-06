@@ -1,17 +1,20 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "moduleResolution": "node",
     "outDir": "build",
     "rootDir": "src",
     "types": [
-        "love-typescript-definitions",
-        "lua-types/jit"
+      "love-typescript-definitions",
+      "lua-types/jit"
     ],
     "strict": true
   },
   "tstl": {
-    "luaTarget": "JIT"
+    "luaTarget": "JIT",
+    "noImplicitSelf": true
   }
 }
