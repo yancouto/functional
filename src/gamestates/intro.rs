@@ -1,6 +1,7 @@
 use core::time;
 
 use bracket_lib::prelude as bl;
+use crate::gamestates::base::*;
 
 const opening_str: &str = "this is functional.";
 
@@ -17,8 +18,8 @@ impl IntroState {
     }
 }
 
-impl bl::GameState for IntroState {
-    fn tick(&mut self, ctx: &mut bl::BTerm) {
+impl GameState for IntroState {
+    fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent {
         ctx.cls();
         self.time_since_creation_ms += ctx.frame_time_ms;
         let mut revealed_letters = (self.time_since_creation_ms as usize / 100);
@@ -28,5 +29,6 @@ impl bl::GameState for IntroState {
             revealed_letters = len - 1 + ((revealed_letters - len) / 5) % 2;
         }
         ctx.print(10, 10, &opening_str[0..revealed_letters]);
+        GameStateEvent::None
     }
 }

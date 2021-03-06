@@ -3,12 +3,12 @@ mod gamestates;
 use bracket_lib::prelude as bl;
 
 struct MainState {
-    cur_gs: Box<dyn bl::GameState>,
+    cur_gs: Box<dyn gamestates::base::GameState>,
 }
 
 impl bl::GameState for MainState {
     fn tick(&mut self, ctx: &mut bl::BTerm) {
-        self.cur_gs.tick(ctx)
+        self.cur_gs.tick(ctx);
     }
 }
 
