@@ -17,7 +17,7 @@ fn main() -> bl::BError {
         .with_title("functional")
         .build()?;
     let gs = MainState {
-        cur_gs: Box::new(gamestates::intro::IntroState),
+        cur_gs: Box::new(gamestates::intro::IntroState::new()),
     };
     bl::main_loop(ctx, gs)
 }
