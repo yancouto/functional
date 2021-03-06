@@ -3,12 +3,12 @@ mod gamestates;
 use bracket_lib::prelude as bl;
 
 struct MainState {
-    cur_gs: Box<dyn gamestates::base::GameState>,
+    manager: gamestates::base::GameStateManager,
 }
 
 impl bl::GameState for MainState {
     fn tick(&mut self, ctx: &mut bl::BTerm) {
-        self.cur_gs.tick(ctx);
+        self.manager.tick(ctx);
     }
 }
 
@@ -17,7 +17,9 @@ fn main() -> bl::BError {
         .with_title("functional")
         .build()?;
     let gs = MainState {
-        cur_gs: Box::new(gamestates::intro::IntroState::new()),
+        manager: gamestates::base::GameStateManager::new(Box::new(
+            gamestates::intro::IntroState::new(),
+        )),
     };
     bl::main_loop(ctx, gs)
 }
