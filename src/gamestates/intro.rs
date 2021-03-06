@@ -1,9 +1,7 @@
-use core::time;
-
-use bracket_lib::prelude as bl;
 use crate::gamestates::base::*;
+use bracket_lib::prelude as bl;
 
-const opening_str: &str = "this is functional.";
+const OPENING_STR: &str = "this is functional.";
 
 #[derive(Debug)]
 pub struct IntroState {
@@ -22,13 +20,13 @@ impl GameState for IntroState {
     fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent {
         ctx.cls();
         self.time_since_creation_ms += ctx.frame_time_ms;
-        let mut revealed_letters = (self.time_since_creation_ms as usize / 100);
-        let len = opening_str.len();
+        let mut revealed_letters = self.time_since_creation_ms as usize / 100;
+        let len = OPENING_STR.len();
         if revealed_letters > len {
             // Make last letter blink on and off, at a slower rate
             revealed_letters = len - 1 + ((revealed_letters - len) / 5) % 2;
         }
-        ctx.print(10, 10, &opening_str[0..revealed_letters]);
+        ctx.print(10, 10, &OPENING_STR[0..revealed_letters]);
         GameStateEvent::None
     }
 }
