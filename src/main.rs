@@ -1,11 +1,14 @@
+mod gamestates;
+
 use bracket_lib::prelude as bl;
 
-struct State;
+struct MainState {
+    cur_gs: Box<dyn bl::GameState>,
+}
 
-impl bl::GameState for State {
+impl bl::GameState for MainState {
     fn tick(&mut self, ctx: &mut bl::BTerm) {
-        ctx.cls();
-        ctx.print(1, 1, "this is functional");
+        self.cur_gs.tick(ctx)
     }
 }
 
@@ -13,6 +16,8 @@ fn main() -> bl::BError {
     let ctx = bl::BTermBuilder::simple80x50()
         .with_title("functional")
         .build()?;
-    let gs = State;
+    let gs = MainState {
+        cur_gs: Box::new(gamestates::intro::IntroState),
+    };
     bl::main_loop(ctx, gs)
 }
