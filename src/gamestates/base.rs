@@ -11,12 +11,19 @@ impl GameStateManager {
     }
 
     pub fn tick(&mut self, ctx: &mut bl::BTerm) {
-        self.cur_gs.tick(ctx);
+        ctx.cls();
+        match self.cur_gs.tick(ctx) {
+            GameStateEvent::None => {}
+            GameStateEvent::Switch(new) => {
+                self.cur_gs = new;
+            }
+        }
     }
 }
 
 pub enum GameStateEvent {
     None,
+    Switch(Box<dyn GameState>),
 }
 
 pub trait GameState: std::fmt::Debug {
