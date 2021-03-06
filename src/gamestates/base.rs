@@ -7,6 +7,7 @@ pub struct GameStateManager {
 
 impl GameStateManager {
     pub fn new(first: Box<dyn GameState>) -> Self {
+        println!("Starting on gamestate {}", first.name());
         Self { cur_gs: first }
     }
 
@@ -15,6 +16,11 @@ impl GameStateManager {
         match self.cur_gs.tick(ctx) {
             GameStateEvent::None => {}
             GameStateEvent::Switch(new) => {
+                println!(
+                    "Switching gamestate from {} to {}",
+                    self.cur_gs.name(),
+                    new.name()
+                );
                 self.cur_gs = new;
             }
         }
@@ -27,5 +33,6 @@ pub enum GameStateEvent {
 }
 
 pub trait GameState: std::fmt::Debug {
+    fn name(&self) -> &'static str;
     fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent;
 }

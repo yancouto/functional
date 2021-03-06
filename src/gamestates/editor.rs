@@ -11,6 +11,10 @@ impl EditorState {
 }
 
 impl GameState for EditorState {
+    fn name(&self) -> &'static str {
+        "Editor"
+    }
+
     fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent {
         ctx.print(10, 10, "hello world");
         GameStateEvent::None

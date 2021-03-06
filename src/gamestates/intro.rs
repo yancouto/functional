@@ -19,6 +19,10 @@ impl IntroState {
 }
 
 impl GameState for IntroState {
+    fn name(&self) -> &'static str {
+        "Intro"
+    }
+
     fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent {
         self.time_since_creation_ms += ctx.frame_time_ms;
         let mut revealed_letters = self.time_since_creation_ms as usize / 100;
