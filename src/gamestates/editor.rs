@@ -3,7 +3,7 @@ use bracket_lib::prelude as bl;
 
 #[derive(Debug)]
 pub struct EditorState {
-    text: Vec<Vec<u8>>,
+    text: Vec<Vec<char>>,
     cursor: (u8, u8),
 }
 
@@ -17,21 +17,25 @@ where
 impl EditorState {
     pub fn new() -> Self {
         Self {
-            text: vec![vec![' ' as u8; 8]; 8],
+            text: vec![vec![' '; 8]; 8],
             cursor: (0, 0),
         }
     }
 
     fn print(&mut self, mut ctx: &mut bl::BTerm) {
-        let mut builder = bl::TextBuilder::empty();
-        self.text[1][1] = 'x' as u8;
-        self.text.iter().for_each(|line| {
-            builder.append(&String::from_utf8_lossy(line));
+        self.text[0][0] = 'x';
+        self.text[1][1] = 'y';
+        with_current_console(&mut ctx, |c| {
+            self.text
+                .iter()
+                .enumerate()
+                .for_each(|(i, line)| c.print(0, i as i32, &line.iter().collect::<String>()));
+            c.set_bg(
+                self.cursor.0.into(),
+                self.cursor.1.into(),
+                bl::RGBA::from_f32(1., 1., 1., 0.5),
+            );
         });
-        builder.reset();
-        let mut block = bl::TextBlock::new(10, 10, 8, 8);
-        block.print(&builder).unwrap();
-        with_current_console(&mut ctx, |c| block.render(c));
     }
 }
 
