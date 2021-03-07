@@ -27,7 +27,10 @@ impl GameState for IntroState {
         self.time_since_creation_ms += ctx.frame_time_ms;
         let mut revealed_letters = self.time_since_creation_ms as usize / 100;
         let len = OPENING_STR.len();
-        let switch = revealed_letters > len + 5 * 4;
+        let mut switch = revealed_letters > len + 5 * 4;
+        if ctx.left_click {
+            switch = true;
+        }
         if revealed_letters > len {
             // Make last letter blink on and off, at a slower rate
             revealed_letters = len - 1 + ((revealed_letters - len) / 5) % 2;
