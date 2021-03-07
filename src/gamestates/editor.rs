@@ -33,7 +33,7 @@ where
 
 impl EditorState {
     pub fn new() -> Self {
-        let size = Dimension { w: 8, h: 8 };
+        let size = Dimension { w: 20, h: 8 };
         Self {
             text: vec![vec![' '; size.w]; size.h],
             cursor: Cursor { i: 0, j: 0 },
@@ -118,11 +118,37 @@ impl GameState for EditorState {
                 if !pressed {
                     return;
                 }
-                if key == bl::VirtualKeyCode::Back {
-                    if self.move_cursor_left() {
-                        self.text[self.cursor.i][self.cursor.j] = ' ';
+                use bl::VirtualKeyCode as K;
+                match key {
+                    K::Back => {
+                        if self.move_cursor_left() {
+                            self.text[self.cursor.i][self.cursor.j] = ' ';
+                        };
                     }
-                };
+                    K::Return | K::NumpadEnter => {
+                        if self.cursor.i < self.size.h - 1 {
+                            self.cursor.i += 1;
+                            self.cursor.j = 0;
+                        }
+                    }
+                    K::Right => {
+                        self.move_cursor_right();
+                    }
+                    K::Left => {
+                        self.move_cursor_left();
+                    }
+                    K::Up => {
+                        if self.cursor.i > 0 {
+                            self.cursor.i -= 1;
+                        }
+                    }
+                    K::Down => {
+                        if self.cursor.i < self.size.h - 1 {
+                            self.cursor.i += 1;
+                        }
+                    }
+                    _ => {}
+                }
             }
             _ => {}
         }
