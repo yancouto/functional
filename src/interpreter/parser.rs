@@ -18,6 +18,9 @@ pub enum ParseError {
     ExtraCloseParenthesis,
 }
 
+/// Level represents an unclosed sequence of terms. It is represented by some
+/// enveloping functions ("a: b: c:" in the beginning of the level), followed
+/// by a single term (which may be the application of several terms in a row).
 #[derive(Default)]
 struct Level {
     prev_node: Option<Box<Node>>,
@@ -25,6 +28,20 @@ struct Level {
 }
 
 impl Level {
+    /// Add a new term to the right of this level, merging it with prev_node if
+    /// it exists
+    fn merge(&mut self, node: Box<Node>) {
+        self.prev_node = if let Some(prev) = self.prev_node.take() {
+            Some(Box::new(Node::Apply {
+                left: prev,
+                right: node,
+            }))
+        } else {
+            Some(node)
+        };
+    }
+    /// Finish this level, and turn it into a single term. Fails if prev_node is
+    /// None.
     fn close(mut self) -> Result<Box<Node>, ParseError> {
         let mut node = if let Some(n) = self.prev_node.take() {
             n
@@ -42,17 +59,9 @@ impl Level {
 }
 
 pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, ParseError> {
+    // Levels keep track of all the current terms being created. Opening a new parenthesis
+    // means creating a new level, and closing one means merging it upward.
     let mut levels = NonEmpty::from((Level::default(), vec![]));
-    let merge = |l: &mut Level, n: Box<Node>| {
-        l.prev_node = if let Some(prev) = l.prev_node.take() {
-            Some(Box::new(Node::Apply {
-                left: prev,
-                right: n,
-            }))
-        } else {
-            Some(n)
-        };
-    };
     let mut iter = tokens.into_iter().peekable();
     while let Some(token) = iter.next() {
         match token {
@@ -64,11 +73,11 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
                     }
                     levels.last_mut().enveloping_functions.push(v);
                 } else {
-                    merge(levels.last_mut(), Box::new(Node::Variable(v)));
+                    levels.last_mut().merge(Box::new(Node::Variable(v)));
                 }
             }
             Token::Constant(c) => {
-                merge(levels.last_mut(), Box::new(Node::Constant(c)));
+                levels.last_mut().merge(Box::new(Node::Constant(c)));
             }
             Token::Colon => {
                 return Err(ParseError::ExtraColon);
@@ -76,7 +85,7 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
             Token::OpenPar => levels.push(Level::default()),
             Token::ClosePar => {
                 if let Some(last) = levels.pop() {
-                    merge(levels.last_mut(), last.close()?);
+                    levels.last_mut().merge(last.close()?);
                 } else {
                     return Err(ParseError::ExtraCloseParenthesis);
                 }
