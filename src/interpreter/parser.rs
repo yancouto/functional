@@ -1,7 +1,7 @@
 use super::tokenizer::{Constant, Token, Variable};
 use non_empty_vec::NonEmpty;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Node {
     Constant(Constant),
     Variable(Variable),
@@ -99,11 +99,11 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use super::super::tokenizer::tokenize;
     use super::*;
 
-    fn parse_ok(str: &str) -> Box<Node> {
+    pub fn parse_ok(str: &str) -> Box<Node> {
         parse(tokenize(str.chars()).unwrap()).unwrap()
     }
 
