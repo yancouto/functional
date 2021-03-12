@@ -1,4 +1,5 @@
 use super::tokenizer::{Constant, Token, Variable};
+use non_empty_vec::NonEmpty;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Node {
@@ -13,18 +14,35 @@ pub enum ParseError {
     FunctionInsideBody,
     ExtraColon,
     MissingExpression,
+    UnclosedParenthesis,
+    ExtraCloseParenthesis,
 }
 
+#[derive(Default)]
 struct Level {
     prev_node: Option<Box<Node>>,
     enveloping_functions: Vec<Variable>,
 }
 
+impl Level {
+    fn close(mut self) -> Result<Box<Node>, ParseError> {
+        let mut node = if let Some(n) = self.prev_node.take() {
+            n
+        } else {
+            return Err(ParseError::MissingExpression);
+        };
+        while let Some(variable) = self.enveloping_functions.pop() {
+            node = Box::new(Node::Function {
+                variable,
+                body: node,
+            });
+        }
+        Ok(node)
+    }
+}
+
 pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, ParseError> {
-    let mut level = Level {
-        prev_node: None,
-        enveloping_functions: vec![],
-    };
+    let mut levels = NonEmpty::from((Level::default(), vec![]));
     let merge = |l: &mut Level, n: Box<Node>| {
         l.prev_node = if let Some(prev) = l.prev_node.take() {
             Some(Box::new(Node::Apply {
@@ -41,35 +59,34 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
             Token::Variable(v) => {
                 if iter.peek() == Some(&Token::Colon) {
                     iter.next().unwrap();
-                    if level.prev_node.is_some() {
+                    if levels.last().prev_node.is_some() {
                         return Err(ParseError::FunctionInsideBody);
                     }
-                    level.enveloping_functions.push(v);
+                    levels.last_mut().enveloping_functions.push(v);
                 } else {
-                    merge(&mut level, Box::new(Node::Variable(v)));
+                    merge(levels.last_mut(), Box::new(Node::Variable(v)));
                 }
             }
             Token::Constant(c) => {
-                merge(&mut level, Box::new(Node::Constant(c)));
+                merge(levels.last_mut(), Box::new(Node::Constant(c)));
             }
             Token::Colon => {
                 return Err(ParseError::ExtraColon);
             }
-            _ => todo!(),
+            Token::OpenPar => levels.push(Level::default()),
+            Token::ClosePar => {
+                if let Some(last) = levels.pop() {
+                    merge(levels.last_mut(), last.close()?);
+                } else {
+                    return Err(ParseError::ExtraCloseParenthesis);
+                }
+            }
         }
     }
-    let mut node = if let Some(n) = level.prev_node.take() {
-        n
-    } else {
-        return Err(ParseError::MissingExpression);
-    };
-    while let Some(variable) = level.enveloping_functions.pop() {
-        node = Box::new(Node::Function {
-            variable,
-            body: node,
-        });
+    if levels.len().get() > 1 {
+        return Err(ParseError::UnclosedParenthesis);
     }
-    Ok(node)
+    Vec::from(levels).pop().unwrap().close()
 }
 
 #[cfg(test)]
@@ -111,6 +128,25 @@ mod test {
                 })
             })
         );
+        assert_eq!(parse_err(""), ParseError::MissingExpression);
+    }
+
+    #[test]
+    fn parenthesis() {
+        assert_eq!(
+            parse_ok("((x) (x: x))"),
+            Box::new(Node::Apply {
+                left: Box::new(Node::Variable('x')),
+                right: Box::new(Node::Function {
+                    variable: 'x',
+                    body: Box::new(Node::Variable('x'))
+                })
+            })
+        );
+        assert_eq!(parse_ok("a b c"), parse_ok("((a b) c)"));
+        assert_eq!(parse_err("(a b ())"), ParseError::MissingExpression);
+        assert_eq!(parse_err("a)"), ParseError::ExtraCloseParenthesis);
+        assert_eq!(parse_err("a (b c"), ParseError::UnclosedParenthesis);
     }
 
     #[test]

@@ -12,6 +12,7 @@ curses = ["bracket-lib/curses"]
 crossterm = ["bracket-lib/crossterm"]
 
 [dependencies]
+non-empty-vec = "0.1.2"
 
 [dependencies.bracket-lib]
 version = "0.8.1"

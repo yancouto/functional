@@ -573,6 +573,7 @@ name = "functional"
 version = "0.1.0"
 dependencies = [
  "bracket-lib",
+ "non-empty-vec",
 ]
 
 [[package]]
@@ -1059,6 +1060,12 @@ dependencies = [
  "memchr",
  "version_check",
 ]
+
+[[package]]
+name = "non-empty-vec"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9bf1d9485a47ae664e95db4cdbee21303f32f40fdd49048d81c36f7f780ffe3"
 
 [[package]]
 name = "ntapi"
