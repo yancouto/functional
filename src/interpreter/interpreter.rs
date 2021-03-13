@@ -31,8 +31,7 @@ fn interpret_req(
     do_apply: bool,
     assigned_values: &mut HashMap<Variable, Box<Node>>,
 ) -> Result<Box<Node>, InterpretError> {
-    println!("IN {:?} {:?} {:?}\n", root, do_apply, assigned_values);
-    let ans = Ok(match *root.clone() {
+    Ok(match *root {
         Node::Apply { left, right } => {
             let left = interpret_req(left, do_apply, assigned_values)?;
             match *left {
@@ -76,15 +75,7 @@ fn interpret_req(
             })
         }
         node @ Node::Constant(..) => Box::new(node),
-    });
-    println!(
-        "OUT {:?} {:?} {:?} = {:?}\n",
-        root,
-        do_apply,
-        assigned_values,
-        ans.clone()
-    );
-    ans
+    })
 }
 
 pub fn interpret(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
@@ -106,7 +97,7 @@ mod test {
 
     #[test]
     fn no_apply() {
-        interpret_eq("z", "z");
+        interpret_eq("z", "x");
         interpret_eq("y:y", "y : y");
     }
 
@@ -124,8 +115,8 @@ mod test {
     #[test]
     fn tricky1() {
         // easy, no name conflicts
-        //interpret_eq("(x: y: x) z", "y: z");
-        //interpret_eq("(x: y: x) w z", "w");
+        interpret_eq("(x: y: x) z", "y: z");
+        interpret_eq("(x: y: x) w z", "w");
         // hard, name conflicts
         interpret_eq("(x: y: x) y", "z: y");
         interpret_eq("(x: y: x) y z", "y");
@@ -133,5 +124,11 @@ mod test {
     #[test]
     fn tricky2() {
         interpret_eq("(x: x x) (y: x)", "x");
+    }
+
+    #[test]
+    #[should_panic]
+    fn infinite() {
+        println!("{:?}", interpret_str("(x: x x) (y: y y)"));
     }
 }

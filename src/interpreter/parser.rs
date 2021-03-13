@@ -68,13 +68,14 @@ impl Level {
     }
     /// Finish this level, and turn it into a single term. Fails if prev_node is
     /// None.
-    fn close(mut self) -> Result<Box<Node>, ParseError> {
+    fn close(mut self, bindings: &mut Bindings) -> Result<Box<Node>, ParseError> {
         let mut node = if let Some(n) = self.prev_node.take() {
             n
         } else {
             return Err(ParseError::MissingExpression);
         };
         while let Some(variable) = self.enveloping_functions.pop() {
+            bindings.pop_var(variable.original);
             node = Box::new(Node::Function {
                 variable,
                 body: node,
@@ -121,6 +122,17 @@ impl Bindings {
             .last()
             .clone()
     }
+
+    fn pop_var(&mut self, name: TVariable) {
+        match self.map.entry(name) {
+            Entry::Occupied(mut entry) => {
+                if entry.get_mut().pop().is_none() {
+                    entry.remove();
+                }
+            }
+            Entry::Vacant(..) => panic!("Should have entry"),
+        }
+    }
 }
 
 pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, ParseError> {
@@ -156,7 +168,7 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
             Token::OpenPar => levels.push(Level::default()),
             Token::ClosePar => {
                 if let Some(last) = levels.pop() {
-                    levels.last_mut().merge(last.close()?);
+                    levels.last_mut().merge(last.close(&mut bindings)?);
                 } else {
                     return Err(ParseError::ExtraCloseParenthesis);
                 }
@@ -166,7 +178,7 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
     if levels.len().get() > 1 {
         return Err(ParseError::UnclosedParenthesis);
     }
-    Vec::from(levels).pop().unwrap().close()
+    Vec::from(levels).pop().unwrap().close(&mut bindings)
 }
 
 #[derive(Debug, Default)]
@@ -296,13 +308,22 @@ pub mod test {
 
     #[test]
     fn test_eq() {
-        //assert_eq!(12.n(), 2.n());
-        //assert_ne!("ab".n(), "hi".n());
+        assert_eq!(12.n(), 2.n());
+        assert_ne!("ab".n(), "hi".n());
         // (x y) == (z w)
-        //assert_eq!((0.n(), 0.n()).n(), (1.n(), 1.n()).n());
+        assert_eq!((0.n(), 0.n()).n(), (1.n(), 1.n()).n());
         // (x y) != (x x)
         assert_ne!((0.n(), 1.n()).n(), (0.n(), 0.n()).n());
         assert_ne!((0.n(), 0.n()).n(), (0.n(), 1.n()).n());
+    }
+
+    #[test]
+    fn parse_eq() {
+        assert_eq!(parse_ok("(x: x) x"), parse_ok("(y: y) z"));
+        assert_eq!(parse_ok("(x: x) (x: x)"), parse_ok("(y: y) (z :z)"));
+        assert_eq!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x z) (y: y z)"));
+        assert_ne!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x z) (z: z n)"));
+        assert_ne!(parse_ok("(x: x x)"), parse_ok("(x: x y)"));
     }
 
     #[test]
