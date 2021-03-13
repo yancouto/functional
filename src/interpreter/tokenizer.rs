@@ -1,10 +1,10 @@
-pub type Variable = char;
+pub type TVariable = char;
 pub type Constant = String;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Token {
     // x, y
-    Variable(Variable),
+    Variable(TVariable),
     // hello, goodbye
     Constant(Constant),
     // :

@@ -1,7 +1,33 @@
-use super::tokenizer::{Constant, Token, Variable};
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    hash::Hash,
+};
+
+use super::tokenizer::{Constant, TVariable, Token};
 use non_empty_vec::NonEmpty;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+/// uid is used to identify variables in different bindings. For example, in
+/// ((x: x) (x: x x)), the x's on both functions will have different uids, but
+/// on the same function they will have the same uid.
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct Variable {
+    /// Unique number between all variables in the term
+    uid: u32,
+    /// Original name of the variable, may have duplicates
+    original: TVariable,
+}
+
+impl Variable {
+    fn new(uid: &mut u32, var: TVariable) -> Self {
+        *uid += 1;
+        Self {
+            uid: *uid - 1,
+            original: var,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Node {
     Constant(Constant),
     Variable(Variable),
@@ -58,22 +84,67 @@ impl Level {
     }
 }
 
+#[derive(Debug)]
+struct Bindings {
+    map: HashMap<TVariable, NonEmpty<Variable>>,
+    num_vars: u32,
+}
+
+impl Bindings {
+    fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+            num_vars: 0,
+        }
+    }
+
+    /// Create a new variable with given name, register and return it.
+    fn push_var(&mut self, name: TVariable) -> Variable {
+        let var = Variable::new(&mut self.num_vars, name);
+        match self.map.entry(name) {
+            Entry::Vacant(entry) => {
+                entry.insert(NonEmpty::from((var, vec![])));
+            }
+            Entry::Occupied(mut entry) => entry.get_mut().push(var),
+        };
+        var
+    }
+
+    /// Get given variable, creating a new one if it doesn't exist (that will
+    /// happen only if it is a free variable)
+    fn get_var(&mut self, name: TVariable) -> Variable {
+        // Need to borrow this outside for compiler to understand we're not double borrowing
+        let num_vars = &mut self.num_vars;
+        self.map
+            .entry(name)
+            .or_insert_with(|| NonEmpty::from((Variable::new(num_vars, name), vec![])))
+            .last()
+            .clone()
+    }
+}
+
 pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, ParseError> {
     // Levels keep track of all the current terms being created. Opening a new parenthesis
     // means creating a new level, and closing one means merging it upward.
     let mut levels = NonEmpty::from((Level::default(), vec![]));
     let mut iter = tokens.into_iter().peekable();
+    let mut bindings = Bindings::new();
     while let Some(token) = iter.next() {
         match token {
-            Token::Variable(v) => {
+            Token::Variable(name) => {
                 if iter.peek() == Some(&Token::Colon) {
                     iter.next().unwrap();
                     if levels.last().prev_node.is_some() {
                         return Err(ParseError::FunctionInsideBody);
                     }
-                    levels.last_mut().enveloping_functions.push(v);
+                    levels
+                        .last_mut()
+                        .enveloping_functions
+                        .push(bindings.push_var(name));
                 } else {
-                    levels.last_mut().merge(Box::new(Node::Variable(v)));
+                    levels
+                        .last_mut()
+                        .merge(Box::new(Node::Variable(bindings.get_var(name))));
                 }
             }
             Token::Constant(c) => {
@@ -98,6 +169,51 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
     Vec::from(levels).pop().unwrap().close()
 }
 
+#[derive(Debug, Default)]
+struct OneToOne<A: Eq + Hash, B: Eq + Hash> {
+    left_to_right: HashMap<A, B>,
+    right_to_left: HashMap<B, A>,
+}
+
+impl<A: Eq + Hash + Copy, B: Eq + Hash + Copy> OneToOne<A, B> {
+    fn check(&mut self, a: A, b: B) -> bool {
+        *self.left_to_right.entry(a).or_insert(b) == b
+            && *self.right_to_left.entry(b).or_insert(a) == a
+    }
+}
+
+impl Node {
+    fn synthatic_eq(&self, other: &Node, var_eqs: &mut OneToOne<u32, u32>) -> bool {
+        match (self, other) {
+            (Node::Constant(c1), Node::Constant(c2)) => c1 == c2,
+            (Node::Variable(v1), Node::Variable(v2)) => var_eqs.check(v1.uid, v2.uid),
+            (
+                Node::Function { variable, body },
+                Node::Function {
+                    variable: variable2,
+                    body: body2,
+                },
+            ) => var_eqs.check(variable.uid, variable2.uid) && body.synthatic_eq(body2, var_eqs),
+            (
+                Node::Apply { left, right },
+                Node::Apply {
+                    left: left2,
+                    right: right2,
+                },
+            ) => left.synthatic_eq(left2, var_eqs) && right.synthatic_eq(right2, var_eqs),
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Node) -> bool {
+        self.synthatic_eq(other, &mut OneToOne::default())
+    }
+}
+
+impl Eq for Node {}
+
 #[cfg(test)]
 pub mod test {
     use super::super::tokenizer::tokenize;
@@ -111,32 +227,58 @@ pub mod test {
         parse(tokenize(str.chars()).unwrap()).unwrap_err()
     }
 
+    impl From<u32> for Variable {
+        fn from(uid: u32) -> Self {
+            Self { uid, original: '-' }
+        }
+    }
+
+    impl From<u32> for Box<Node> {
+        fn from(uid: u32) -> Self {
+            Box::new(Node::Variable(uid.into()))
+        }
+    }
+
+    impl From<&str> for Box<Node> {
+        fn from(val: &str) -> Self {
+            Box::new(Node::Constant(val.to_string()))
+        }
+    }
+
+    impl From<(Box<Node>, Box<Node>)> for Box<Node> {
+        fn from(args: (Box<Node>, Box<Node>)) -> Self {
+            Box::new(Node::Apply {
+                left: args.0,
+                right: args.1,
+            })
+        }
+    }
+
+    impl From<(u32, Box<Node>)> for Box<Node> {
+        fn from(args: (u32, Box<Node>)) -> Self {
+            Box::new(Node::Function {
+                variable: args.0.into(),
+                body: args.1,
+            })
+        }
+    }
+
+    trait ConvertToNode {
+        fn n(self) -> Box<Node>;
+    }
+
+    impl<T: Into<Box<Node>>> ConvertToNode for T {
+        fn n(self) -> Box<Node> {
+            self.into()
+        }
+    }
+
     #[test]
     fn simple() {
-        assert_eq!(
-            parse(vec![Token::Variable('x')]).unwrap(),
-            Box::new(Node::Variable('x'))
-        );
-        assert_eq!(
-            parse_ok("a b c"),
-            Box::new(Node::Apply {
-                left: Box::new(Node::Apply {
-                    left: Box::new(Node::Variable('a')),
-                    right: Box::new(Node::Variable('b')),
-                }),
-                right: Box::new(Node::Variable('c'))
-            })
-        );
-        assert_eq!(
-            parse_ok("x:y:x"),
-            Box::new(Node::Function {
-                variable: 'x',
-                body: Box::new(Node::Function {
-                    variable: 'y',
-                    body: Box::new(Node::Variable('x'))
-                })
-            })
-        );
+        assert_eq!(parse(vec![Token::Variable('x')]).unwrap(), 12.into(),);
+        assert_eq!(parse_ok("a bc c"), ((0.n(), "bc".n()).n(), 2.n()).n());
+        assert_eq!(parse_ok("a b c"), ((1.n(), 3.n()).n(), 13.n()).n(),);
+        assert_eq!(parse_ok("x:y:x"), (0, (1, 0.n()).n()).n());
         assert_eq!(parse_err(""), ParseError::MissingExpression);
     }
 
@@ -144,18 +286,23 @@ pub mod test {
     fn parenthesis() {
         assert_eq!(
             parse_ok("((x) (x: x))"),
-            Box::new(Node::Apply {
-                left: Box::new(Node::Variable('x')),
-                right: Box::new(Node::Function {
-                    variable: 'x',
-                    body: Box::new(Node::Variable('x'))
-                })
-            })
+            (Box::<Node>::from(9), (3, 3.n()).n()).n()
         );
         assert_eq!(parse_ok("a b c"), parse_ok("((a b) c)"));
         assert_eq!(parse_err("(a b ())"), ParseError::MissingExpression);
         assert_eq!(parse_err("a)"), ParseError::ExtraCloseParenthesis);
         assert_eq!(parse_err("a (b c"), ParseError::UnclosedParenthesis);
+    }
+
+    #[test]
+    fn test_eq() {
+        //assert_eq!(12.n(), 2.n());
+        //assert_ne!("ab".n(), "hi".n());
+        // (x y) == (z w)
+        //assert_eq!((0.n(), 0.n()).n(), (1.n(), 1.n()).n());
+        // (x y) != (x x)
+        assert_ne!((0.n(), 1.n()).n(), (0.n(), 0.n()).n());
+        assert_ne!((0.n(), 0.n()).n(), (0.n(), 1.n()).n());
     }
 
     #[test]
