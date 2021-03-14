@@ -62,6 +62,12 @@ const START_J: i32 = 2;
 const LINES_PER_SECTION: i32 = 3;
 const MID_I: i32 = 40;
 
+impl LevelSelectionState {
+    fn get_j(&self, index: i32) -> i32 {
+        return START_J + LINES_PER_SECTION * index;
+    }
+}
+
 impl GameState for LevelSelectionState {
     fn name(&self) -> &'static str {
         "LevelSelection"
@@ -78,23 +84,25 @@ impl GameState for LevelSelectionState {
         let cursor_on = ((data.time.as_millis() / 500) % 2) == 0;
         if let Some(l_i) = self.level_i {
             for (i, level) in self.sections[self.section_i].levels.iter().enumerate() {
-                data.console.print(
-                    MID_I + CURSOR_I + 2,
-                    START_J + LINES_PER_SECTION * i as i32,
-                    &level.0,
-                );
+                data.console
+                    .print(MID_I + CURSOR_I + 2, self.get_j(i as i32), &level.0);
             }
+            data.console.print(
+                MID_I + CURSOR_I + 5,
+                self.get_j(l_i as i32) + 1,
+                "press ENTER to select level",
+            )
         } else {
             data.console.print(
                 MID_I + CURSOR_I,
-                START_J + LINES_PER_SECTION * self.section_i as i32,
+                self.get_j(self.section_i as i32),
                 "press RIGHT to open section",
             );
         }
         if cursor_on {
             data.console.print(
                 CURSOR_I + self.level_i.map_or(0, |_| MID_I),
-                START_J + LINES_PER_SECTION * self.level_i.unwrap_or(self.section_i) as i32,
+                self.get_j(self.level_i.unwrap_or(self.section_i) as i32),
                 ">",
             );
         }
