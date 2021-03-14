@@ -1,5 +1,6 @@
 mod gamestates;
 mod interpreter;
+use gamestates::level_selection;
 use structopt::StructOpt;
 
 use bracket_lib::prelude as bl;
@@ -29,7 +30,7 @@ fn main() -> bl::BError {
         .build()?;
     let gs = MainState {
         manager: gamestates::base::GameStateManager::new(if opt.skip_intro {
-            Box::new(gamestates::editor::EditorState::new())
+            Box::new(gamestates::level_selection::LevelSelectionState::new())
         } else {
             Box::new(gamestates::intro::IntroState::new())
         }),
