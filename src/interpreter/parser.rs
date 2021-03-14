@@ -1,5 +1,6 @@
 use std::{
     collections::{hash_map::Entry, HashMap},
+    fmt::{self, Debug},
     hash::Hash,
 };
 
@@ -9,7 +10,7 @@ use non_empty_vec::NonEmpty;
 /// uid is used to identify variables in different bindings. For example, in
 /// ((x: x) (x: x x)), the x's on both functions will have different uids, but
 /// on the same function they will have the same uid.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Variable {
     /// Unique number between all variables in the term
     uid: u32,
@@ -27,12 +28,31 @@ impl Variable {
     }
 }
 
-#[derive(Debug, Clone)]
+impl fmt::Debug for Variable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("{}_{}", self.original, self.uid))
+    }
+}
+
+#[derive(Clone)]
 pub enum Node {
     Constant(Constant),
     Variable(Variable),
     Function { variable: Variable, body: Box<Node> },
     Apply { left: Box<Node>, right: Box<Node> },
+}
+
+impl fmt::Debug for Node {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Node::Constant(c) => f.write_str(c),
+            Node::Variable(v) => v.fmt(f),
+            Node::Function { variable, body } => {
+                f.write_fmt(format_args!("{:?}: {:?}", variable, body))
+            }
+            Node::Apply { left, right } => f.write_fmt(format_args!("({:?} {:?})", left, right)),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]

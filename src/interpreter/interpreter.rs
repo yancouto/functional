@@ -2,10 +2,12 @@ use std::collections::HashMap;
 
 use super::parser::{Node, Variable};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InterpretError {
     /// Shouldn't really happen
     AlgorithmError,
+    /// Interpretation has gone too deep, the expression probaly has no reduction
+    TooDeep,
 }
 
 trait AlgorithmAssert<T> {
@@ -26,18 +28,25 @@ impl<T> AlgorithmAssert<T> for Option<T> {
     }
 }
 
+const MAX_LEVEL: usize = 100;
+
 fn interpret_req(
+    level: usize,
     root: Box<Node>,
     do_apply: bool,
     assigned_values: &mut HashMap<Variable, Box<Node>>,
 ) -> Result<Box<Node>, InterpretError> {
+    if level > MAX_LEVEL {
+        return Err(InterpretError::TooDeep);
+    }
     Ok(match *root {
         Node::Apply { left, right } => {
-            let left = interpret_req(left, do_apply, assigned_values)?;
+            let left = interpret_req(level + 1, left, do_apply, assigned_values)?;
+            let right = interpret_req(level + 1, right, false, assigned_values)?;
             match *left {
                 Node::Function { variable, body } if do_apply => {
                     let prev = assigned_values.insert(variable, right);
-                    let ans = interpret_req(body, true, assigned_values)?;
+                    let ans = interpret_req(level + 1, body, true, assigned_values)?;
                     if let Some(n) = prev {
                         assigned_values.insert(variable, n).assert_some()?;
                     } else {
@@ -45,10 +54,7 @@ fn interpret_req(
                     }
                     ans
                 }
-                _ => Box::new(Node::Apply {
-                    left,
-                    right: interpret_req(right, false, assigned_values)?,
-                }),
+                _ => Box::new(Node::Apply { left, right }),
             }
         }
         Node::Variable(v) => assigned_values
@@ -56,7 +62,7 @@ fn interpret_req(
             .map(Clone::clone)
             .map(|n| {
                 let prev = assigned_values.remove(&v);
-                let ans = interpret_req(n, do_apply, assigned_values);
+                let ans = interpret_req(level + 1, n, do_apply, assigned_values);
                 if let Some(prev_node) = prev {
                     assigned_values.insert(v, prev_node).assert_none()?;
                 }
@@ -65,7 +71,7 @@ fn interpret_req(
             .unwrap_or_else(|| Ok(Box::new(Node::Variable(v))))?,
         Node::Function { variable, body } => {
             let prev = assigned_values.remove(&variable);
-            let inner = interpret_req(body, false, assigned_values)?;
+            let inner = interpret_req(level + 1, body, false, assigned_values)?;
             if let Some(prev_node) = prev {
                 assigned_values.insert(variable, prev_node).assert_none()?;
             }
@@ -79,7 +85,7 @@ fn interpret_req(
 }
 
 pub fn interpret(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
-    interpret_req(root, true, &mut HashMap::new())
+    interpret_req(0, root, true, &mut HashMap::new())
 }
 
 #[cfg(test)]
@@ -87,18 +93,26 @@ mod test {
     use super::super::parser::test::parse_ok;
     use super::*;
 
-    fn interpret_str(str: &str) -> Box<Node> {
+    const Y_COMB: &str = "(f: (x: f (x x)) (x: f (x x)))";
+
+    fn interpret_ok(str: &str) -> Box<Node> {
         interpret(parse_ok(str)).unwrap()
     }
 
+    fn interpret_err(str: &str) -> InterpretError {
+        interpret(parse_ok(str)).unwrap_err()
+    }
+
     fn interpret_eq(src: &str, expected: &str) {
-        assert_eq!(interpret_str(src), parse_ok(expected));
+        assert_eq!(interpret_ok(src), parse_ok(expected));
     }
 
     #[test]
     fn no_apply() {
         interpret_eq("z", "x");
         interpret_eq("y:y", "y : y");
+        interpret_eq("y:hello", "z : hello");
+        assert_ne!(interpret_ok("y:hello"), parse_ok("y:other"));
     }
 
     #[test]
@@ -106,10 +120,11 @@ mod test {
         interpret_eq("(x: x) z", "z");
     }
     #[test]
-    fn double_apply() {
+    fn more_apply() {
         interpret_eq("(x: x x) (y z)", "(y z) (y z)");
         interpret_eq("(x: x x) (y: y)", "(y: y)");
         interpret_eq("(x: x x) (y: z)", "z");
+        interpret_eq("(x: x x x) (x: x)", "y: y");
     }
 
     #[test]
@@ -127,8 +142,26 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
     fn infinite() {
-        println!("{:?}", interpret_str("(x: x x) (y: y y)"));
+        assert_eq!(interpret_err("(x: x x) (y: y y)"), InterpretError::TooDeep);
+        assert_eq!(interpret_err("(x: x x) (x: x x)"), InterpretError::TooDeep);
+        assert_eq!(
+            interpret_err("(x: x x x) (y: y y)"),
+            InterpretError::TooDeep
+        );
+    }
+
+    #[test]
+    fn actually_not_infinite() {
+        interpret_eq("(x: z) ((x: x x) (x: x x))", "k");
+        interpret_eq(&format!("({} (f: x:y: y x)) a b", Y_COMB), "b a");
+    }
+
+    #[test]
+    fn recursive() {
+        assert_eq!(
+            interpret_err(&format!("({} (f: x:y: f x y)) a b", Y_COMB)),
+            InterpretError::TooDeep
+        );
     }
 }
