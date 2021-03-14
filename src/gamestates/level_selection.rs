@@ -47,9 +47,9 @@ impl LevelSelectionState {
     }
 }
 
-const CURSOR_I: usize = 3;
-const START_J: usize = 2;
-const LINES_PER_SECTION: usize = 3;
+const CURSOR_I: i32 = 3;
+const START_J: i32 = 2;
+const LINES_PER_SECTION: i32 = 3;
 
 impl GameState for LevelSelectionState {
     fn name(&self) -> &'static str {
@@ -59,16 +59,19 @@ impl GameState for LevelSelectionState {
     fn tick(&mut self, data: TickData) -> GameStateEvent {
         for (i, section) in self.sections.iter().enumerate() {
             data.console.print(
-                (CURSOR_I + 2) as i32,
-                (START_J + LINES_PER_SECTION * i) as i32,
+                CURSOR_I + 2,
+                START_J + LINES_PER_SECTION * i as i32,
                 &section.name,
             );
         }
-        data.console.print(
-            CURSOR_I as i32,
-            (START_J + LINES_PER_SECTION * self.section_cur) as i32,
-            ">",
-        );
+        let cursor_on = ((data.time.as_millis() / 500) % 2) == 0;
+        if cursor_on {
+            data.console.print(
+                CURSOR_I,
+                START_J + LINES_PER_SECTION * self.section_cur as i32,
+                ">",
+            );
+        }
         GameStateEvent::None
     }
 
