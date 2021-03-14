@@ -1,4 +1,5 @@
 use super::base::*;
+use super::editor::EditorState;
 use crate::levels::{Level, LEVELS};
 use bracket_lib::prelude as bl;
 
@@ -98,7 +99,12 @@ impl<'a> GameState for LevelSelectionState<'a> {
                 ">",
             );
         }
-        GameStateEvent::None
+        match data.pressed_key.zip(self.level_i) {
+            Some((bl::VirtualKeyCode::Return, l_i)) => {
+                GameStateEvent::Switch(Box::new(EditorState::new()))
+            }
+            _ => GameStateEvent::None,
+        }
     }
 
     fn on_event(&mut self, event: bl::BEvent) -> () {
