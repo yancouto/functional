@@ -16,6 +16,7 @@ struct Dimension {
     h: usize,
 }
 
+// TODO: Split editor itself to different component.
 #[derive(Debug)]
 pub struct EditorState<'a> {
     size: Dimension,
@@ -75,6 +76,9 @@ impl<'a> EditorState<'a> {
     }
 }
 
+const EDITOR_I: i32 = 20;
+const EDITOR_J: i32 = 2;
+
 impl<'a> GameState for EditorState<'a> {
     fn name(&self) -> &'static str {
         "Editor"
@@ -82,14 +86,32 @@ impl<'a> GameState for EditorState<'a> {
 
     fn tick(&mut self, data: TickData) -> GameStateEvent {
         let cursor_on = ((data.time.as_millis() / self.cursor_blink_rate.as_millis()) % 2) == 0;
+        let mut c = data.console;
+
+        c.print(2, 0, "Editor");
+        let mut text = bl::TextBuilder::empty();
+        text.line_wrap(&self.level.name)
+            .ln()
+            .ln()
+            .line_wrap(&self.level.description)
+            .reset();
+
+        let mut block = bl::TextBlock::new(1, 2, 30, 20);
+        block.print(&text).unwrap();
+        block.render(&mut c);
+
         self.text.iter().enumerate().for_each(|(i, line)| {
-            data.console
-                .print(0, i as i32, &line.iter().collect::<String>())
+            c.print(
+                EDITOR_J,
+                i as i32 + EDITOR_I,
+                &line.iter().collect::<String>(),
+            )
         });
+
         if cursor_on {
-            data.console.set_bg(
-                self.cursor.j as i32,
-                self.cursor.i as i32,
+            c.set_bg(
+                self.cursor.j as i32 + EDITOR_J,
+                self.cursor.i as i32 + EDITOR_I,
                 bl::RGBA::from_f32(1., 1., 1., 0.5),
             );
         }

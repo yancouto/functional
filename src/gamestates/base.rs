@@ -9,7 +9,7 @@ struct GSData {
 pub struct TickData<'a> {
     /// Time since start of gamestate
     pub time: Duration,
-    pub console: &'a mut dyn bl::Console,
+    pub console: &'a mut Box<dyn bl::Console>,
     /// Is left mouse button pressed?
     pub left_click: bool,
     /// Was any key pressed this frame?
@@ -17,7 +17,7 @@ pub struct TickData<'a> {
 }
 
 impl<'a> TickData<'a> {
-    fn new(data: &GSData, console: &'a mut dyn bl::Console, ctx: &mut bl::BTerm) -> Self {
+    fn new(data: &GSData, console: &'a mut Box<dyn bl::Console>, ctx: &mut bl::BTerm) -> Self {
         TickData {
             time: data.time,
             console,
@@ -34,11 +34,9 @@ pub struct GameStateManager {
 // Will we ever need two consoles?
 fn with_current_console<F, R>(active_console: usize, f: F) -> R
 where
-    F: FnOnce(&mut dyn bl::Console) -> R,
+    F: FnOnce(&mut Box<dyn bl::Console>) -> R,
 {
-    f(bl::BACKEND_INTERNAL.lock().consoles[active_console]
-        .console
-        .as_mut())
+    f(&mut bl::BACKEND_INTERNAL.lock().consoles[active_console].console)
 }
 
 impl GameStateManager {
