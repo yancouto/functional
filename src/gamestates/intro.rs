@@ -23,19 +23,19 @@ impl GameState for IntroState {
         "Intro"
     }
 
-    fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent {
-        self.time_since_creation_ms += ctx.frame_time_ms;
-        let mut revealed_letters = self.time_since_creation_ms as usize / 100;
+    fn tick(&mut self, data: TickData) -> GameStateEvent {
+        let mut revealed_letters = (data.time.as_millis() as usize) / 100;
         let len = OPENING_STR.len();
         let mut switch = revealed_letters > len + 5 * 4;
-        if ctx.left_click || ctx.key.is_some() {
+        if data.left_click || data.pressed_key.is_some() {
             switch = true;
         }
         if revealed_letters > len {
             // Make last letter blink on and off, at a slower rate
             revealed_letters = len - 1 + ((revealed_letters - len) / 5) % 2;
         }
-        ctx.print(10, 10, &OPENING_STR[0..revealed_letters]);
+        data.console
+            .print(10, 10, &OPENING_STR[0..revealed_letters]);
         if !switch {
             GameStateEvent::None
         } else {

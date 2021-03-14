@@ -1,4 +1,4 @@
-use super::base::{GameState, GameStateEvent};
+use super::base::*;
 use bracket_lib::prelude as bl;
 
 #[derive(Debug)]
@@ -56,17 +56,17 @@ impl GameState for LevelSelectionState {
         "LevelSelection"
     }
 
-    fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent {
+    fn tick(&mut self, data: TickData) -> GameStateEvent {
         for (i, section) in self.sections.iter().enumerate() {
-            ctx.print(
-                CURSOR_I + 2,
-                START_J + LINES_PER_SECTION * i,
-                section.name.clone(),
+            data.console.print(
+                (CURSOR_I + 2) as i32,
+                (START_J + LINES_PER_SECTION * i) as i32,
+                &section.name,
             );
         }
-        ctx.print(
-            CURSOR_I,
-            START_J + LINES_PER_SECTION * self.section_cur,
+        data.console.print(
+            CURSOR_I as i32,
+            (START_J + LINES_PER_SECTION * self.section_cur) as i32,
             ">",
         );
         GameStateEvent::None

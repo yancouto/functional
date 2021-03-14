@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::base::{GameState, GameStateEvent};
+use super::base::{GameState, GameStateEvent, TickData};
 use bracket_lib::prelude as bl;
 
 #[derive(Debug)]
@@ -24,13 +24,6 @@ pub struct EditorState {
     time: Duration,
 }
 
-fn with_current_console<F>(ctx: &mut bl::BTerm, f: F)
-where
-    F: Fn(&mut Box<dyn bl::Console>) -> (),
-{
-    f(&mut bl::BACKEND_INTERNAL.lock().consoles[ctx.active_console].console);
-}
-
 impl EditorState {
     pub fn new() -> Self {
         let size = Dimension { w: 20, h: 8 };
@@ -41,24 +34,6 @@ impl EditorState {
             time: Duration::from_secs(0),
             size,
         }
-    }
-
-    fn print(&mut self, mut ctx: &mut bl::BTerm) {
-        self.time += Duration::from_secs_f32(ctx.frame_time_ms / 1000.);
-        let cursor_on = ((self.time.as_millis() / self.cursor_blink_rate.as_millis()) % 2) == 0;
-        with_current_console(&mut ctx, |c| {
-            self.text
-                .iter()
-                .enumerate()
-                .for_each(|(i, line)| c.print(0, i as i32, &line.iter().collect::<String>()));
-            if cursor_on {
-                c.set_bg(
-                    self.cursor.j as i32,
-                    self.cursor.i as i32,
-                    bl::RGBA::from_f32(1., 1., 1., 0.5),
-                );
-            }
-        });
     }
 
     fn move_cursor_right(&mut self) -> bool {
@@ -100,8 +75,19 @@ impl GameState for EditorState {
         "Editor"
     }
 
-    fn tick(&mut self, ctx: &mut bl::BTerm) -> GameStateEvent {
-        self.print(ctx);
+    fn tick(&mut self, data: TickData) -> GameStateEvent {
+        let cursor_on = ((data.time.as_millis() / self.cursor_blink_rate.as_millis()) % 2) == 0;
+        self.text.iter().enumerate().for_each(|(i, line)| {
+            data.console
+                .print(0, i as i32, &line.iter().collect::<String>())
+        });
+        if cursor_on {
+            data.console.set_bg(
+                self.cursor.j as i32,
+                self.cursor.i as i32,
+                bl::RGBA::from_f32(1., 1., 1., 0.5),
+            );
+        }
         GameStateEvent::None
     }
 
