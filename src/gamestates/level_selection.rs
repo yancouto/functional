@@ -1,31 +1,23 @@
 use super::base::*;
+use crate::levels::{Level, LEVELS};
 use bracket_lib::prelude as bl;
 
-#[derive(Debug)]
-struct Level(String);
-
-#[derive(Debug)]
-struct Section {
+struct Section<'a> {
     name: String,
-    levels: Vec<Level>,
+    levels: Vec<&'a Level>,
 }
 
-#[derive(Debug)]
-pub struct LevelSelectionState {
+pub struct LevelSelectionState<'a> {
     /// Index of selected section
     section_i: usize,
-    sections: Vec<Section>,
+    sections: Vec<Section<'a>>,
     /// Index of selected level inside section
     level_i: Option<usize>,
 }
 
-impl LevelSelectionState {
+impl LevelSelectionState<'static> {
     pub fn new() -> Self {
-        let random_levels = |n: usize| {
-            (0..n)
-                .map(|i| Level(format!("level {}", i)))
-                .collect::<Vec<Level>>()
-        };
+        let random_levels = |n: usize| (0..n).map(|i| &LEVELS[0]).collect::<Vec<&Level>>();
         let l = LevelSelectionState {
             section_i: 0,
             sections: vec![
@@ -62,13 +54,13 @@ const START_J: i32 = 2;
 const LINES_PER_SECTION: i32 = 3;
 const MID_I: i32 = 40;
 
-impl LevelSelectionState {
+impl<'a> LevelSelectionState<'a> {
     fn get_j(&self, index: i32) -> i32 {
         return START_J + LINES_PER_SECTION * index;
     }
 }
 
-impl GameState for LevelSelectionState {
+impl<'a> GameState for LevelSelectionState<'a> {
     fn name(&self) -> &'static str {
         "LevelSelection"
     }
@@ -85,7 +77,7 @@ impl GameState for LevelSelectionState {
         if let Some(l_i) = self.level_i {
             for (i, level) in self.sections[self.section_i].levels.iter().enumerate() {
                 data.console
-                    .print(MID_I + CURSOR_I + 2, self.get_j(i as i32), &level.0);
+                    .print(MID_I + CURSOR_I + 2, self.get_j(i as i32), &level.name);
             }
             data.console.print(
                 MID_I + CURSOR_I + 5,

@@ -1,7 +1,6 @@
 use bracket_lib::prelude as bl;
 use std::{borrow::BorrowMut, time::Duration};
 
-#[derive(Debug)]
 struct GSData {
     cur: Box<dyn GameState>,
     time: Duration,
@@ -28,7 +27,6 @@ impl<'a> TickData<'a> {
     }
 }
 
-#[derive(Debug)]
 pub struct GameStateManager {
     cur_gs: GSData,
 }
@@ -98,7 +96,7 @@ pub enum GameStateEvent {
     Switch(Box<dyn GameState>),
 }
 
-pub trait GameState: std::fmt::Debug {
+pub trait GameState {
     fn name(&self) -> &'static str;
     fn tick(&mut self, data: TickData) -> GameStateEvent;
     fn on_event(&mut self, _event: bl::BEvent) -> () {}

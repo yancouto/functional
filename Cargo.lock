@@ -584,6 +584,7 @@ name = "functional"
 version = "0.1.0"
 dependencies = [
  "bracket-lib",
+ "lazy_static",
  "non-empty-vec",
  "structopt",
 ]

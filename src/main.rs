@@ -1,5 +1,9 @@
 mod gamestates;
+#[macro_use]
+extern crate lazy_static;
+
 mod interpreter;
+mod levels;
 use gamestates::level_selection;
 use structopt::StructOpt;
 
