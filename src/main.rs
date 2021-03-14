@@ -1,5 +1,6 @@
 mod gamestates;
 mod interpreter;
+use structopt::StructOpt;
 
 use bracket_lib::prelude as bl;
 
@@ -13,14 +14,25 @@ impl bl::GameState for MainState {
     }
 }
 
+#[derive(Debug, StructOpt)]
+#[structopt(name = "functional")]
+struct Opt {
+    /// Skip intro screen
+    #[structopt(long, short)]
+    skip_intro: bool,
+}
+
 fn main() -> bl::BError {
+    let opt = Opt::from_args();
     let ctx = bl::BTermBuilder::simple80x50()
         .with_title("functional")
         .build()?;
     let gs = MainState {
-        manager: gamestates::base::GameStateManager::new(Box::new(
-            gamestates::intro::IntroState::new(),
-        )),
+        manager: gamestates::base::GameStateManager::new(if opt.skip_intro {
+            Box::new(gamestates::editor::EditorState::new())
+        } else {
+            Box::new(gamestates::intro::IntroState::new())
+        }),
     };
     bl::main_loop(ctx, gs)
 }
