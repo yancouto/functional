@@ -1,5 +1,6 @@
 use crate::interpreter::Node;
 
+#[derive(Debug)]
 pub struct TestCase {
     /// Must be a function that receives the code and returns the result.
     application: Box<Node>,
@@ -8,6 +9,7 @@ pub struct TestCase {
     expected_result: Box<Node>,
 }
 
+#[derive(Debug)]
 pub struct Level {
     pub name: String,
     pub description: String,

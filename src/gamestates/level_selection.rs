@@ -61,7 +61,7 @@ impl<'a> LevelSelectionState<'a> {
     }
 }
 
-impl<'a> GameState for LevelSelectionState<'a> {
+impl GameState for LevelSelectionState<'static> {
     fn name(&self) -> &'static str {
         "LevelSelection"
     }
@@ -100,9 +100,9 @@ impl<'a> GameState for LevelSelectionState<'a> {
             );
         }
         match data.pressed_key.zip(self.level_i) {
-            Some((bl::VirtualKeyCode::Return, l_i)) => {
-                GameStateEvent::Switch(Box::new(EditorState::new()))
-            }
+            Some((bl::VirtualKeyCode::Return, l_i)) => GameStateEvent::Switch(Box::new(
+                EditorState::new(self.sections[self.section_i].levels[l_i]),
+            )),
             _ => GameStateEvent::None,
         }
     }

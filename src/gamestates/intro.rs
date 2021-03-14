@@ -1,7 +1,7 @@
 use crate::gamestates::base::*;
 use bracket_lib::prelude as bl;
 
-use super::editor;
+use super::level_selection;
 
 const OPENING_STR: &str = "this is functional.";
 
@@ -39,7 +39,7 @@ impl GameState for IntroState {
         if !switch {
             GameStateEvent::None
         } else {
-            GameStateEvent::Switch(Box::new(editor::EditorState::new()))
+            GameStateEvent::Switch(Box::new(level_selection::LevelSelectionState::new()))
         }
     }
 }

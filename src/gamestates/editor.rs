@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use super::base::{GameState, GameStateEvent, TickData};
+use crate::levels::Level;
 use bracket_lib::prelude as bl;
 
 #[derive(Debug)]
@@ -16,16 +17,17 @@ struct Dimension {
 }
 
 #[derive(Debug)]
-pub struct EditorState {
+pub struct EditorState<'a> {
     size: Dimension,
     text: Vec<Vec<char>>,
     cursor: Cursor,
     cursor_blink_rate: Duration,
     time: Duration,
+    level: &'a Level,
 }
 
-impl EditorState {
-    pub fn new() -> Self {
+impl EditorState<'static> {
+    pub fn new(level: &'static Level) -> Self {
         let size = Dimension { w: 20, h: 8 };
         Self {
             text: vec![vec![' '; size.w]; size.h],
@@ -33,9 +35,12 @@ impl EditorState {
             cursor_blink_rate: Duration::from_secs_f32(0.5),
             time: Duration::from_secs(0),
             size,
+            level,
         }
     }
+}
 
+impl<'a> EditorState<'a> {
     fn move_cursor_right(&mut self) -> bool {
         let c = &mut self.cursor;
         if c.j == self.size.w - 1 {
@@ -70,7 +75,7 @@ impl EditorState {
     }
 }
 
-impl GameState for EditorState {
+impl<'a> GameState for EditorState<'a> {
     fn name(&self) -> &'static str {
         "Editor"
     }
