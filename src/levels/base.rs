@@ -38,10 +38,8 @@ impl TestCase {
 }
 
 impl Level {
-    pub fn test(&self, code: &str) -> bool {
-        let node = tokenize(code.chars())
-            .ok()
-            .and_then(|tokens| parse(tokens).ok());
+    pub fn test<S: IntoIterator<Item = char>>(&self, code: S) -> bool {
+        let node = tokenize(code).ok().and_then(|tokens| parse(tokens).ok());
         if let Some(node) = node {
             !self.test_cases.iter().any(|tc| !tc.test(node.clone()))
         } else {

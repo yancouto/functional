@@ -75,13 +75,8 @@ impl<'a> EditorState<'a> {
         }
     }
 
-    fn get_text(&self) -> String {
-        self.text
-            .clone()
-            .into_iter()
-            .map(|v| v.into_iter().collect::<String>())
-            .collect::<Vec<String>>()
-            .join("\n")
+    fn get_text(&self) -> impl Iterator<Item = char> {
+        self.text.clone().into_iter().flatten()
     }
 }
 
@@ -169,7 +164,7 @@ impl<'a> GameState for EditorState<'a> {
                         }
                     }
                     K::F1 => {
-                        println!("Is ok? {}", self.level.test(&self.get_text()));
+                        println!("Is ok? {}", self.level.test(self.get_text()));
                     }
                     _ => {}
                 }
