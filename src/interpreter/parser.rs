@@ -67,7 +67,7 @@ pub enum ParseError {
 /// Level represents an unclosed sequence of terms. It is represented by some
 /// enveloping functions ("a: b: c:" in the beginning of the level), followed
 /// by a single term (which may be the application of several terms in a row).
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct Level {
     prev_node: Option<Box<Node>>,
     enveloping_functions: Vec<Variable>,
@@ -307,6 +307,7 @@ pub mod test {
 
     #[test]
     fn simple() {
+        assert_eq!(parse_ok("A"), Box::new(Node::Constant("A".to_string())));
         assert_eq!(parse(vec![Token::Variable('x')]).unwrap(), 12.into(),);
         assert_eq!(parse_ok("a bc c"), ((0.n(), "bc".n()).n(), 2.n()).n());
         assert_eq!(parse_ok("a b c"), ((1.n(), 3.n()).n(), 13.n()).n(),);

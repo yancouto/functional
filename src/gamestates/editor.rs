@@ -74,6 +74,15 @@ impl<'a> EditorState<'a> {
             true
         }
     }
+
+    fn get_text(&self) -> String {
+        self.text
+            .clone()
+            .into_iter()
+            .map(|v| v.into_iter().collect::<String>())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
 }
 
 const EDITOR_I: i32 = 20;
@@ -127,10 +136,9 @@ impl<'a> GameState for EditorState<'a> {
                     self.move_cursor_right();
                 }
             }
-            bl::BEvent::KeyboardInput { key, pressed, .. } => {
-                if !pressed {
-                    return;
-                }
+            bl::BEvent::KeyboardInput {
+                key, pressed: true, ..
+            } => {
                 use bl::VirtualKeyCode as K;
                 match key {
                     K::Back => {
@@ -159,6 +167,9 @@ impl<'a> GameState for EditorState<'a> {
                         if self.cursor.i < self.size.h - 1 {
                             self.cursor.i += 1;
                         }
+                    }
+                    K::F1 => {
+                        println!("Is ok? {}", self.level.test(&self.get_text()));
                     }
                     _ => {}
                 }

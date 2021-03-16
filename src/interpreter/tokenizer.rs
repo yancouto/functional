@@ -24,9 +24,9 @@ fn tokenize_vec<S: IntoIterator<Item = char>>(str: S) -> Result<Vec<Token>, Toke
     let mut ans = vec![];
     let mut cur_word: Vec<char> = vec![];
     let flush = |cur_word: &mut Vec<char>, ans: &mut Vec<Token>| {
-        if cur_word.len() == 1 {
+        if cur_word.len() == 1 && cur_word[0].is_ascii_lowercase() {
             ans.push(Token::Variable(cur_word[0]));
-        } else if cur_word.len() > 1 {
+        } else if cur_word.len() >= 1 {
             ans.push(Token::Constant(cur_word.iter().collect()));
         }
         cur_word.clear();
@@ -64,7 +64,7 @@ mod test {
     #[test]
     fn it_works() {
         assert_eq!(
-            tokenize("a: asd()".chars())
+            tokenize("a: asd()B".chars())
                 .unwrap()
                 .collect::<Vec<Token>>(),
             vec![
@@ -72,7 +72,8 @@ mod test {
                 Token::Colon,
                 Token::Constant("asd".to_string()),
                 Token::OpenPar,
-                Token::ClosePar
+                Token::ClosePar,
+                Token::Constant("B".to_string()),
             ]
         );
     }
