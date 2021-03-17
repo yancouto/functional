@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use super::base::{GameState, GameStateEvent, TickData};
+use crate::drawables::text_box;
 use crate::levels::Level;
 use bracket_lib::prelude as bl;
 
@@ -80,7 +81,7 @@ impl<'a> EditorState<'a> {
     }
 }
 
-const EDITOR_I: i32 = 20;
+const EDITOR_I: i32 = 22;
 const EDITOR_J: i32 = 2;
 
 impl<'a> GameState for EditorState<'a> {
@@ -92,17 +93,7 @@ impl<'a> GameState for EditorState<'a> {
         let cursor_on = ((data.time.as_millis() / self.cursor_blink_rate.as_millis()) % 2) == 0;
         let mut c = data.console;
 
-        c.print(2, 0, "Editor");
-        let mut text = bl::TextBuilder::empty();
-        text.line_wrap(&self.level.name)
-            .ln()
-            .ln()
-            .line_wrap(&self.level.description)
-            .reset();
-
-        let mut block = bl::TextBlock::new(1, 2, 30, 20);
-        block.print(&text).unwrap();
-        block.render(&mut c);
+        text_box(c, &self.level.name, &self.level.description, 1, 0, 50, 20);
 
         self.text.iter().enumerate().for_each(|(i, line)| {
             c.print(

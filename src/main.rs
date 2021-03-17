@@ -2,6 +2,7 @@ mod gamestates;
 #[macro_use]
 extern crate lazy_static;
 
+mod drawables;
 mod interpreter;
 mod levels;
 use gamestates::level_selection;
