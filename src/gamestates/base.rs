@@ -1,3 +1,4 @@
+use crate::math::Pos;
 use bracket_lib::prelude as bl;
 use std::{borrow::BorrowMut, time::Duration};
 
@@ -15,7 +16,7 @@ pub struct TickData<'a> {
     /// Was any key pressed this frame?
     pub pressed_key: Option<bl::VirtualKeyCode>,
     /// (i, j)
-    pub mouse_pos: (i32, i32),
+    pub mouse_pos: Pos,
 }
 
 impl<'a> TickData<'a> {
@@ -26,7 +27,7 @@ impl<'a> TickData<'a> {
             console,
             left_click: ctx.left_click,
             pressed_key: ctx.key,
-            mouse_pos: (mouse.1, mouse.0),
+            mouse_pos: Pos::new(mouse.1, mouse.0),
         }
     }
 }

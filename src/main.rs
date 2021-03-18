@@ -5,6 +5,7 @@ extern crate lazy_static;
 mod drawables;
 mod interpreter;
 mod levels;
+mod math;
 use gamestates::level_selection;
 use structopt::StructOpt;
 
