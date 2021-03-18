@@ -5,24 +5,12 @@ use super::base::{GameState, GameStateEvent, TickData};
 use crate::levels::Level;
 use bracket_lib::prelude as bl;
 
-#[derive(Debug)]
-struct Cursor {
-    i: usize,
-    j: usize,
-}
-
-#[derive(Debug)]
-struct Dimension {
-    w: usize,
-    h: usize,
-}
-
 // TODO: Split editor itself to different component.
 #[derive(Debug)]
 pub struct EditorState<'a> {
-    size: Dimension,
+    size: Size,
     text: Vec<Vec<char>>,
-    cursor: Cursor,
+    cursor: Pos,
     cursor_blink_rate: Duration,
     time: Duration,
     level: &'a Level,
@@ -30,10 +18,10 @@ pub struct EditorState<'a> {
 
 impl EditorState<'static> {
     pub fn new(level: &'static Level) -> Self {
-        let size = Dimension { w: 20, h: 8 };
+        let size = Size { w: 20, h: 8 };
         Self {
-            text: vec![vec![' '; size.w]; size.h],
-            cursor: Cursor { i: 0, j: 0 },
+            text: vec![vec![' '; size.w as usize]; size.h as usize],
+            cursor: Pos { i: 0, j: 0 },
             cursor_blink_rate: Duration::from_secs_f32(0.5),
             time: Duration::from_secs(0),
             size,
@@ -81,7 +69,7 @@ impl<'a> EditorState<'a> {
     }
 }
 
-const EDITOR_I: i32 = 22;
+const EDITOR_I: i32 = 23;
 const EDITOR_J: i32 = 2;
 
 impl<'a> GameState for EditorState<'a> {
@@ -96,6 +84,11 @@ impl<'a> GameState for EditorState<'a> {
             &self.level.name,
             &self.level.description,
             Rect::new(1, 0, 50, 20),
+        );
+
+        data.draw_box(
+            "Text editor",
+            Rect::new(EDITOR_I - 2, EDITOR_J - 1, self.size.w + 2, self.size.h + 3),
         );
 
         self.text.iter().enumerate().for_each(|(i, line)| {
@@ -126,7 +119,7 @@ impl<'a> GameState for EditorState<'a> {
             bl::BEvent::Character { c } => {
                 if !c.is_control() {
                     let cu = &self.cursor;
-                    self.text[cu.i][cu.j] = c;
+                    self.text[cu.i as usize][cu.j as usize] = c;
                     self.move_cursor_right();
                 }
             }
@@ -137,7 +130,7 @@ impl<'a> GameState for EditorState<'a> {
                 match key {
                     K::Back => {
                         if self.move_cursor_left() {
-                            self.text[self.cursor.i][self.cursor.j] = ' ';
+                            self.text[self.cursor.i as usize][self.cursor.j as usize] = ' ';
                         };
                     }
                     K::Return | K::NumpadEnter => {

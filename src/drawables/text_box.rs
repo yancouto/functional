@@ -14,11 +14,16 @@ fn gray() -> bl::RGBA {
 }
 
 impl TickData<'_> {
-    pub fn text_box(&mut self, title: &str, text: &str, rect: Rect) {
+    pub fn draw_box(&mut self, title: &str, rect: Rect) {
         let Rect { pos, size } = rect;
         self.console
             .draw_box(pos.j, pos.i, size.w - 1, size.h - 1, white(), black());
         self.console.print(pos.j + 1, pos.i, title);
+    }
+
+    pub fn text_box(&mut self, title: &str, text: &str, rect: Rect) {
+        self.draw_box(title, rect);
+        let Rect { pos, size } = rect;
         let mut tb = bl::TextBuilder::empty();
         // TODO: support \n's
         tb.ln().line_wrap(text).reset();
