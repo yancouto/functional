@@ -7,11 +7,16 @@ struct GSData {
     time: Duration,
 }
 
+#[derive(Default)]
+struct EventTickData {
+    left_click: bool,
+}
+
 pub struct TickData<'a> {
     /// Time since start of gamestate
     pub time: Duration,
     pub console: &'a mut Box<dyn bl::Console>,
-    /// Is left mouse button pressed?
+    /// Was the LMB pressed this frame?
     pub left_click: bool,
     /// Was any key pressed this frame?
     pub pressed_key: Option<bl::VirtualKeyCode>,
@@ -20,14 +25,19 @@ pub struct TickData<'a> {
 }
 
 impl<'a> TickData<'a> {
-    fn new(data: &GSData, console: &'a mut Box<dyn bl::Console>, ctx: &mut bl::BTerm) -> Self {
+    fn new(
+        data: &GSData,
+        event_data: EventTickData,
+        console: &'a mut Box<dyn bl::Console>,
+        ctx: &mut bl::BTerm,
+    ) -> Self {
         let mouse = pixel_to_char_pos(&ctx, ctx.mouse_pos, &console);
         TickData {
             time: data.time,
             console,
-            left_click: ctx.left_click,
             pressed_key: ctx.key,
             mouse_pos: Pos::new(mouse.1, mouse.0),
+            left_click: event_data.left_click,
         }
     }
 }
@@ -56,26 +66,36 @@ impl GameStateManager {
         }
     }
 
-    fn process_events(&mut self, ctx: &mut bl::BTerm) {
+    fn process_events(&mut self, ctx: &mut bl::BTerm) -> EventTickData {
         let mut input = bl::INPUT.lock();
+        let mut data = EventTickData::default();
         while let Some(e) = input.pop() {
-            // Blib stops tracking close events when we activate event queue
-            if let bl::BEvent::CloseRequested = e {
-                ctx.quit();
-            } else {
-                self.cur_gs.cur.on_event(e);
+            self.cur_gs.cur.on_event(e.clone());
+            match e {
+                // Blib stops tracking close events when we activate event queue
+                bl::BEvent::CloseRequested => {
+                    ctx.quit();
+                }
+                bl::BEvent::MouseClick {
+                    button,
+                    pressed: true,
+                } => {
+                    data.left_click = true;
+                }
+                _ => {}
             }
         }
+        data
     }
 
     pub fn tick(&mut self, ctx: &mut bl::BTerm) {
-        self.process_events(ctx);
+        let event_data = self.process_events(ctx);
         self.cur_gs.time += Duration::from_secs_f32(ctx.frame_time_ms / 1000.);
         let event = with_current_console(ctx.active_console, |console| {
             console.cls();
             self.cur_gs
                 .cur
-                .tick(TickData::new(&self.cur_gs, console, ctx))
+                .tick(TickData::new(&self.cur_gs, event_data, console, ctx))
         });
         match event {
             GameStateEvent::None => {}

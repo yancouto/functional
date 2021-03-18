@@ -18,9 +18,9 @@ impl Pos {
 
     pub fn inside(&self, r: &Rect) -> bool {
         if self.i < r.pos.i
-            || self.i >= r.pos.i + r.size.w
+            || self.i >= r.pos.i + r.size.h
             || self.j < r.pos.j
-            || self.j >= r.pos.j + r.size.h
+            || self.j >= r.pos.j + r.size.w
         {
             false
         } else {
