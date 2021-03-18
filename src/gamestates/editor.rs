@@ -89,14 +89,21 @@ impl<'a> GameState for EditorState<'a> {
         "Editor"
     }
 
-    fn tick(&mut self, data: TickData) -> GameStateEvent {
+    fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         let cursor_on = ((data.time.as_millis() / self.cursor_blink_rate.as_millis()) % 2) == 0;
-        let mut c = data.console;
 
-        text_box(c, &self.level.name, &self.level.description, 1, 0, 50, 20);
+        text_box(
+            data.console,
+            &self.level.name,
+            &self.level.description,
+            1,
+            0,
+            50,
+            20,
+        );
 
         self.text.iter().enumerate().for_each(|(i, line)| {
-            c.print(
+            data.console.print(
                 EDITOR_J,
                 i as i32 + EDITOR_I,
                 &line.iter().collect::<String>(),
@@ -104,12 +111,15 @@ impl<'a> GameState for EditorState<'a> {
         });
 
         if cursor_on {
-            c.set_bg(
+            data.console.set_bg(
                 self.cursor.j as i32 + EDITOR_J,
                 self.cursor.i as i32 + EDITOR_I,
                 bl::RGBA::from_f32(1., 1., 1., 0.5),
             );
         }
+
+        data.button("Run", 47, 2);
+
         GameStateEvent::None
     }
 

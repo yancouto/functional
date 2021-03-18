@@ -14,6 +14,8 @@ pub struct TickData<'a> {
     pub left_click: bool,
     /// Was any key pressed this frame?
     pub pressed_key: Option<bl::VirtualKeyCode>,
+    /// (i, j)
+    pub mouse_pos: (i32, i32),
 }
 
 impl<'a> TickData<'a> {
@@ -23,6 +25,7 @@ impl<'a> TickData<'a> {
             console,
             left_click: ctx.left_click,
             pressed_key: ctx.key,
+            mouse_pos: (ctx.mouse_pos.1, ctx.mouse_pos.0),
         }
     }
 }
