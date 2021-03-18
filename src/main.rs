@@ -1,3 +1,4 @@
+#![feature(div_duration)]
 mod gamestates;
 #[macro_use]
 extern crate lazy_static;
