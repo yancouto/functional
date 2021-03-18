@@ -11,6 +11,7 @@ pub struct EditorState<'a> {
     time: Duration,
     level: &'a Level,
     editor: TextEditor,
+    last_result: Option<bool>,
 }
 
 impl EditorState<'static> {
@@ -20,6 +21,7 @@ impl EditorState<'static> {
             time: Duration::from_secs(0),
             level,
             editor: TextEditor::new(Pos { i: 23, j: 2 }, Size { w: 20, h: 8 }),
+            last_result: None,
         }
     }
 }
@@ -39,7 +41,11 @@ impl<'a> GameState for EditorState<'a> {
         self.editor.draw(&mut data);
 
         if data.button("Run", Pos::new(47, 2)) {
-            println!("Is ok? {}", self.level.test(self.editor.get_text()));
+            self.last_result = Some(self.level.test(self.editor.get_text()));
+        }
+
+        if let Some(r) = self.last_result {
+            data.print(Pos::new(48, 8), if r { "OK" } else { "WA" });
         }
 
         GameStateEvent::None

@@ -54,4 +54,13 @@ impl TickData<'_> {
             .print_color(pos.j + 1, pos.i + 1, white(), bg, text);
         was_clicked
     }
+
+    pub fn char(&mut self, pos: Pos, c: char) {
+        self.console
+            .set(pos.j, pos.i, white(), black(), bl::to_cp437(c));
+    }
+
+    pub fn print(&mut self, pos: Pos, text: &str) {
+        self.console.print(pos.j, pos.i, text);
+    }
 }
