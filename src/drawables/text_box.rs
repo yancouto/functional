@@ -8,6 +8,9 @@ fn white() -> bl::RGBA {
 fn black() -> bl::RGBA {
     bl::RGBA::named(bl::BLACK)
 }
+fn gray() -> bl::RGBA {
+    bl::RGBA::named(bl::GRAY)
+}
 
 impl TickData<'_> {
     pub fn text_box(&mut self, title: &str, text: &str, i: i32, j: i32, w: i32, h: i32) {
