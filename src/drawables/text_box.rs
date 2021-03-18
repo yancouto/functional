@@ -1,7 +1,7 @@
 use bracket_lib::prelude as bl;
 
 use crate::gamestates::base::TickData;
-use crate::math::{Pos, Size};
+use crate::math::{Pos, Rect, Size};
 
 fn white() -> bl::RGBA {
     bl::RGBA::named(bl::WHITE)
@@ -14,7 +14,8 @@ fn gray() -> bl::RGBA {
 }
 
 impl TickData<'_> {
-    pub fn text_box(&mut self, title: &str, text: &str, pos: Pos, size: Size) {
+    pub fn text_box(&mut self, title: &str, text: &str, rect: Rect) {
+        let Rect { pos, size } = rect;
         self.console
             .draw_box(pos.j, pos.i, size.w, size.h, white(), black());
         self.console.print(pos.j + 1, pos.i, title);

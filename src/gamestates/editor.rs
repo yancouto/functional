@@ -1,4 +1,4 @@
-use crate::math::{Pos, Size};
+use crate::math::{Pos, Rect, Size};
 use std::time::Duration;
 
 use super::base::{GameState, GameStateEvent, TickData};
@@ -95,8 +95,7 @@ impl<'a> GameState for EditorState<'a> {
         data.text_box(
             &self.level.name,
             &self.level.description,
-            Pos::new(1, 0),
-            Size::new(50, 20),
+            Rect::new(1, 0, 50, 20),
         );
 
         self.text.iter().enumerate().for_each(|(i, line)| {

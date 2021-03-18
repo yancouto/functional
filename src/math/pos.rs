@@ -15,6 +15,18 @@ impl Pos {
     pub fn new(i: i32, j: i32) -> Self {
         Self { i, j }
     }
+
+    pub fn inside(&self, r: &Rect) -> bool {
+        if self.i < r.pos.i
+            || self.i >= r.pos.i + r.size.w
+            || self.j < r.pos.j
+            || self.j >= r.pos.j + r.size.h
+        {
+            false
+        } else {
+            true
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,5 +38,20 @@ pub struct Size {
 impl Size {
     pub fn new(w: i32, h: i32) -> Self {
         Self { w, h }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Rect {
+    pub pos: Pos,
+    pub size: Size,
+}
+
+impl Rect {
+    pub fn new(i: i32, j: i32, w: i32, h: i32) -> Self {
+        Self {
+            pos: Pos { i, j },
+            size: Size { w, h },
+        }
     }
 }
