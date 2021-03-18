@@ -32,8 +32,14 @@ impl TickData<'_> {
     pub fn button(&mut self, text: &str, pos: Pos) -> bool {
         let size = Size::new(text.len() as i32 + 2, 3);
         let rect = Rect { pos, size };
+        let mut was_clicked = false;
         let bg = if self.mouse_pos.inside(&rect) {
-            gray()
+            if self.left_click {
+                was_clicked = true;
+                white()
+            } else {
+                gray()
+            }
         } else {
             black()
         };
@@ -41,6 +47,6 @@ impl TickData<'_> {
             .draw_box(pos.j, pos.i, size.w - 1, size.h - 1, white(), bg);
         self.console
             .print_color(pos.j + 1, pos.i + 1, white(), bg, text);
-        false
+        was_clicked
     }
 }

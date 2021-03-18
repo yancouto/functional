@@ -114,7 +114,9 @@ impl<'a> GameState for EditorState<'a> {
             );
         }
 
-        data.button("Run", Pos::new(47, 2));
+        if data.button("Run", Pos::new(47, 2)) {
+            println!("Is ok? {}", self.level.test(self.get_text()));
+        }
 
         GameStateEvent::None
     }
@@ -159,9 +161,6 @@ impl<'a> GameState for EditorState<'a> {
                         if self.cursor.i < self.size.h - 1 {
                             self.cursor.i += 1;
                         }
-                    }
-                    K::F1 => {
-                        println!("Is ok? {}", self.level.test(self.get_text()));
                     }
                     _ => {}
                 }
