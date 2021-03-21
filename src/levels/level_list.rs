@@ -55,6 +55,29 @@ lazy_static! {
             TestCase::from("f: f B", "B"),
             TestCase::from("f: f (x: x)", "x:x"),
         ]
+    }, Level {
+        name: "two arguments".to_string(),
+        description: "
+            Functions in terms only accept a single parameter. However, you can simulate multiple arguments by having multiple chained functions.
+
+            Example:
+            - (x: y: x) a b -> (y: a) b -> a
+            - (x: y: x y) a b -> (y: a y) b -> a b
+            
+            Write a function with two arguments that swaps the order of their terms.
+        ".to_string(),
+        extra_info: Some("
+            Notice that terms are left associative, that is:
+            - a b c = ((a b) c)
+
+            And that's why you can call \"multi parameter functions\" like this:
+            - FUNC x y z = (((FUNC x) y) z)
+            ".to_string()
+        ), test_cases: vec![
+            TestCase::from("f: f A B", "B A"),
+            TestCase::from("f: f X (x: x)", "X"),
+            TestCase::from("f: f (x: x) A", "A (y: y)"),
+        ]
     }
     ];
 }
