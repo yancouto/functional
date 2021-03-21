@@ -26,7 +26,11 @@ impl TickData<'_> {
         let Rect { pos, size } = rect;
         let mut tb = bl::TextBuilder::empty();
         // TODO: support \n's
-        tb.ln().line_wrap(text).reset();
+        tb.ln();
+        for line in text.trim().split('\n') {
+            tb.line_wrap(line.trim()).ln();
+        }
+        tb.reset();
 
         let mut block = bl::TextBlock::new(pos.j + 1, pos.i + 1, size.w - 3, size.h - 3);
         block.print(&tb).unwrap();

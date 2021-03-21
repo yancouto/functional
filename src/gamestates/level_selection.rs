@@ -18,7 +18,11 @@ pub struct LevelSelectionState<'a> {
 
 impl LevelSelectionState<'static> {
     pub fn new() -> Self {
-        let random_levels = |n: usize| (0..n).map(|i| &LEVELS[0]).collect::<Vec<&Level>>();
+        let random_levels = |n: usize| {
+            (0..n)
+                .map(|i| &LEVELS[i % LEVELS.len()])
+                .collect::<Vec<&Level>>()
+        };
         let l = LevelSelectionState {
             section_i: 0,
             sections: vec![

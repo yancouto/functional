@@ -13,6 +13,7 @@ pub struct TestCase {
 pub struct Level {
     pub name: String,
     pub description: String,
+    pub extra_info: Option<String>,
     pub test_cases: Vec<TestCase>,
 }
 
