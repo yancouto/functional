@@ -2,6 +2,7 @@ use crate::math::{Pos, Rect, Size};
 use std::time::Duration;
 
 use super::base::{GameState, GameStateEvent, TickData};
+use super::level_selection::LevelSelectionState;
 use crate::drawables::TextEditor;
 use crate::levels::Level;
 use bracket_lib::prelude as bl;
@@ -37,6 +38,9 @@ impl<'a> GameState for EditorState<'a> {
             &self.level.description,
             Rect::new(1, 0, 50, 20),
         );
+        if let Some(info) = &self.level.extra_info {
+            data.text_box("Extra info", info, Rect::new(1, 50, 30, 20));
+        }
 
         self.editor.draw(&mut data);
 
@@ -48,7 +52,11 @@ impl<'a> GameState for EditorState<'a> {
             data.print(Pos::new(48, 8), if r { "OK" } else { "WA" });
         }
 
-        GameStateEvent::None
+        if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
+            GameStateEvent::Switch(box LevelSelectionState::new())
+        } else {
+            GameStateEvent::None
+        }
     }
 
     fn on_event(&mut self, event: bl::BEvent) {

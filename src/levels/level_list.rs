@@ -43,11 +43,11 @@ lazy_static! {
             We say that A B reduces to M[x=B].
 
             Formally:
-            - If M = x, then M[x=B] = B
-            - If M = y, then M[x=B] = y
-            - If M = y: N, then M[x=B] = y: N[x=B]
-            - If M = x: N, then M[x=B] = x: N
-            - If M = N O, then M[x=B] = N[x=B] O[x=B]
+            If M = x, then M[x=B] = B
+            If M = y, then M[x=B] = y
+            If M = y: N, then M[x=B] = y: N[x=B]
+            If M = x: N, then M[x=B] = x: N
+            If M = N O, then M[x=B] = N[x=B] O[x=B]
         ".to_string()
         ),
         test_cases: vec![

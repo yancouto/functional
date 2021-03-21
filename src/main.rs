@@ -1,9 +1,10 @@
 #![feature(div_duration)]
-mod gamestates;
+#![feature(box_syntax)]
 #[macro_use]
 extern crate lazy_static;
 
 mod drawables;
+mod gamestates;
 mod interpreter;
 mod levels;
 mod math;
