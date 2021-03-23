@@ -25,24 +25,10 @@ impl LevelSelectionState<'static> {
         };
         let l = LevelSelectionState {
             section_i: 0,
-            sections: vec![
-                Section {
-                    name: "basic".to_string(),
-                    levels: random_levels(3),
-                },
-                Section {
-                    name: "boolean".to_string(),
-                    levels: random_levels(2),
-                },
-                Section {
-                    name: "extra".to_string(),
-                    levels: random_levels(5),
-                },
-                Section {
-                    name: "cook's numerals".to_string(),
-                    levels: random_levels(10),
-                },
-            ],
+            sections: vec![Section {
+                name: "basic".to_string(),
+                levels: random_levels(5),
+            }],
             level_i: None,
         };
         for section in &l.sections {

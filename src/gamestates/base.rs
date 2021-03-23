@@ -1,6 +1,6 @@
 use crate::math::Pos;
 use bracket_lib::prelude as bl;
-use std::{borrow::BorrowMut, time::Duration};
+use std::{borrow::BorrowMut, collections::HashSet, time::Duration};
 
 struct GSData {
     cur: Box<dyn GameState>,
@@ -22,6 +22,10 @@ pub struct TickData<'a> {
     pub pressed_key: Option<bl::VirtualKeyCode>,
     /// (i, j)
     pub mouse_pos: Pos,
+    /// Is pressing ctrl
+    pub ctrl: bool,
+    /// Current keys pressed
+    pub keys_pressed: &'a HashSet<bl::VirtualKeyCode>,
 }
 
 impl<'a> TickData<'a> {
@@ -30,6 +34,7 @@ impl<'a> TickData<'a> {
         event_data: EventTickData,
         console: &'a mut Box<dyn bl::Console>,
         ctx: &mut bl::BTerm,
+        input: &'a bl::Input,
     ) -> Self {
         let mouse = pixel_to_char_pos(&ctx, ctx.mouse_pos, &console);
         TickData {
@@ -38,6 +43,8 @@ impl<'a> TickData<'a> {
             pressed_key: ctx.key,
             mouse_pos: Pos::new(mouse.1, mouse.0),
             left_click: event_data.left_click,
+            ctrl: ctx.control,
+            keys_pressed: input.key_pressed_set(),
         }
     }
 }
@@ -92,10 +99,15 @@ impl GameStateManager {
         let event_data = self.process_events(ctx);
         self.cur_gs.time += Duration::from_secs_f32(ctx.frame_time_ms / 1000.);
         let event = with_current_console(ctx.active_console, |console| {
+            let input = bl::INPUT.lock();
             console.cls();
-            self.cur_gs
-                .cur
-                .tick(TickData::new(&self.cur_gs, event_data, console, ctx))
+            self.cur_gs.cur.tick(TickData::new(
+                &self.cur_gs,
+                event_data,
+                console,
+                ctx,
+                &input,
+            ))
         });
         match event {
             GameStateEvent::None => {}

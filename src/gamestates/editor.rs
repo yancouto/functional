@@ -44,13 +44,19 @@ impl<'a> GameState for EditorState<'a> {
 
         self.editor.draw(&mut data);
 
-        if data.button("Run", Pos::new(47, 2)) {
+        if data.button("Run", Pos::new(47, 2))
+            || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
+        {
             self.last_result = Some(self.level.test(self.editor.get_text()));
         }
 
         if let Some(r) = self.last_result {
             data.print(Pos::new(48, 8), if r { "OK" } else { "WA" });
         }
+
+        data.console
+            .print_right(80, 47, "Click Run or press CTRL+ENTER to run");
+        data.console.print_right(80, 49, "Press ESC to go back");
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
             GameStateEvent::Switch(box LevelSelectionState::new())
