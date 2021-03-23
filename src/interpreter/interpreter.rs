@@ -35,18 +35,25 @@ fn interpret_req(
     root: Box<Node>,
     do_apply: bool,
     assigned_values: &mut HashMap<Variable, Box<Node>>,
+    fully_resolve: bool,
 ) -> Result<Box<Node>, InterpretError> {
     if level > MAX_LEVEL {
         return Err(InterpretError::TooDeep);
     }
     Ok(match *root {
         Node::Apply { left, right } => {
-            let left = interpret_req(level + 1, left, do_apply, assigned_values)?;
-            let right = interpret_req(level + 1, right, false, assigned_values)?;
+            let left = interpret_req(level + 1, left, do_apply, assigned_values, fully_resolve)?;
+            let right = interpret_req(
+                level + 1,
+                right,
+                fully_resolve,
+                assigned_values,
+                fully_resolve,
+            )?;
             match *left {
                 Node::Function { variable, body } if do_apply => {
                     let prev = assigned_values.insert(variable, right);
-                    let ans = interpret_req(level + 1, body, true, assigned_values)?;
+                    let ans = interpret_req(level + 1, body, true, assigned_values, fully_resolve)?;
                     if let Some(n) = prev {
                         assigned_values.insert(variable, n).assert_some()?;
                     } else {
@@ -62,7 +69,7 @@ fn interpret_req(
             .map(Clone::clone)
             .map(|n| {
                 let prev = assigned_values.remove(&v);
-                let ans = interpret_req(level + 1, n, do_apply, assigned_values);
+                let ans = interpret_req(level + 1, n, do_apply, assigned_values, fully_resolve);
                 if let Some(prev_node) = prev {
                     assigned_values.insert(v, prev_node).assert_none()?;
                 }
@@ -71,7 +78,13 @@ fn interpret_req(
             .unwrap_or_else(|| Ok(Box::new(Node::Variable(v))))?,
         Node::Function { variable, body } => {
             let prev = assigned_values.remove(&variable);
-            let inner = interpret_req(level + 1, body, false, assigned_values)?;
+            let inner = interpret_req(
+                level + 1,
+                body,
+                fully_resolve,
+                assigned_values,
+                fully_resolve,
+            )?;
             if let Some(prev_node) = prev {
                 assigned_values.insert(variable, prev_node).assert_none()?;
             }
@@ -84,8 +97,12 @@ fn interpret_req(
     })
 }
 
-pub fn interpret(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
-    interpret_req(0, root, true, &mut HashMap::new())
+pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, InterpretError> {
+    interpret_req(0, root, true, &mut HashMap::new(), fully_resolve)
+}
+
+pub fn interpret_lazy(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
+    interpret(root, false)
 }
 
 #[cfg(test)]
@@ -96,11 +113,18 @@ mod test {
     const Y_COMB: &str = "(f: (x: f (x x)) (x: f (x x)))";
 
     fn interpret_ok(str: &str) -> Box<Node> {
-        interpret(parse_ok(str)).unwrap()
+        interpret_lazy(parse_ok(str)).unwrap()
     }
 
     fn interpret_err(str: &str) -> InterpretError {
-        interpret(parse_ok(str)).unwrap_err()
+        interpret_lazy(parse_ok(str)).unwrap_err()
+    }
+
+    fn interpret_eq_full(src: &str, expected: &str, fully_resolve: bool) {
+        assert_eq!(
+            interpret(parse_ok(src), fully_resolve).unwrap(),
+            parse_ok(expected)
+        );
     }
 
     fn interpret_eq(src: &str, expected: &str) {
@@ -149,6 +173,10 @@ mod test {
             interpret_err("(x: x x x) (y: y y)"),
             InterpretError::TooDeep
         );
+        assert_eq!(
+            interpret(parse_ok("(x: z) ((x: x x) (x: x x))"), true).unwrap_err(),
+            InterpretError::TooDeep
+        );
     }
 
     #[test]
@@ -163,5 +191,10 @@ mod test {
             interpret_err(&format!("({} (f: x:y: f x y)) a b", Y_COMB)),
             InterpretError::TooDeep
         );
+    }
+
+    #[test]
+    fn some_levels() {
+        interpret_eq_full("(f: x: f (f x)) (x: x x) A", "(A A) (A A)", true);
     }
 }

@@ -30,10 +30,13 @@ impl TestCase {
     }
 
     fn test(&self, expression: Box<Node>) -> bool {
-        interpret(Box::new(Node::Apply {
-            left: self.application.clone(),
-            right: expression,
-        }))
+        interpret(
+            Box::new(Node::Apply {
+                left: self.application.clone(),
+                right: expression,
+            }),
+            true,
+        )
         .map_or(false, |result| result == self.expected_result)
     }
 }

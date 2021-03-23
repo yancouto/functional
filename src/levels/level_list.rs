@@ -78,6 +78,38 @@ lazy_static! {
             TestCase::from("f: f X (x: x)", "X"),
             TestCase::from("f: f (x: x) A", "A (y: y)"),
         ]
+    }, Level {
+        name: "squaring".to_string(),
+        description: "
+            Always remember that functions are also values.
+
+            Write a function SQR that receives a function and a value, and applies the function to the value twice.
+
+            Examples:
+            - SQR (x: x) y -> y
+            - SQR (x: x x) y -> (y y) (y y)
+        ".to_string(),
+        extra_info: None,
+        test_cases: vec![
+            TestCase::from("f: f (x: x) A", "A"),
+            TestCase::from("f: f (x: x x) Z", "(Z Z) (Z Z)"),
+            TestCase::from("f: f (x: x x x) (x: x)", "(x: x)"),
+        ]
+    }, Level {
+        name: "indirection".to_string(),
+        description: "
+            Write a function SWAP_ARGS that receives a two argument function and will swap the values of the arguments it receives.
+
+            Examples:
+            - SWAP_ARGS (a:b: a b) x y -> y x
+            - SWAP_ARGS (a:b: a a) x y -> y y
+        ".to_string(),
+        extra_info: None,
+        test_cases: vec![
+            TestCase::from("f: f (a:b: a b) X Y", "Y X"),
+            TestCase::from("f: f (a:b: a a) A B", "B B"),
+            TestCase::from("f: f (a:b: a b) A (x: x)", "A"),
+        ]
     }
     ];
 }
