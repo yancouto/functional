@@ -1,0 +1,5 @@
+{
+  sections: [
+    import "basic.jsonnet",
+  ]
+}
