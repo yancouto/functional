@@ -1,5 +1,5 @@
 {
   sections: [
-    import "basic.jsonnet",
+    import "basic/section.jsonnet",
   ]
 }

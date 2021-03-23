@@ -589,6 +589,8 @@ dependencies = [
  "jsonnet-rs",
  "lazy_static",
  "non-empty-vec",
+ "serde",
+ "serde_json",
  "structopt",
 ]
 
@@ -767,6 +769,12 @@ checksum = "b2b3ea6ff95e175473f8ffe6a7eb7c00d054240321b84c57051175fe3c1e075e"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "itoa"
+version = "0.4.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 
 [[package]]
 name = "jni-sys"
@@ -1480,6 +1488,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ryu"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
+
+[[package]]
 name = "safe_arch"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1520,6 +1534,31 @@ name = "serde"
 version = "1.0.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd761ff957cb2a45fbb9ab3da6512de9de55872866160b23c25f1a841e99d29f"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.124"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1800f7693e94e186f5e25a28291ae1570da908aff7d97a095dec1e56ff99069b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.64"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "799e97dc9fdae36a5c8b8f2cae9ce2ee9fdce2058c57a93e6099d919fd982f79"
+dependencies = [
+ "itoa",
+ "ryu",
+ "serde",
+]
 
 [[package]]
 name = "shared_library"
