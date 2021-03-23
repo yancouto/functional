@@ -13,6 +13,7 @@ pub struct EditorState<'a> {
     level: &'a Level,
     editor: TextEditor,
     last_result: Option<bool>,
+    last_result_expire_at: Duration,
 }
 
 impl EditorState<'static> {
@@ -23,6 +24,7 @@ impl EditorState<'static> {
             level,
             editor: TextEditor::new(Pos { i: 23, j: 2 }, Size { w: 20, h: 8 }),
             last_result: None,
+            last_result_expire_at: Duration::from_secs(0),
         }
     }
 }
@@ -48,10 +50,14 @@ impl<'a> GameState for EditorState<'a> {
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
         {
             self.last_result = Some(self.level.test(self.editor.get_text()));
+            self.last_result_expire_at = data.time + Duration::from_secs(3);
         }
 
         if let Some(r) = self.last_result {
             data.print(Pos::new(48, 8), if r { "OK" } else { "WA" });
+            if self.last_result_expire_at <= data.time {
+                self.last_result = None;
+            }
         }
 
         data.console
