@@ -1,5 +1,4 @@
 use super::{Level, TestCase};
-use jsonnet::JsonnetVm;
 use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -23,13 +22,10 @@ struct JLevelConfig {
     sections: Vec<JSection>,
 }
 
-// TODO: prebuild jsons
+const RAW_LEVEL_CONFIG: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/level_config.json"));
+
 fn load_using_jsonnet() -> Vec<Level> {
-    let mut vm = JsonnetVm::new();
-    let output = vm
-        .evaluate_file("src/levels/config/level_config.jsonnet")
-        .expect("Failed to parse jsonnet");
-    let config: JLevelConfig = serde_json::from_str(&output).expect("Invalid json");
+    let config: JLevelConfig = serde_json::from_slice(RAW_LEVEL_CONFIG).expect("Invalid json");
     config
         .sections
         .into_iter()
