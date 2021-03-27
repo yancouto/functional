@@ -1,6 +1,7 @@
 use super::base::*;
 use super::editor::EditorState;
 use crate::levels::{Level, LEVELS};
+use crate::save_system::{load_profile, SaveProfile};
 use bracket_lib::prelude as bl;
 
 struct Section<'a> {
@@ -14,10 +15,11 @@ pub struct LevelSelectionState<'a> {
     sections: Vec<Section<'a>>,
     /// Index of selected level inside section
     level_i: Option<usize>,
+    save_profile: Box<SaveProfile>,
 }
 
 impl LevelSelectionState<'static> {
-    pub fn new() -> Self {
+    pub fn new(name: &str) -> Self {
         let random_levels = |n: usize| {
             (0..n)
                 .map(|i| &LEVELS[i % LEVELS.len()])
@@ -30,6 +32,7 @@ impl LevelSelectionState<'static> {
                 levels: random_levels(5),
             }],
             level_i: None,
+            save_profile: box load_profile(name),
         };
         for section in &l.sections {
             if section.name.len() as i32 + CURSOR_I + 2 > MID_I {
@@ -90,9 +93,9 @@ impl GameState for LevelSelectionState<'static> {
             );
         }
         match data.pressed_key.zip(self.level_i) {
-            Some((bl::VirtualKeyCode::Return, l_i)) => GameStateEvent::Switch(Box::new(
-                EditorState::new(self.sections[self.section_i].levels[l_i]),
-            )),
+            Some((bl::VirtualKeyCode::Return, l_i)) => GameStateEvent::Switch(
+                box EditorState::new(self.sections[self.section_i].levels[l_i]),
+            ),
             _ => GameStateEvent::None,
         }
     }

@@ -1,4 +1,4 @@
-use crate::gamestates::base::*;
+use crate::{gamestates::base::*, DEFAULT_PROFILE};
 use bracket_lib::prelude as bl;
 
 use super::level_selection;
@@ -39,7 +39,9 @@ impl GameState for IntroState {
         if !switch {
             GameStateEvent::None
         } else {
-            GameStateEvent::Switch(Box::new(level_selection::LevelSelectionState::new()))
+            GameStateEvent::Switch(Box::new(level_selection::LevelSelectionState::new(
+                DEFAULT_PROFILE,
+            )))
         }
     }
 }

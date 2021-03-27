@@ -8,6 +8,7 @@ mod gamestates;
 mod interpreter;
 mod levels;
 mod math;
+mod save_system;
 use gamestates::level_selection;
 use structopt::StructOpt;
 
@@ -31,6 +32,9 @@ struct Opt {
     skip_intro: bool,
 }
 
+// TODO: profile selection
+pub const DEFAULT_PROFILE: &str = "default";
+
 fn main() -> bl::BError {
     let opt = Opt::from_args();
     let ctx = bl::BTermBuilder::simple80x50()
@@ -38,7 +42,9 @@ fn main() -> bl::BError {
         .build()?;
     let gs = MainState {
         manager: gamestates::base::GameStateManager::new(if opt.skip_intro {
-            Box::new(gamestates::level_selection::LevelSelectionState::new())
+            Box::new(gamestates::level_selection::LevelSelectionState::new(
+                DEFAULT_PROFILE,
+            ))
         } else {
             Box::new(gamestates::intro::IntroState::new())
         }),

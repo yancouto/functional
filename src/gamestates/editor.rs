@@ -1,5 +1,8 @@
-use crate::math::{Pos, Rect, Size};
-use std::time::Duration;
+use crate::{
+    math::{Pos, Rect, Size},
+    save_system::SaveProfile,
+};
+use std::{rc::Rc, time::Duration};
 
 use super::base::{GameState, GameStateEvent, TickData};
 use super::level_selection::LevelSelectionState;
@@ -65,7 +68,7 @@ impl<'a> GameState for EditorState<'a> {
         data.console.print_right(80, 49, "Press ESC to go back");
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
-            GameStateEvent::Switch(box LevelSelectionState::new())
+            GameStateEvent::Switch(box LevelSelectionState::new(crate::DEFAULT_PROFILE))
         } else {
             GameStateEvent::None
         }
