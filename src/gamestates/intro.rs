@@ -1,5 +1,6 @@
 use crate::{gamestates::base::*, DEFAULT_PROFILE};
 use bracket_lib::prelude as bl;
+use std::rc::Rc;
 
 use super::level_selection;
 
@@ -40,7 +41,7 @@ impl GameState for IntroState {
             GameStateEvent::None
         } else {
             GameStateEvent::Switch(Box::new(level_selection::LevelSelectionState::new(
-                DEFAULT_PROFILE,
+                Rc::new(crate::save_system::load_profile(DEFAULT_PROFILE)),
             )))
         }
     }

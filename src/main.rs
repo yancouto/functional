@@ -13,6 +13,7 @@ use gamestates::level_selection;
 use structopt::StructOpt;
 
 use bracket_lib::prelude as bl;
+use std::rc::Rc;
 
 struct MainState {
     manager: gamestates::base::GameStateManager,
@@ -43,7 +44,7 @@ fn main() -> bl::BError {
     let gs = MainState {
         manager: gamestates::base::GameStateManager::new(if opt.skip_intro {
             Box::new(gamestates::level_selection::LevelSelectionState::new(
-                DEFAULT_PROFILE,
+                Rc::new(save_system::load_profile(DEFAULT_PROFILE)),
             ))
         } else {
             Box::new(gamestates::intro::IntroState::new())

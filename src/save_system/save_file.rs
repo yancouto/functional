@@ -6,11 +6,21 @@ const APP_INFO: AppInfo = AppInfo {
     author: "Yan Couto",
 };
 
-pub struct SaveProfile {}
+#[derive(Debug)]
+pub struct SaveProfile {
+    path: PathBuf,
+}
 
 impl SaveProfile {
     fn load(path: PathBuf) -> Self {
-        Self {}
+        println!("Creating save file from {:?}", path);
+        Self { path }
+    }
+}
+
+impl Drop for SaveProfile {
+    fn drop(&mut self) {
+        println!("Dropping save file object from {:?}", self.path);
     }
 }
 

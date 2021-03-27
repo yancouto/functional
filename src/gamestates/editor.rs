@@ -17,10 +17,11 @@ pub struct EditorState<'a> {
     editor: TextEditor,
     last_result: Option<bool>,
     last_result_expire_at: Duration,
+    save_profile: Rc<SaveProfile>,
 }
 
 impl EditorState<'static> {
-    pub fn new(level: &'static Level) -> Self {
+    pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
         let size = Size { w: 20, h: 8 };
         Self {
             time: Duration::from_secs(0),
@@ -28,6 +29,7 @@ impl EditorState<'static> {
             editor: TextEditor::new(Pos { i: 23, j: 2 }, Size { w: 20, h: 8 }),
             last_result: None,
             last_result_expire_at: Duration::from_secs(0),
+            save_profile,
         }
     }
 }
@@ -68,7 +70,7 @@ impl<'a> GameState for EditorState<'a> {
         data.console.print_right(80, 49, "Press ESC to go back");
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
-            GameStateEvent::Switch(box LevelSelectionState::new(crate::DEFAULT_PROFILE))
+            GameStateEvent::Switch(box LevelSelectionState::new(self.save_profile.clone()))
         } else {
             GameStateEvent::None
         }
