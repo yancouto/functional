@@ -70,7 +70,29 @@ impl TextEditor {
         }
     }
 
-    pub fn get_text(&self) -> impl Iterator<Item = char> {
+    pub fn load_text(&mut self, text: &str) {
+        let size = &self.size;
+        self.text = text
+            .split('\n')
+            .map(|line| {
+                let mut line: Vec<char> = line.chars().collect();
+                line.resize_with(size.w as usize, || ' ');
+                line
+            })
+            .collect();
+        self.text
+            .resize_with(size.h as usize, || vec![' '; size.w as usize]);
+    }
+
+    pub fn to_string(&self) -> String {
+        self.text
+            .iter()
+            .map(|line| line.iter().collect::<String>())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+    pub fn get_chars(&self) -> impl Iterator<Item = char> {
         self.text.clone().into_iter().flatten()
     }
 

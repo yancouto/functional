@@ -23,10 +23,12 @@ pub struct EditorState<'a> {
 impl EditorState<'static> {
     pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
         let size = Size { w: 20, h: 8 };
+        let mut editor = TextEditor::new(Pos { i: 23, j: 2 }, Size { w: 20, h: 8 });
+        editor.load_text(&save_profile.read_level(&level.name, 0));
         Self {
             time: Duration::from_secs(0),
             level,
-            editor: TextEditor::new(Pos { i: 23, j: 2 }, Size { w: 20, h: 8 }),
+            editor,
             last_result: None,
             last_result_expire_at: Duration::from_secs(0),
             save_profile,
@@ -54,7 +56,7 @@ impl<'a> GameState for EditorState<'a> {
         if data.button("Run", Pos::new(47, 2))
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
         {
-            self.last_result = Some(self.level.test(self.editor.get_text()));
+            self.last_result = Some(self.level.test(self.editor.get_chars()));
             self.last_result_expire_at = data.time + Duration::from_secs(3);
         }
 
@@ -70,11 +72,8 @@ impl<'a> GameState for EditorState<'a> {
         data.console.print_right(80, 49, "Press ESC to go back");
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::F10)) {
-            self.save_profile.write_level(
-                &self.level.name,
-                0,
-                &self.editor.get_text().collect::<String>(),
-            );
+            self.save_profile
+                .write_level(&self.level.name, 0, &self.editor.to_string());
         }
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
