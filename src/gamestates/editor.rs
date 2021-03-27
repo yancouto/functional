@@ -17,22 +17,40 @@ pub struct EditorState<'a> {
     editor: TextEditor,
     last_result: Option<bool>,
     last_result_expire_at: Duration,
+    current_solution: u8,
     save_profile: Rc<SaveProfile>,
 }
 
 impl EditorState<'static> {
     pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
         let size = Size { w: 20, h: 8 };
-        let mut editor = TextEditor::new(Pos { i: 23, j: 2 }, Size { w: 20, h: 8 });
-        editor.load_text(&save_profile.read_level(&level.name, 0));
-        Self {
+        let mut state = Self {
             time: Duration::from_secs(0),
             level,
-            editor,
+            editor: TextEditor::new(Pos { i: 26, j: 1 }, Size { w: 20, h: 8 }),
             last_result: None,
             last_result_expire_at: Duration::from_secs(0),
             save_profile,
-        }
+            current_solution: 1,
+        };
+        state.load_solution(1);
+        state
+    }
+}
+
+impl<'a> EditorState<'a> {
+    fn load_solution(&mut self, solution: u8) {
+        self.editor
+            .load_text(&self.save_profile.read_level(&self.level.name, solution));
+        self.current_solution = solution;
+    }
+
+    fn save_current_solution(&mut self) {
+        self.save_profile.write_level(
+            &self.level.name,
+            self.current_solution,
+            &self.editor.to_string(),
+        );
     }
 }
 
@@ -49,6 +67,15 @@ impl<'a> GameState for EditorState<'a> {
         );
         if let Some(info) = &self.level.extra_info {
             data.text_box("Extra info", info, Rect::new(1, 50, 30, 20));
+        }
+
+        for i in 1..4u8 {
+            if data.button(&i.to_string(), Pos::new(21, (i as i32 - 1) * 3)) {
+                if i != self.current_solution {
+                    self.save_current_solution();
+                    self.load_solution(i);
+                }
+            }
         }
 
         self.editor.draw(&mut data);
@@ -72,8 +99,7 @@ impl<'a> GameState for EditorState<'a> {
         data.console.print_right(80, 49, "Press ESC to go back");
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::F10)) {
-            self.save_profile
-                .write_level(&self.level.name, 0, &self.editor.to_string());
+            self.save_current_solution();
         }
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {

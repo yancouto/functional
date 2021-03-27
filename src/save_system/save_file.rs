@@ -46,7 +46,9 @@ impl SaveProfile {
         println!("Reading solution {} of level {}", solution, level_name);
         self.read_level_impl(level_name, solution)
             .unwrap_or_else(|err| {
-                println!("Error reading level: {:?}", err);
+                if err.kind() != io::ErrorKind::NotFound {
+                    println!("Error reading level: {:?}", err);
+                }
                 String::new()
             })
     }
