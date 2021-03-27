@@ -69,6 +69,14 @@ impl<'a> GameState for EditorState<'a> {
             .print_right(80, 47, "Click Run or press CTRL+ENTER to run");
         data.console.print_right(80, 49, "Press ESC to go back");
 
+        if matches!(data.pressed_key, Some(bl::VirtualKeyCode::F10)) {
+            self.save_profile.write_level(
+                &self.level.name,
+                0,
+                &self.editor.get_text().collect::<String>(),
+            );
+        }
+
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
             GameStateEvent::Switch(box LevelSelectionState::new(self.save_profile.clone()))
         } else {
