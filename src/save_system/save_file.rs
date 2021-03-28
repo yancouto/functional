@@ -1,5 +1,6 @@
 use app_dirs::*;
-use std::{collections::HashMap, fs, sync::Mutex};
+use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
+use std::{collections::HashMap, fs};
 use std::{io, path::PathBuf};
 
 pub const APP_INFO: AppInfo = AppInfo {
@@ -17,11 +18,12 @@ pub struct SaveProfile {
 pub enum LevelResult {
     Success,
     Failure,
+    NotTried,
 }
 
 impl Default for LevelResult {
     fn default() -> Self {
-        Self::Failure
+        Self::NotTried
     }
 }
 
@@ -29,7 +31,7 @@ const CURRENT_SAVE_VERSION: u32 = 0;
 
 #[derive(Savefile, Debug, Default, Clone)]
 pub struct LevelInfo {
-    result: LevelResult,
+    pub result: LevelResult,
 }
 
 #[derive(Savefile, Debug, Default)]
@@ -57,7 +59,7 @@ impl SaveProfile {
     }
 
     pub fn mark_level_as_tried(&self, level_name: &str, result: LevelResult) {
-        let mut save_file = self.current_save_file.lock().unwrap();
+        let mut save_file = self.current_save_file.lock();
         save_file
             .level_info
             .entry(level_name.to_string())
@@ -66,17 +68,12 @@ impl SaveProfile {
         self.write("save.data", &*save_file);
     }
 
-    pub fn get_level_info(&self, level_name: &str) -> LevelInfo {
-        let mut save_file = self.current_save_file.lock().unwrap();
-        save_file
-            .level_info
-            .entry(level_name.to_string())
-            .or_default()
-            .clone()
+    pub fn get_levels_info(&self) -> MappedMutexGuard<HashMap<String, LevelInfo>> {
+        MutexGuard::map(self.current_save_file.lock(), |s| &mut s.level_info)
     }
 
     pub fn reload(&self) {
-        self.read("save.data", &mut *self.current_save_file.lock().unwrap());
+        self.read("save.data", &mut *self.current_save_file.lock());
     }
 }
 

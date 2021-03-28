@@ -1,9 +1,13 @@
 use super::base::*;
 use super::editor::EditorState;
 use crate::levels::{Level, LEVELS};
-use crate::save_system::SaveProfile;
+use crate::math::*;
+use crate::save_system::{LevelResult, SaveProfile};
 use bracket_lib::prelude as bl;
-use std::rc::Rc;
+use std::{
+    borrow::{BorrowMut, Cow},
+    rc::Rc,
+};
 
 struct Section<'a> {
     name: String,
@@ -60,7 +64,7 @@ impl GameState for LevelSelectionState<'static> {
         "LevelSelection"
     }
 
-    fn tick(&mut self, data: TickData) -> GameStateEvent {
+    fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         for (i, section) in self.sections.iter().enumerate() {
             data.console.print(
                 CURSOR_I + 2,
@@ -70,9 +74,16 @@ impl GameState for LevelSelectionState<'static> {
         }
         let cursor_on = ((data.time.as_millis() / 500) % 2) == 0;
         if let Some(l_i) = self.level_i {
+            let mut levels_info = self.save_profile.get_levels_info();
             for (i, level) in self.sections[self.section_i].levels.iter().enumerate() {
-                data.console
-                    .print(MID_I + CURSOR_I + 2, self.get_j(i as i32), &level.name);
+                let info = levels_info.entry(level.name.clone()).or_default();
+                let mut text = Cow::Borrowed(&level.name);
+                match info.result {
+                    LevelResult::Success => text.to_mut().push_str(" (completed)"),
+                    LevelResult::Failure => text.to_mut().push_str(" (failed)"),
+                    LevelResult::NotTried => {}
+                }
+                data.print(Pos::new(self.get_j(i as i32), MID_I + CURSOR_I + 2), &text);
             }
             data.console.print(
                 MID_I + CURSOR_I + 5,

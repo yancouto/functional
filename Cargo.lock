@@ -693,6 +693,7 @@ dependencies = [
  "jsonnet-rs",
  "lazy_static",
  "log",
+ "parking_lot 0.11.1",
  "savefile",
  "savefile-derive",
  "serde",
