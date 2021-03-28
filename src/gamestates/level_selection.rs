@@ -1,7 +1,7 @@
 use super::base::*;
 use super::editor::EditorState;
 use crate::levels::{Level, LEVELS};
-use crate::save_system::{load_profile, SaveProfile};
+use crate::save_system::SaveProfile;
 use bracket_lib::prelude as bl;
 use std::rc::Rc;
 

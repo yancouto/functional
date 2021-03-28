@@ -1,5 +1,5 @@
 use app_dirs::*;
-use std::{borrow::Cow, fs};
+use std::fs;
 use std::{io, path::PathBuf};
 
 const APP_INFO: AppInfo = AppInfo {

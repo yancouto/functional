@@ -59,6 +59,7 @@ impl TickData<'_> {
         was_clicked
     }
 
+    #[allow(dead_code)]
     pub fn char(&mut self, pos: Pos, c: char) {
         self.console
             .set(pos.j, pos.i, white(), black(), bl::to_cp437(c));

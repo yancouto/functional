@@ -1,4 +1,4 @@
-use crate::interpreter::{self, interpret, parse, tokenize, Node};
+use crate::interpreter::{interpret, parse, tokenize, Node};
 
 #[derive(Debug)]
 pub struct TestCase {

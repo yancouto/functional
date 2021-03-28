@@ -1,6 +1,6 @@
 use crate::math::Pos;
 use bracket_lib::prelude as bl;
-use std::{borrow::BorrowMut, collections::HashSet, time::Duration};
+use std::{collections::HashSet, time::Duration};
 
 struct GSData {
     cur: Box<dyn GameState>,
@@ -84,7 +84,7 @@ impl GameStateManager {
                     ctx.quit();
                 }
                 bl::BEvent::MouseClick {
-                    button,
+                    button: 0,
                     pressed: true,
                 } => {
                     data.left_click = true;

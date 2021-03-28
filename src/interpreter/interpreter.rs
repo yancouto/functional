@@ -101,16 +101,16 @@ pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, Inte
     interpret_req(0, root, true, &mut HashMap::new(), fully_resolve)
 }
 
-pub fn interpret_lazy(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
-    interpret(root, false)
-}
-
 #[cfg(test)]
 mod test {
     use super::super::parser::test::parse_ok;
     use super::*;
 
     const Y_COMB: &str = "(f: (x: f (x x)) (x: f (x x)))";
+
+    fn interpret_lazy(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
+        interpret(root, false)
+    }
 
     fn interpret_ok(str: &str) -> Box<Node> {
         interpret_lazy(parse_ok(str)).unwrap()

@@ -9,7 +9,6 @@ mod interpreter;
 mod levels;
 mod math;
 mod save_system;
-use gamestates::level_selection;
 use structopt::StructOpt;
 
 use bracket_lib::prelude as bl;

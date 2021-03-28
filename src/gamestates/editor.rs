@@ -23,7 +23,6 @@ pub struct EditorState<'a> {
 
 impl EditorState<'static> {
     pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
-        let size = Size { w: 20, h: 8 };
         let mut state = Self {
             time: Duration::from_secs(0),
             level,
