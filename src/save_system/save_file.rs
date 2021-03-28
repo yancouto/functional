@@ -13,6 +13,26 @@ pub struct SaveProfile {
 }
 
 impl SaveProfile {
+    pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {
+        log::debug!("Writing solution {} of level {}", solution, level_name);
+        if let Err(err) = self.write_level_impl(level_name, solution, code) {
+            log::warn!("Error writing level: {:?}", err);
+        }
+    }
+
+    pub fn read_level(&self, level_name: &str, solution: u8) -> String {
+        log::debug!("Reading solution {} of level {}", solution, level_name);
+        self.read_level_impl(level_name, solution)
+            .unwrap_or_else(|err| {
+                if err.kind() != io::ErrorKind::NotFound {
+                    log::warn!("Error reading level: {:?}", err);
+                }
+                String::new()
+            })
+    }
+}
+
+impl SaveProfile {
     fn load(path: PathBuf) -> Self {
         log::debug!("Loading save profile from {:?}", path);
         Self { path }
@@ -28,29 +48,11 @@ impl SaveProfile {
         fs::write(path, code)
     }
 
-    pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {
-        log::debug!("Writing solution {} of level {}", solution, level_name);
-        if let Err(err) = self.write_level_impl(level_name, solution, code) {
-            log::warn!("Error writing level: {:?}", err);
-        }
-    }
-
     fn read_level_impl(&self, level_name: &str, solution: u8) -> io::Result<String> {
         let path = self
             .path
             .join(format!("levels/{}/{}.code", level_name, solution));
         Ok(String::from_utf8_lossy(&fs::read(path)?).into_owned())
-    }
-
-    pub fn read_level(&self, level_name: &str, solution: u8) -> String {
-        log::debug!("Reading solution {} of level {}", solution, level_name);
-        self.read_level_impl(level_name, solution)
-            .unwrap_or_else(|err| {
-                if err.kind() != io::ErrorKind::NotFound {
-                    log::warn!("Error reading level: {:?}", err);
-                }
-                String::new()
-            })
     }
 }
 
