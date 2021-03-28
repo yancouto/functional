@@ -5,7 +5,7 @@ use std::{
 };
 
 use super::tokenizer::{Constant, TVariable, Token};
-use non_empty_vec::NonEmpty;
+use vec1::Vec1;
 
 /// uid is used to identify variables in different bindings. For example, in
 /// ((x: x) (x: x x)), the x's on both functions will have different uids, but
@@ -107,7 +107,7 @@ impl Level {
 
 #[derive(Debug)]
 struct Bindings {
-    map: HashMap<TVariable, NonEmpty<Variable>>,
+    map: HashMap<TVariable, Vec1<Variable>>,
     num_vars: u32,
 }
 
@@ -124,7 +124,7 @@ impl Bindings {
         let var = Variable::new(&mut self.num_vars, name);
         match self.map.entry(name) {
             Entry::Vacant(entry) => {
-                entry.insert(NonEmpty::from((var, vec![])));
+                entry.insert(Vec1::new(var));
             }
             Entry::Occupied(mut entry) => entry.get_mut().push(var),
         };
@@ -138,7 +138,7 @@ impl Bindings {
         let num_vars = &mut self.num_vars;
         self.map
             .entry(name)
-            .or_insert_with(|| NonEmpty::from((Variable::new(num_vars, name), vec![])))
+            .or_insert_with(|| Vec1::new(Variable::new(num_vars, name)))
             .last()
             .clone()
     }
@@ -146,7 +146,7 @@ impl Bindings {
     fn pop_var(&mut self, name: TVariable) {
         match self.map.entry(name) {
             Entry::Occupied(mut entry) => {
-                if entry.get_mut().pop().is_none() {
+                if entry.get_mut().pop().is_err() {
                     entry.remove();
                 }
             }
@@ -158,7 +158,7 @@ impl Bindings {
 pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, ParseError> {
     // Levels keep track of all the current terms being created. Opening a new parenthesis
     // means creating a new level, and closing one means merging it upward.
-    let mut levels = NonEmpty::from((Level::default(), vec![]));
+    let mut levels = Vec1::new(Level::default());
     let mut iter = tokens.into_iter().peekable();
     let mut bindings = Bindings::new();
     while let Some(token) = iter.next() {
@@ -187,7 +187,7 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
             }
             Token::OpenPar => levels.push(Level::default()),
             Token::ClosePar => {
-                if let Some(last) = levels.pop() {
+                if let Ok(last) = levels.pop() {
                     levels.last_mut().merge(last.close(&mut bindings)?);
                 } else {
                     return Err(ParseError::ExtraCloseParenthesis);
@@ -195,7 +195,7 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
             }
         }
     }
-    if levels.len().get() > 1 {
+    if levels.len() > 1 {
         return Err(ParseError::UnclosedParenthesis);
     }
     Vec::from(levels).pop().unwrap().close(&mut bindings)
