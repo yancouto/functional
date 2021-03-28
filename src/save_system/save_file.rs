@@ -1,5 +1,5 @@
 use app_dirs::*;
-use std::{collections::HashMap, fs, option::NoneError, sync::Mutex};
+use std::{collections::HashMap, fs, sync::Mutex};
 use std::{io, path::PathBuf};
 
 pub const APP_INFO: AppInfo = AppInfo {
@@ -13,16 +13,24 @@ pub struct SaveProfile {
     current_save_file: Mutex<SaveFile>,
 }
 
-#[derive(Debug)]
+#[derive(Savefile, Debug, Clone, Copy)]
 pub enum LevelResult {
     Success,
     Failure,
 }
 
+impl Default for LevelResult {
+    fn default() -> Self {
+        Self::Failure
+    }
+}
+
 const CURRENT_SAVE_VERSION: u32 = 0;
 
-#[derive(Savefile, Debug, Default)]
-struct LevelInfo {}
+#[derive(Savefile, Debug, Default, Clone)]
+pub struct LevelInfo {
+    result: LevelResult,
+}
 
 #[derive(Savefile, Debug, Default)]
 struct SaveFile {
@@ -49,8 +57,26 @@ impl SaveProfile {
     }
 
     pub fn mark_level_as_tried(&self, level_name: &str, result: LevelResult) {
-        let save_file = self.current_save_file.lock().unwrap();
+        let mut save_file = self.current_save_file.lock().unwrap();
+        save_file
+            .level_info
+            .entry(level_name.to_string())
+            .or_default()
+            .result = result;
         self.write("save.data", &*save_file);
+    }
+
+    pub fn get_level_info(&self, level_name: &str) -> LevelInfo {
+        let mut save_file = self.current_save_file.lock().unwrap();
+        save_file
+            .level_info
+            .entry(level_name.to_string())
+            .or_default()
+            .clone()
+    }
+
+    pub fn reload(&self) {
+        self.read("save.data", &mut *self.current_save_file.lock().unwrap());
     }
 }
 
@@ -58,20 +84,44 @@ impl SaveProfile {
     fn load(path: PathBuf) -> Self {
         log::debug!("Loading save profile from {:?}", path);
         // TODO: load save file
-        Self {
+        let this = Self {
             path,
             current_save_file: Mutex::from(SaveFile::default()),
+        };
+        this.reload();
+        this
+    }
+
+    fn read<T: savefile::WithSchema + savefile::Deserialize + Default>(
+        &self,
+        path: &str,
+        data: &mut T,
+    ) {
+        log::debug!("Loading save file {}", path);
+        // Better error message without having to implement a new error type?
+        let result =
+            savefile::load_file(self.path.join(path).to_str().unwrap(), CURRENT_SAVE_VERSION);
+        match result {
+            Ok(value) => *data = value,
+            Err(savefile::SavefileError::IOError { io_error })
+                if io_error.kind() == io::ErrorKind::NotFound =>
+            {
+                *data = Default::default()
+            }
+            Err(err) => log::error!("Failed to read save file {}: {:?}", path, err),
         }
     }
 
     fn write<T: savefile::WithSchema + savefile::Serialize>(&self, path: &str, data: &T) {
         log::debug!("Writing save file {}", path);
         // Better error message without having to implement a new error type?
-        let result: Result<(), NoneError> = try {
-            savefile::save_file(self.path.join(path).to_str()?, CURRENT_SAVE_VERSION, data).ok()?;
-        };
-        if result.is_err() {
-            log::error!("Failed to write save file");
+        let result = savefile::save_file(
+            self.path.join(path).to_str().unwrap(),
+            CURRENT_SAVE_VERSION,
+            data,
+        );
+        if let Err(err) = result {
+            log::error!("Failed to write save file {}: {:?}", path, err);
         }
     }
 

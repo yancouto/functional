@@ -85,15 +85,6 @@ impl GameState for EditorState {
                 self.editor.get_chars(),
                 self.save_profile.clone(),
             ));
-            self.last_result = Some(self.level.test(self.editor.get_chars()));
-            self.last_result_expire_at = data.time + Duration::from_secs(3);
-        }
-
-        if let Some(r) = self.last_result {
-            data.print(Pos::new(48, 8), if r { "OK" } else { "WA" });
-            if self.last_result_expire_at <= data.time {
-                self.last_result = None;
-            }
         }
 
         data.console
