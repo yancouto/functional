@@ -134,7 +134,7 @@ pub enum GameStateEvent {
 pub trait GameState {
     fn name(&self) -> &'static str;
     fn tick(&mut self, data: TickData) -> GameStateEvent;
-    fn on_event(&mut self, _event: bl::BEvent) -> () {}
+    fn on_event(&mut self, _event: bl::BEvent) {}
 }
 
 // COPIED from bracket lib

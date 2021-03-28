@@ -69,11 +69,11 @@ impl<'a> GameState for EditorState<'a> {
         }
 
         for i in 1..4u8 {
-            if data.button(&i.to_string(), Pos::new(21, (i as i32 - 1) * 3)) {
-                if i != self.current_solution {
-                    self.save_current_solution();
-                    self.load_solution(i);
-                }
+            if data.button(&i.to_string(), Pos::new(21, (i as i32 - 1) * 3))
+                && i != self.current_solution
+            {
+                self.save_current_solution();
+                self.load_solution(i);
             }
         }
 

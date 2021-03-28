@@ -51,7 +51,7 @@ const MID_I: i32 = 40;
 
 impl<'a> LevelSelectionState<'a> {
     fn get_j(&self, index: i32) -> i32 {
-        return START_J + LINES_PER_SECTION * index;
+        START_J + LINES_PER_SECTION * index
     }
 }
 
@@ -104,7 +104,7 @@ impl GameState for LevelSelectionState<'static> {
         }
     }
 
-    fn on_event(&mut self, event: bl::BEvent) -> () {
+    fn on_event(&mut self, event: bl::BEvent) {
         match event {
             bl::BEvent::KeyboardInput {
                 key, pressed: true, ..

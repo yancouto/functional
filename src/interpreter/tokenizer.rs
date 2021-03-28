@@ -26,7 +26,7 @@ fn tokenize_vec<S: IntoIterator<Item = char>>(str: S) -> Result<Vec<Token>, Toke
     let flush = |cur_word: &mut Vec<char>, ans: &mut Vec<Token>| {
         if cur_word.len() == 1 && cur_word[0].is_ascii_lowercase() {
             ans.push(Token::Variable(cur_word[0]));
-        } else if cur_word.len() >= 1 {
+        } else if !cur_word.is_empty() {
             ans.push(Token::Constant(cur_word.iter().collect()));
         }
         cur_word.clear();
