@@ -5,15 +5,15 @@ use crate::{
 use std::{rc::Rc, time::Duration};
 
 use super::base::{GameState, GameStateEvent, TickData};
-use super::level_selection::LevelSelectionState;
+use super::{level_selection::LevelSelectionState, run_solution::RunSolutionState};
 use crate::drawables::TextEditor;
 use crate::levels::Level;
 use bracket_lib::prelude as bl;
 
 #[derive(Debug)]
-pub struct EditorState<'a> {
+pub struct EditorState {
     time: Duration,
-    level: &'a Level,
+    level: &'static Level,
     editor: TextEditor,
     last_result: Option<bool>,
     last_result_expire_at: Duration,
@@ -21,7 +21,7 @@ pub struct EditorState<'a> {
     save_profile: Rc<SaveProfile>,
 }
 
-impl EditorState<'static> {
+impl EditorState {
     pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
         let mut state = Self {
             time: Duration::from_secs(0),
@@ -35,9 +35,7 @@ impl EditorState<'static> {
         state.load_solution(1);
         state
     }
-}
 
-impl<'a> EditorState<'a> {
     fn load_solution(&mut self, solution: u8) {
         self.editor
             .load_text(&self.save_profile.read_level(&self.level.name, solution));
@@ -53,7 +51,7 @@ impl<'a> EditorState<'a> {
     }
 }
 
-impl<'a> GameState for EditorState<'a> {
+impl GameState for EditorState {
     fn name(&self) -> &'static str {
         "Editor"
     }
@@ -82,6 +80,11 @@ impl<'a> GameState for EditorState<'a> {
         if data.button("Run", Pos::new(47, 2))
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
         {
+            return GameStateEvent::Push(box RunSolutionState::new(
+                self.level,
+                "asd".to_string(),
+                self.save_profile.clone(),
+            ));
             self.last_result = Some(self.level.test(self.editor.get_chars()));
             self.last_result_expire_at = data.time + Duration::from_secs(3);
         }
