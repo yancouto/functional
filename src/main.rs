@@ -37,13 +37,24 @@ struct Opt {
 pub const DEFAULT_PROFILE: &str = "default";
 
 fn main() -> bl::BError {
-    CombinedLogger::init(vec![TermLogger::new(
-        LevelFilter::Debug,
-        Config::default(),
-        TerminalMode::Mixed,
-        ColorChoice::Auto,
-    )])
+    let mut log_file = app_dirs::app_root(app_dirs::AppDataType::UserCache, &save_system::APP_INFO)
+        .expect("Failed to get app root");
+    log_file.push("debug.log");
+    CombinedLogger::init(vec![
+        TermLogger::new(
+            LevelFilter::Debug,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ),
+        WriteLogger::new(
+            LevelFilter::Debug,
+            Config::default(),
+            std::fs::File::create(log_file.clone()).expect("Failed to create debug file"),
+        ),
+    ])
     .expect("Failed to set up logger.");
+    log::info!("Writing debug logs to {:?}", log_file);
 
     let opt = Opt::from_args();
     let ctx = bl::BTermBuilder::simple80x50()

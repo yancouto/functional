@@ -2,7 +2,7 @@ use app_dirs::*;
 use std::fs;
 use std::{io, path::PathBuf};
 
-const APP_INFO: AppInfo = AppInfo {
+pub const APP_INFO: AppInfo = AppInfo {
     name: "functional",
     author: "yancouto",
 };
