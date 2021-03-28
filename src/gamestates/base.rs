@@ -1,6 +1,7 @@
 use crate::math::Pos;
 use bracket_lib::prelude as bl;
 use std::{collections::HashSet, time::Duration};
+use vec1::Vec1;
 
 struct GSData {
     cur: Box<dyn GameState>,
@@ -50,7 +51,7 @@ impl<'a> TickData<'a> {
 }
 
 pub struct GameStateManager {
-    cur_gs: GSData,
+    all_gs: Vec1<GSData>,
 }
 
 // Will we ever need two consoles?
@@ -66,10 +67,10 @@ impl GameStateManager {
         bl::INPUT.lock().activate_event_queue();
         log::info!("Starting on gamestate {}", first.name());
         Self {
-            cur_gs: GSData {
+            all_gs: Vec1::new(GSData {
                 cur: first,
                 time: Duration::default(),
-            },
+            }),
         }
     }
 
@@ -77,7 +78,7 @@ impl GameStateManager {
         let mut input = bl::INPUT.lock();
         let mut data = EventTickData::default();
         while let Some(e) = input.pop() {
-            self.cur_gs.cur.on_event(e.clone());
+            self.all_gs.last_mut().cur.on_event(e.clone());
             match e {
                 // Blib stops tracking close events when we activate event queue
                 bl::BEvent::CloseRequested => {
@@ -97,37 +98,41 @@ impl GameStateManager {
 
     pub fn tick(&mut self, ctx: &mut bl::BTerm) {
         let event_data = self.process_events(ctx);
-        self.cur_gs.time += Duration::from_secs_f32(ctx.frame_time_ms / 1000.);
+        let time_passed = Duration::from_secs_f32(ctx.frame_time_ms / 1000.);
+        self.all_gs.last_mut().time += time_passed;
         let event = with_current_console(ctx.active_console, |console| {
             let input = bl::INPUT.lock();
             console.cls();
-            self.cur_gs.cur.tick(TickData::new(
-                &self.cur_gs,
-                event_data,
-                console,
-                ctx,
-                &input,
-            ))
+            let tick_data = TickData::new(self.all_gs.last(), event_data, console, ctx, &input);
+            self.all_gs.last_mut().cur.tick(tick_data)
         });
         match event {
             GameStateEvent::None => {}
             GameStateEvent::Switch(new) => {
                 log::info!(
-                    "Switching gamestate from {} to {}",
-                    self.cur_gs.cur.name(),
+                    "Switching top gamestate from {} to {}",
+                    self.all_gs.last().cur.name(),
                     new.name()
                 );
-                self.cur_gs = GSData {
+                let new = GSData {
                     cur: new,
                     time: Duration::default(),
                 };
+                if self.all_gs.pop().is_err() {
+                    // Only a single gamestate
+                    self.all_gs = Vec1::new(new);
+                } else {
+                    self.all_gs.push(new);
+                }
             }
         }
     }
 }
 
 pub enum GameStateEvent {
+    /// Don't do anything, continue running this gamestate
     None,
+    /// Remove this gamestate and add a new one in its place
     Switch(Box<dyn GameState>),
 }
 
