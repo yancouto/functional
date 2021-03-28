@@ -4,10 +4,7 @@ use crate::levels::{Level, LEVELS};
 use crate::math::*;
 use crate::save_system::{LevelResult, SaveProfile};
 use bracket_lib::prelude as bl;
-use std::{
-    borrow::{BorrowMut, Cow},
-    rc::Rc,
-};
+use std::{borrow::Cow, rc::Rc};
 
 struct Section<'a> {
     name: String,
@@ -40,7 +37,7 @@ impl LevelSelectionState<'static> {
             save_profile,
         };
         for section in &l.sections {
-            if section.name.len() as i32 + CURSOR_I + 2 > MID_I {
+            if section.name.len() as i32 + CURSOR_J + 2 > MID_J {
                 panic!("Too long name");
             }
         }
@@ -48,14 +45,14 @@ impl LevelSelectionState<'static> {
     }
 }
 
-const CURSOR_I: i32 = 3;
-const START_J: i32 = 2;
+const CURSOR_J: i32 = 3;
+const START_I: i32 = 2;
 const LINES_PER_SECTION: i32 = 3;
-const MID_I: i32 = 40;
+const MID_J: i32 = 40;
 
 impl<'a> LevelSelectionState<'a> {
-    fn get_j(&self, index: i32) -> i32 {
-        START_J + LINES_PER_SECTION * index
+    fn get_i(&self, index: i32) -> i32 {
+        START_I + LINES_PER_SECTION * index
     }
 }
 
@@ -66,9 +63,8 @@ impl GameState for LevelSelectionState<'static> {
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         for (i, section) in self.sections.iter().enumerate() {
-            data.console.print(
-                CURSOR_I + 2,
-                START_J + LINES_PER_SECTION * i as i32,
+            data.print(
+                Pos::new(START_I + LINES_PER_SECTION * i as i32, CURSOR_J + 2),
                 &section.name,
             );
         }
@@ -83,24 +79,24 @@ impl GameState for LevelSelectionState<'static> {
                     LevelResult::Failure => text.to_mut().push_str(" (failed)"),
                     LevelResult::NotTried => {}
                 }
-                data.print(Pos::new(self.get_j(i as i32), MID_I + CURSOR_I + 2), &text);
+                data.print(Pos::new(self.get_i(i as i32), MID_J + CURSOR_J + 2), &text);
             }
-            data.console.print(
-                MID_I + CURSOR_I + 5,
-                self.get_j(l_i as i32) + 1,
+            data.print(
+                Pos::new(self.get_i(l_i as i32) + 1, MID_J + CURSOR_J + 5),
                 "press ENTER to select level",
             )
         } else {
-            data.console.print(
-                MID_I + CURSOR_I,
-                self.get_j(self.section_i as i32),
+            data.print(
+                Pos::new(self.get_i(self.section_i as i32), MID_J + CURSOR_J),
                 "press RIGHT to open section",
             );
         }
         if cursor_on {
-            data.console.print(
-                CURSOR_I + self.level_i.map_or(0, |_| MID_I),
-                self.get_j(self.level_i.unwrap_or(self.section_i) as i32),
+            data.print(
+                Pos::new(
+                    self.get_i(self.level_i.unwrap_or(self.section_i) as i32),
+                    CURSOR_J + self.level_i.map_or(0, |_| MID_J),
+                ),
                 ">",
             );
         }
