@@ -82,7 +82,7 @@ impl GameState for EditorState {
         {
             return GameStateEvent::Push(box RunSolutionState::new(
                 self.level,
-                "asd".to_string(),
+                self.editor.get_chars(),
                 self.save_profile.clone(),
             ));
             self.last_result = Some(self.level.test(self.editor.get_chars()));
