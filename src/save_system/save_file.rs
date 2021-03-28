@@ -1,5 +1,5 @@
 use app_dirs::*;
-use std::fs;
+use std::{collections::HashMap, fs, option::NoneError, sync::Mutex};
 use std::{io, path::PathBuf};
 
 pub const APP_INFO: AppInfo = AppInfo {
@@ -10,6 +10,23 @@ pub const APP_INFO: AppInfo = AppInfo {
 #[derive(Debug)]
 pub struct SaveProfile {
     path: PathBuf,
+    current_save_file: Mutex<SaveFile>,
+}
+
+#[derive(Debug)]
+pub enum LevelResult {
+    Success,
+    Failure,
+}
+
+const CURRENT_SAVE_VERSION: u32 = 0;
+
+#[derive(Savefile, Debug, Default)]
+struct LevelInfo {}
+
+#[derive(Savefile, Debug, Default)]
+struct SaveFile {
+    level_info: HashMap<String, LevelInfo>,
 }
 
 impl SaveProfile {
@@ -30,12 +47,32 @@ impl SaveProfile {
                 String::new()
             })
     }
+
+    pub fn mark_level_as_tried(&self, level_name: &str, result: LevelResult) {
+        let save_file = self.current_save_file.lock().unwrap();
+        self.write("save.data", &*save_file);
+    }
 }
 
 impl SaveProfile {
     fn load(path: PathBuf) -> Self {
         log::debug!("Loading save profile from {:?}", path);
-        Self { path }
+        // TODO: load save file
+        Self {
+            path,
+            current_save_file: Mutex::from(SaveFile::default()),
+        }
+    }
+
+    fn write<T: savefile::WithSchema + savefile::Serialize>(&self, path: &str, data: &T) {
+        log::debug!("Writing save file {}", path);
+        // Better error message without having to implement a new error type?
+        let result: Result<(), NoneError> = try {
+            savefile::save_file(self.path.join(path).to_str()?, CURRENT_SAVE_VERSION, data).ok()?;
+        };
+        if result.is_err() {
+            log::error!("Failed to write save file");
+        }
     }
 
     fn write_level_impl(&self, level_name: &str, solution: u8, code: &str) -> io::Result<()> {

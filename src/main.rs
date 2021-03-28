@@ -1,7 +1,12 @@
 #![feature(div_duration)]
 #![feature(box_syntax)]
+#![feature(try_blocks)]
+#![feature(try_trait)]
 #[macro_use]
 extern crate lazy_static;
+
+#[macro_use]
+extern crate savefile_derive;
 
 mod drawables;
 mod gamestates;
