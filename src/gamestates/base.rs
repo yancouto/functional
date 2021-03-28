@@ -125,15 +125,33 @@ impl GameStateManager {
                     self.all_gs.push(new);
                 }
             }
+            GameStateEvent::Push(new) => {
+                log::info!("Pushing gamestate {} to stack", new.name());
+                let new = GSData {
+                    cur: new,
+                    time: Duration::default(),
+                };
+                self.all_gs.push(new);
+            }
+            GameStateEvent::Pop => match self.all_gs.pop() {
+                Err(_) => log::error!("Trying to pop only gamestate, ignoring."),
+                Ok(gs) => println!("Popped gamestate {}", gs.cur.name()),
+            },
         }
     }
 }
 
 pub enum GameStateEvent {
-    /// Don't do anything, continue running this gamestate
+    /// Don't do anything, continue running this gamestate.
     None,
-    /// Remove this gamestate and add a new one in its place
+    /// Remove this gamestate and add a new one in its place.
     Switch(Box<dyn GameState>),
+    /// Push a new gamestate on top of this one. Only the top gamestate will be
+    /// called tick and on_event.
+    Push(Box<dyn GameState>),
+    /// Remove this gamestate and go back to previous. Ignored if this is the
+    /// only gamestate.
+    Pop,
 }
 
 pub trait GameState {
