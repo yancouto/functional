@@ -64,7 +64,7 @@ where
 impl GameStateManager {
     pub fn new(first: Box<dyn GameState>) -> Self {
         bl::INPUT.lock().activate_event_queue();
-        println!("Starting on gamestate {}", first.name());
+        log::info!("Starting on gamestate {}", first.name());
         Self {
             cur_gs: GSData {
                 cur: first,
@@ -112,7 +112,7 @@ impl GameStateManager {
         match event {
             GameStateEvent::None => {}
             GameStateEvent::Switch(new) => {
-                println!(
+                log::info!(
                     "Switching gamestate from {} to {}",
                     self.cur_gs.cur.name(),
                     new.name()

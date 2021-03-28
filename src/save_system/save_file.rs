@@ -14,7 +14,7 @@ pub struct SaveProfile {
 
 impl SaveProfile {
     fn load(path: PathBuf) -> Self {
-        println!("Loading save profile from {:?}", path);
+        log::debug!("Loading save profile from {:?}", path);
         Self { path }
     }
 
@@ -29,9 +29,9 @@ impl SaveProfile {
     }
 
     pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {
-        log::info!("Writing solution {} of level {}", solution, level_name);
+        log::debug!("Writing solution {} of level {}", solution, level_name);
         if let Err(err) = self.write_level_impl(level_name, solution, code) {
-            println!("Error writing level: {:?}", err);
+            log::warn!("Error writing level: {:?}", err);
         }
     }
 
@@ -43,11 +43,11 @@ impl SaveProfile {
     }
 
     pub fn read_level(&self, level_name: &str, solution: u8) -> String {
-        println!("Reading solution {} of level {}", solution, level_name);
+        log::debug!("Reading solution {} of level {}", solution, level_name);
         self.read_level_impl(level_name, solution)
             .unwrap_or_else(|err| {
                 if err.kind() != io::ErrorKind::NotFound {
-                    println!("Error reading level: {:?}", err);
+                    log::warn!("Error reading level: {:?}", err);
                 }
                 String::new()
             })
@@ -56,7 +56,7 @@ impl SaveProfile {
 
 impl Drop for SaveProfile {
     fn drop(&mut self) {
-        println!("Closing save profile at {:?}", self.path);
+        log::debug!("Closing save profile at {:?}", self.path);
     }
 }
 
