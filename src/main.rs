@@ -12,6 +12,7 @@ mod save_system;
 use structopt::StructOpt;
 
 use bracket_lib::prelude as bl;
+use simplelog::*;
 use std::rc::Rc;
 
 struct MainState {
@@ -36,6 +37,14 @@ struct Opt {
 pub const DEFAULT_PROFILE: &str = "default";
 
 fn main() -> bl::BError {
+    CombinedLogger::init(vec![TermLogger::new(
+        LevelFilter::Debug,
+        Config::default(),
+        TerminalMode::Mixed,
+        ColorChoice::Auto,
+    )])
+    .expect("Failed to set up logger.");
+
     let opt = Opt::from_args();
     let ctx = bl::BTermBuilder::simple80x50()
         .with_title("functional")

@@ -29,7 +29,7 @@ impl SaveProfile {
     }
 
     pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {
-        println!("Writing solution {} of level {}", solution, level_name);
+        log::info!("Writing solution {} of level {}", solution, level_name);
         if let Err(err) = self.write_level_impl(level_name, solution, code) {
             println!("Error writing level: {:?}", err);
         }

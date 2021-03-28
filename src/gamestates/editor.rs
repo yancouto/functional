@@ -26,7 +26,7 @@ impl EditorState<'static> {
         let mut state = Self {
             time: Duration::from_secs(0),
             level,
-            editor: TextEditor::new(Pos { i: 26, j: 1 }, Size { w: 20, h: 8 }),
+            editor: TextEditor::new(Pos { i: 26, j: 1 }, Size { w: 30, h: 15 }),
             last_result: None,
             last_result_expire_at: Duration::from_secs(0),
             save_profile,
