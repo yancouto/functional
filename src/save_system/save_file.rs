@@ -14,7 +14,7 @@ pub struct SaveProfile {
     current_save_file: Mutex<SaveFile>,
 }
 
-#[derive(Savefile, Debug, Clone, Copy)]
+#[derive(Savefile, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LevelResult {
     Success,
     Failure,
@@ -60,12 +60,15 @@ impl SaveProfile {
 
     pub fn mark_level_as_tried(&self, level_name: &str, result: LevelResult) {
         let mut save_file = self.current_save_file.lock();
-        save_file
+        let stored_result = &mut save_file
             .level_info
             .entry(level_name.to_string())
             .or_default()
-            .result = result;
-        self.write("save.data", &*save_file);
+            .result;
+        if *stored_result != LevelResult::Success {
+            *stored_result = result;
+            self.write("save.data", &*save_file);
+        }
     }
 
     pub fn get_levels_info(&self) -> MappedMutexGuard<HashMap<String, LevelInfo>> {
