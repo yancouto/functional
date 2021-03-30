@@ -3,6 +3,7 @@ use std::{
     fmt::{self, Debug},
     hash::Hash,
 };
+use thiserror::Error;
 
 use super::tokenizer::{Constant, TVariable, Token};
 use vec1::Vec1;
@@ -55,12 +56,17 @@ impl fmt::Debug for Node {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum ParseError {
+    #[error("Function must be first part of expression!")]
     FunctionInsideBody,
+    #[error("Extra ':' in the input")]
     ExtraColon,
+    #[error("Some subexpression '()' is empty")]
     MissingExpression,
+    #[error("Parenthesis is unclosed")]
     UnclosedParenthesis,
+    #[error("Extra close parenthesis")]
     ExtraCloseParenthesis,
 }
 

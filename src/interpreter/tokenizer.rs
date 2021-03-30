@@ -1,3 +1,4 @@
+use thiserror::Error;
 pub type TVariable = char;
 pub type Constant = String;
 
@@ -15,8 +16,9 @@ pub enum Token {
     ClosePar,
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum TokenizeError {
+    #[error("Character '{0}' is unknown")]
     UnknownCharacter(char),
 }
 

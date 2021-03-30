@@ -1,5 +1,5 @@
 use crate::{
-    levels::Level,
+    levels::{Level, LevelTestError},
     math::Rect,
     save_system::{LevelResult, SaveProfile},
 };
@@ -11,7 +11,7 @@ use super::base::*;
 pub struct RunSolutionState {
     level: &'static Level,
     save_profile: Rc<SaveProfile>,
-    ans: bool,
+    err: Option<LevelTestError>,
 }
 
 impl RunSolutionState {
@@ -20,11 +20,11 @@ impl RunSolutionState {
         code: impl Iterator<Item = char>,
         save_profile: Rc<SaveProfile>,
     ) -> Self {
-        let ans = level.test(code);
+        let err = level.test(code).err();
         Self {
             level,
             save_profile,
-            ans,
+            err,
         }
     }
 }
@@ -37,7 +37,7 @@ impl GameState for RunSolutionState {
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         data.text_box(
             "Running solution...",
-            if self.ans {
+            if self.err.is_none() {
                 "Your solution is correct!"
             } else {
                 "Your solution is wrong :("
@@ -47,7 +47,7 @@ impl GameState for RunSolutionState {
         if data.time.as_secs() > 3 {
             self.save_profile.mark_level_as_tried(
                 &self.level.name,
-                if self.ans {
+                if self.err.is_none() {
                     LevelResult::Success
                 } else {
                     LevelResult::Failure

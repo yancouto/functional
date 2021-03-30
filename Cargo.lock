@@ -700,6 +700,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "structopt",
+ "thiserror",
  "vec1",
 ]
 

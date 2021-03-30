@@ -1,12 +1,13 @@
 use std::collections::HashMap;
+use thiserror::Error;
 
 use super::parser::{Node, Variable};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum InterpretError {
-    /// Shouldn't really happen
+    #[error("The interpreter algorithm is wrong, this shouldn't happen.")]
     AlgorithmError,
-    /// Interpretation has gone too deep, the expression probaly has no reduction
+    #[error("The interpretation has gone too deep, expression probably has no reduction.")]
     TooDeep,
 }
 

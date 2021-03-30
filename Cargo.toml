@@ -25,6 +25,7 @@ vec1 = "1"
 savefile = "0.7"
 savefile-derive = "0.7"
 parking_lot = "0.11"
+thiserror = "1"
 
 [dependencies.bracket-lib]
 version = "0.8.1"
