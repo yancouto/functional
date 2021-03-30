@@ -1,8 +1,9 @@
 use crate::{
-    levels::{Level, LevelTestError},
+    levels::{get_result, Level, TestRunResults},
     math::Rect,
-    save_system::{LevelResult, SaveProfile},
+    save_system::SaveProfile,
 };
+use std::fmt::Write;
 use std::rc::Rc;
 
 use super::base::*;
@@ -11,7 +12,7 @@ use super::base::*;
 pub struct RunSolutionState {
     level: &'static Level,
     save_profile: Rc<SaveProfile>,
-    err: Option<LevelTestError>,
+    results: TestRunResults,
 }
 
 impl RunSolutionState {
@@ -20,11 +21,11 @@ impl RunSolutionState {
         code: impl Iterator<Item = char>,
         save_profile: Rc<SaveProfile>,
     ) -> Self {
-        let err = level.test(code).err();
         Self {
             level,
             save_profile,
-            err,
+            // Do we need to not block here? Probably not.
+            results: level.test(code),
         }
     }
 }
@@ -35,24 +36,32 @@ impl GameState for RunSolutionState {
     }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
-        data.text_box(
-            "Running solution...",
-            if self.err.is_none() {
-                "Your solution is correct!"
-            } else {
-                "Your solution is wrong :("
-            },
-            Rect::new(20, 20, 20, 20),
-        );
-        if data.time.as_secs() > 3 {
-            self.save_profile.mark_level_as_tried(
-                &self.level.name,
-                if self.err.is_none() {
-                    LevelResult::Success
-                } else {
-                    LevelResult::Failure
-                },
-            );
+        let mut text = String::new();
+        match &self.results {
+            Ok(runs) => runs
+                .iter()
+                .enumerate()
+                .map(|(i, run)| {
+                    write!(&mut text, "Test Case #{}: ", i)?;
+                    match &run.result {
+                        Ok(node) => {
+                            if *node == run.expected_result {
+                                writeln!(&mut text, "SUCCESS!")
+                            } else {
+                                writeln!(&mut text, "WRONG ANSWER!")
+                            }
+                        }
+                        Err(err) => writeln!(&mut text, "ERROR ({})", err),
+                    }
+                })
+                .collect(),
+            Err(err) => writeln!(&mut text, "Failed to parse code: {}", err),
+        }
+        .unwrap();
+        data.text_box("Running solution...", &text, Rect::new(20, 20, 40, 20));
+        if data.time.as_secs() > 5 {
+            self.save_profile
+                .mark_level_as_tried(&self.level.name, get_result(&self.results));
             GameStateEvent::Pop
         } else {
             GameStateEvent::None

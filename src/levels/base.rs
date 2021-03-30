@@ -1,5 +1,6 @@
-use crate::interpreter::{
-    interpret, parse, tokenize, InterpretError, Node, ParseError, TokenizeError,
+use crate::{
+    interpreter::{interpret, parse, tokenize, InterpretError, Node, ParseError, TokenizeError},
+    save_system::LevelResult,
 };
 use thiserror::Error;
 
@@ -24,12 +25,18 @@ fn parse_or_fail(str: &str) -> Box<Node> {
     parse(tokenize(str.chars()).expect("Failed to tokenize")).expect("Failed to parse")
 }
 
-#[derive(Error, Debug)]
-pub enum TestCaseError {
-    #[error("Failed to interpret test case")]
-    InterpretError(#[from] InterpretError),
-    #[error("Output of test is not expected")]
-    WrongAnswer,
+#[derive(Debug)]
+pub struct TestCaseRun {
+    pub result: Result<Box<Node>, InterpretError>,
+    pub expected_result: Box<Node>,
+}
+
+impl TestCaseRun {
+    fn is_correct(&self) -> bool {
+        self.result
+            .as_ref()
+            .map_or(false, |r| *r == self.expected_result)
+    }
 }
 
 impl TestCase {
@@ -40,18 +47,17 @@ impl TestCase {
         }
     }
 
-    fn test(&self, expression: Box<Node>) -> Result<(), TestCaseError> {
+    fn test(&self, expression: Box<Node>) -> TestCaseRun {
         let result = interpret(
             Box::new(Node::Apply {
                 left: self.application.clone(),
                 right: expression,
             }),
             true,
-        )?;
-        if result == self.expected_result {
-            Ok(())
-        } else {
-            Err(TestCaseError::WrongAnswer)
+        );
+        TestCaseRun {
+            result,
+            expected_result: self.expected_result.clone(),
         }
     }
 }
@@ -62,16 +68,29 @@ pub enum LevelTestError {
     TokenizeError(#[from] TokenizeError),
     #[error("While parsing tokens")]
     ParseError(#[from] ParseError),
-    #[error("Failed some test")]
-    TestCaseError(#[from] TestCaseError),
+}
+
+pub type TestRunResults = Result<Vec<TestCaseRun>, LevelTestError>;
+
+pub fn get_result(results: &TestRunResults) -> LevelResult {
+    let r = match &results {
+        Err(_) => false,
+        Ok(runs) => runs.iter().all(|run| run.is_correct()),
+    };
+    if r {
+        LevelResult::Success
+    } else {
+        LevelResult::Failure
+    }
 }
 
 impl Level {
-    pub fn test<S: IntoIterator<Item = char>>(&self, code: S) -> Result<(), LevelTestError> {
+    pub fn test<S: IntoIterator<Item = char>>(&self, code: S) -> TestRunResults {
         let node = parse(tokenize(code)?)?;
-        for test_case in &self.test_cases {
-            test_case.test(node.clone())?;
-        }
-        Ok(())
+        Ok(self
+            .test_cases
+            .iter()
+            .map(|t| t.test(node.clone()))
+            .collect())
     }
 }
