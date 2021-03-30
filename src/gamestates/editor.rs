@@ -67,7 +67,7 @@ impl GameState for EditorState {
             data.text_box(
                 "Extra info",
                 info,
-                Rect::new(1, W / 2 + 1, (W - W / 2 - 1), 20),
+                Rect::new(1, W / 2 + 1, W - W / 2 - 1, 20),
             );
         }
 
