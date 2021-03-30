@@ -1,10 +1,10 @@
 use super::base::*;
 use super::editor::EditorState;
 use crate::levels::{Level, LEVELS};
-use crate::math::*;
+use crate::prelude::*;
 use crate::save_system::{LevelResult, SaveProfile};
 use bracket_lib::prelude as bl;
-use std::{borrow::Cow, rc::Rc};
+use std::borrow::Cow;
 
 struct Section<'a> {
     name: String,
@@ -48,7 +48,7 @@ impl LevelSelectionState<'static> {
 const CURSOR_J: i32 = 3;
 const START_I: i32 = 2;
 const LINES_PER_SECTION: i32 = 3;
-const MID_J: i32 = 40;
+const MID_J: i32 = W / 2;
 
 impl<'a> LevelSelectionState<'a> {
     fn get_i(&self, index: i32) -> i32 {

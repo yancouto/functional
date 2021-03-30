@@ -64,9 +64,9 @@ impl TestCase {
 
 #[derive(Error, Debug)]
 pub enum LevelTestError {
-    #[error("While tokenizing input")]
+    #[error("While tokenizing input: {0}")]
     TokenizeError(#[from] TokenizeError),
-    #[error("While parsing tokens")]
+    #[error("While parsing tokens: {0}")]
     ParseError(#[from] ParseError),
 }
 

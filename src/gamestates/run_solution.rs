@@ -1,6 +1,6 @@
 use crate::{
     levels::{get_result, Level, TestRunResults},
-    math::Rect,
+    math::*,
     save_system::SaveProfile,
 };
 use std::fmt::Write;
@@ -36,29 +36,36 @@ impl GameState for RunSolutionState {
     }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
-        let mut text = String::new();
-        match &self.results {
-            Ok(runs) => runs
-                .iter()
-                .enumerate()
-                .map(|(i, run)| {
-                    write!(&mut text, "Test Case #{}: ", i)?;
-                    match &run.result {
-                        Ok(node) => {
-                            if *node == run.expected_result {
-                                writeln!(&mut text, "SUCCESS!")
-                            } else {
-                                writeln!(&mut text, "WRONG ANSWER!")
-                            }
-                        }
-                        Err(err) => writeln!(&mut text, "ERROR ({})", err),
+        let text = if let Err(err) = &self.results {
+            format!("Failed to parse code:\n{}", err)
+        } else {
+            "Code compiled successfully.".to_owned()
+        };
+        data.text_box("Solution results", &text, Rect::new(20, 20, 40, 20));
+
+        if let Ok(runs) = &self.results {
+            let mut cur_i = 26;
+            for (i, run) in runs.iter().enumerate() {
+                let result_str = match &run.result {
+                    Ok(node) => if *node == run.expected_result {
+                        "SUCCESS!"
+                    } else {
+                        "WRONG ANSWER!"
                     }
-                })
-                .collect(),
-            Err(err) => writeln!(&mut text, "Failed to parse code: {}", err),
+                    .to_owned(),
+                    Err(err) => format!("ERROR ({})", err),
+                };
+                data.print(
+                    Pos::new(cur_i, 21),
+                    &format!("Test Case #{}: {}", i, result_str),
+                );
+                if data.button("Debug", Pos::new(cur_i - 1, 50)) {
+                    log::info!("Pressed debug {}!", i);
+                }
+                cur_i += 3;
+            }
         }
-        .unwrap();
-        data.text_box("Running solution...", &text, Rect::new(20, 20, 40, 20));
+
         if data.time.as_secs() > 5 {
             self.save_profile
                 .mark_level_as_tried(&self.level.name, get_result(&self.results));

@@ -41,6 +41,16 @@ struct Opt {
 // TODO: profile selection
 pub const DEFAULT_PROFILE: &str = "default";
 
+// Things useful for everyone
+mod prelude {
+    pub const W: i32 = 130;
+    pub const H: i32 = 80;
+    pub use crate::math::Pos;
+    pub use std::rc::Rc;
+}
+
+use prelude::*;
+
 fn main() -> bl::BError {
     let mut log_file = app_dirs::app_root(app_dirs::AppDataType::UserCache, &save_system::APP_INFO)
         .expect("Failed to get app root");
@@ -62,7 +72,7 @@ fn main() -> bl::BError {
     log::info!("Writing debug logs to {:?}", log_file);
 
     let opt = Opt::from_args();
-    let ctx = bl::BTermBuilder::simple80x50()
+    let ctx = bl::BTermBuilder::simple(W, H)?
         .with_title("functional")
         .build()?;
     let gs = MainState {

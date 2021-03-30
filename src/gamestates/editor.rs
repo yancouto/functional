@@ -1,8 +1,9 @@
 use crate::{
-    math::{Pos, Rect, Size},
+    math::{Rect, Size},
+    prelude::*,
     save_system::SaveProfile,
 };
-use std::{rc::Rc, time::Duration};
+use std::time::Duration;
 
 use super::base::{GameState, GameStateEvent, TickData};
 use super::{level_selection::LevelSelectionState, run_solution::RunSolutionState};
@@ -26,7 +27,7 @@ impl EditorState {
         let mut state = Self {
             time: Duration::from_secs(0),
             level,
-            editor: TextEditor::new(Pos { i: 26, j: 1 }, Size { w: 30, h: 15 }),
+            editor: TextEditor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
             last_result: None,
             last_result_expire_at: Duration::from_secs(0),
             save_profile,
@@ -60,24 +61,28 @@ impl GameState for EditorState {
         data.text_box(
             &self.level.name,
             &self.level.description,
-            Rect::new(1, 0, 50, 20),
+            Rect::new(1, 0, W / 2, 30),
         );
         if let Some(info) = &self.level.extra_info {
-            data.text_box("Extra info", info, Rect::new(1, 50, 30, 20));
+            data.text_box(
+                "Extra info",
+                info,
+                Rect::new(1, W / 2 + 1, (W - W / 2 - 1), 20),
+            );
         }
 
-        for i in 1..4u8 {
-            if data.button(&i.to_string(), Pos::new(21, (i as i32 - 1) * 3))
-                && i != self.current_solution
+        for idx in 1..4u8 {
+            if data.button(&idx.to_string(), Pos::new(31, (idx as i32 - 1) * 3))
+                && idx != self.current_solution
             {
                 self.save_current_solution();
-                self.load_solution(i);
+                self.load_solution(idx);
             }
         }
 
         self.editor.draw(&mut data);
 
-        if data.button("Run", Pos::new(47, 2))
+        if data.button("Run", Pos::new(H - 3, 2))
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
         {
             return GameStateEvent::Push(box RunSolutionState::new(
@@ -88,8 +93,8 @@ impl GameState for EditorState {
         }
 
         data.console
-            .print_right(80, 47, "Click Run or press CTRL+ENTER to run");
-        data.console.print_right(80, 49, "Press ESC to go back");
+            .print_right(W, H - 3, "Click Run or press CTRL+ENTER to run");
+        data.console.print_right(W, H - 1, "Press ESC to go back");
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::F10)) {
             self.save_current_solution();

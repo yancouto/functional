@@ -1,5 +1,4 @@
-use crate::{gamestates::base::*, DEFAULT_PROFILE};
-use std::rc::Rc;
+use crate::{gamestates::base::*, prelude::*, DEFAULT_PROFILE};
 
 use super::level_selection;
 
@@ -35,7 +34,7 @@ impl GameState for IntroState {
             revealed_letters = len - 1 + ((revealed_letters - len) / 5) % 2;
         }
         data.console
-            .print(10, 10, &OPENING_STR[0..revealed_letters]);
+            .print(20, 20, &OPENING_STR[0..revealed_letters]);
         if !switch {
             GameStateEvent::None
         } else {
