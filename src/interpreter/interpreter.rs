@@ -33,18 +33,6 @@ const MAX_LEVEL: usize = 100;
 
 use std::pin::Pin;
 
-macro_rules! yield_from {
-    ($x: expr) => {{
-        let mut gen = $x;
-        loop {
-            match gen.as_mut().resume(()) {
-                GeneratorState::Yielded(y) => yield y,
-                GeneratorState::Complete(r) => break r,
-            }
-        }
-    }};
-}
-
 fn replace_req(root: Box<Node>, var: Variable, value: Box<Node>) -> Box<Node> {
     box match *root {
         Node::Variable(v) => {
@@ -72,6 +60,21 @@ fn replace_req(root: Box<Node>, var: Variable, value: Box<Node>) -> Box<Node> {
     }
 }
 
+macro_rules! yield_from {
+    ($x: expr, $f: expr) => {{
+        let mut gen = $x;
+        loop {
+            match gen.as_mut().resume(()) {
+                GeneratorState::Yielded(y) => yield $f(y),
+                GeneratorState::Complete(r) => break r,
+            }
+        }
+    }};
+    ($x: expr) => {
+        yield_from!($x, |x| x)
+    };
+}
+
 fn interpret_req(
     level: usize,
     root: Box<Node>,
@@ -84,16 +87,24 @@ fn interpret_req(
         }
         Ok(match *root {
             Node::Apply { left, right } => {
-                let left = yield_from!(interpret_req(level + 1, left, do_apply, fully_resolve))?;
-                let right = yield_from!(interpret_req(
-                    level + 1,
-                    right,
-                    fully_resolve,
-                    fully_resolve,
-                ))?;
+                let left = yield_from!(
+                    interpret_req(level + 1, left, do_apply, fully_resolve),
+                    |left| box Node::Apply {
+                        left,
+                        right: right.clone()
+                    }
+                )?;
+                let right = yield_from!(
+                    interpret_req(level + 1, right, fully_resolve, fully_resolve,),
+                    |right| box Node::Apply {
+                        left: left.clone(),
+                        right
+                    }
+                )?;
                 match *left {
                     Node::Function { variable, body } if do_apply => {
                         let body = replace_req(body, variable, right);
+                        yield body.clone();
                         yield_from!(interpret_req(level + 1, body, true, fully_resolve))?
                     }
                     _ => box Node::Apply { left, right },
@@ -101,8 +112,13 @@ fn interpret_req(
             }
             Node::Variable(v) => box Node::Variable(v),
             Node::Function { variable, body } => {
-                let inner =
-                    yield_from!(interpret_req(level + 1, body, fully_resolve, fully_resolve))?;
+                let inner = yield_from!(
+                    interpret_req(level + 1, body, fully_resolve, fully_resolve),
+                    |inner| box Node::Function {
+                        variable,
+                        body: inner
+                    }
+                )?;
                 Box::new(Node::Function {
                     variable,
                     body: inner,
@@ -114,10 +130,13 @@ fn interpret_req(
 }
 
 pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, InterpretError> {
+    println!("\nInterpret {:?}", root);
     let mut gen = interpret_req(0, root, true, fully_resolve);
     loop {
         match gen.as_mut().resume(()) {
-            GeneratorState::Yielded(_) => {}
+            GeneratorState::Yielded(y) => {
+                println!("YIELD {:?}", y);
+            }
             GeneratorState::Complete(ret) => break ret,
         }
     }
@@ -171,6 +190,7 @@ mod test {
         interpret_eq("(x: x x) (y: y)", "(y: y)");
         interpret_eq("(x: x x) (y: z)", "z");
         interpret_eq("(x: x x x) (x: x)", "y: y");
+        interpret_eq_full("((x:x)(y:y))(z:z)", "x:x", true);
     }
 
     #[test]

@@ -49,7 +49,7 @@ impl fmt::Debug for Node {
             Node::Constant(c) => f.write_str(c),
             Node::Variable(v) => v.fmt(f),
             Node::Function { variable, body } => {
-                f.write_fmt(format_args!("{:?}: {:?}", variable, body))
+                f.write_fmt(format_args!("({:?}: {:?})", variable, body))
             }
             Node::Apply { left, right } => f.write_fmt(format_args!("({:?} {:?})", left, right)),
         }
