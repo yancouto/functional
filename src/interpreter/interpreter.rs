@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::ops::{Generator, GeneratorState};
 use thiserror::Error;
 
@@ -46,97 +45,76 @@ macro_rules! yield_from {
     }};
 }
 
+fn replace_req(root: Box<Node>, var: Variable, value: Box<Node>) -> Box<Node> {
+    box match *root {
+        Node::Variable(v) => {
+            if v == var {
+                *value.clone()
+            } else {
+                Node::Variable(v)
+            }
+        }
+        Node::Function { variable, body } => {
+            if variable == var {
+                Node::Function { variable, body }
+            } else {
+                Node::Function {
+                    variable,
+                    body: replace_req(body, var, value),
+                }
+            }
+        }
+        Node::Apply { left, right } => Node::Apply {
+            left: replace_req(left, var, value.clone()),
+            right: replace_req(right, var, value.clone()),
+        },
+        node @ Node::Constant(_) => node,
+    }
+}
+
 fn interpret_req(
     level: usize,
     root: Box<Node>,
     do_apply: bool,
-    assigned_values: &mut HashMap<Variable, Box<Node>>,
     fully_resolve: bool,
-) -> Pin<Box<dyn Generator<Yield = Box<Node>, Return = Result<Box<Node>, InterpretError>> + '_>> {
+) -> Pin<Box<dyn Generator<Yield = Box<Node>, Return = Result<Box<Node>, InterpretError>>>> {
     Box::pin(move || {
         if level > MAX_LEVEL {
             return Err(InterpretError::TooDeep);
         }
         Ok(match *root {
             Node::Apply { left, right } => {
-                let left = yield_from!(interpret_req(
-                    level + 1,
-                    left,
-                    do_apply,
-                    assigned_values,
-                    fully_resolve
-                ))?;
+                let left = yield_from!(interpret_req(level + 1, left, do_apply, fully_resolve))?;
                 let right = yield_from!(interpret_req(
                     level + 1,
                     right,
                     fully_resolve,
-                    assigned_values,
                     fully_resolve,
                 ))?;
                 match *left {
                     Node::Function { variable, body } if do_apply => {
-                        let prev = assigned_values.insert(variable, right);
-                        let ans = yield_from!(interpret_req(
-                            level + 1,
-                            body,
-                            true,
-                            assigned_values,
-                            fully_resolve
-                        ))?;
-                        if let Some(n) = prev {
-                            assigned_values.insert(variable, n).assert_some()?;
-                        } else {
-                            assigned_values.remove(&variable).assert_some()?;
-                        }
-                        ans
+                        let body = replace_req(body, variable, right);
+                        yield_from!(interpret_req(level + 1, body, true, fully_resolve))?
                     }
-                    _ => Box::new(Node::Apply { left, right }),
+                    _ => box Node::Apply { left, right },
                 }
             }
-            Node::Variable(v) => {
-                let maybe_node = assigned_values.get(&v).map(Clone::clone);
-                if let Some(n) = maybe_node {
-                    let prev = assigned_values.remove(&v);
-                    let ans = yield_from!(interpret_req(
-                        level + 1,
-                        n,
-                        do_apply,
-                        assigned_values,
-                        fully_resolve
-                    ));
-                    if let Some(prev_node) = prev {
-                        assigned_values.insert(v, prev_node).assert_none()?;
-                    }
-                    ans
-                } else {
-                    Ok(box Node::Variable(v))
-                }?
-            }
+            Node::Variable(v) => box Node::Variable(v),
             Node::Function { variable, body } => {
-                let prev = assigned_values.remove(&variable);
-                let inner = yield_from!(interpret_req(
-                    level + 1,
-                    body,
-                    fully_resolve,
-                    assigned_values,
-                    fully_resolve,
-                ))?;
-                if let Some(prev_node) = prev {
-                    assigned_values.insert(variable, prev_node).assert_none()?;
-                }
+                let inner =
+                    yield_from!(interpret_req(level + 1, body, fully_resolve, fully_resolve))?;
                 Box::new(Node::Function {
                     variable,
                     body: inner,
                 })
             }
-            node @ Node::Constant(..) => Box::new(node),
+            node @ Node::Constant(..) => box node,
         })
     })
 }
 
 pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, InterpretError> {
-    let mut assigned_values = HashMap::new();
-    let mut gen = interpret_req(0, root, true, &mut assigned_values, fully_resolve);
+    let mut gen = interpret_req(0, root, true, fully_resolve);
     loop {
         match gen.as_mut().resume(()) {
             GeneratorState::Yielded(_) => {}
