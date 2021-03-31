@@ -2,6 +2,7 @@
 #![feature(box_syntax)]
 #![feature(try_blocks)]
 #![feature(try_trait)]
+#![feature(generators, generator_trait)]
 #[macro_use]
 extern crate lazy_static;
 
