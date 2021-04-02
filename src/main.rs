@@ -15,6 +15,7 @@ mod interpreter;
 mod levels;
 mod math;
 mod save_system;
+mod utils;
 use structopt::StructOpt;
 
 use bracket_lib::prelude as bl;

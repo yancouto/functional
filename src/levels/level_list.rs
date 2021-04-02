@@ -24,7 +24,7 @@ struct JLevelConfig {
 
 const RAW_LEVEL_CONFIG: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/level_config.json"));
 
-fn load_using_jsonnet() -> Vec<Level> {
+fn load_all() -> Vec<Level> {
     let config: JLevelConfig = serde_json::from_slice(RAW_LEVEL_CONFIG).expect("Invalid json");
     config
         .sections
@@ -44,5 +44,5 @@ fn load_using_jsonnet() -> Vec<Level> {
 }
 
 lazy_static! {
-    pub static ref LEVELS: Vec<Level> = load_using_jsonnet();
+    pub static ref LEVELS: Vec<Level> = load_all();
 }
