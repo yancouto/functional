@@ -25,8 +25,9 @@ fn parse_or_fail(str: &str) -> Box<Node> {
     parse(tokenize(str.chars()).expect("Failed to tokenize")).expect("Failed to parse")
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TestCaseRun {
+    pub test_expression: Box<Node>,
     pub result: Result<Box<Node>, InterpretError>,
     pub expected_result: Box<Node>,
 }
@@ -47,15 +48,18 @@ impl TestCase {
         }
     }
 
+    fn test_expression(&self, expression: Box<Node>) -> Box<Node> {
+        box Node::Apply {
+            left: self.application.clone(),
+            right: expression,
+        }
+    }
+
     fn test(&self, expression: Box<Node>) -> TestCaseRun {
-        let result = interpret(
-            Box::new(Node::Apply {
-                left: self.application.clone(),
-                right: expression,
-            }),
-            true,
-        );
+        let test_expression = self.test_expression(expression);
+        let result = interpret(test_expression.clone(), true);
         TestCaseRun {
+            test_expression,
             result,
             expected_result: self.expected_result.clone(),
         }
@@ -70,12 +74,18 @@ pub enum LevelTestError {
     ParseError(#[from] ParseError),
 }
 
-pub type TestRunResults = Result<Vec<TestCaseRun>, LevelTestError>;
+#[derive(Debug)]
+pub struct TestCaseRuns {
+    pub runs: Vec<TestCaseRun>,
+    pub code: Box<Node>,
+}
+
+pub type TestRunResults = Result<TestCaseRuns, LevelTestError>;
 
 pub fn get_result(results: &TestRunResults) -> LevelResult {
     let r = match &results {
         Err(_) => false,
-        Ok(runs) => runs.iter().all(|run| run.is_correct()),
+        Ok(runs) => runs.runs.iter().all(|run| run.is_correct()),
     };
     if r {
         LevelResult::Success
@@ -87,10 +97,13 @@ pub fn get_result(results: &TestRunResults) -> LevelResult {
 impl Level {
     pub fn test<S: IntoIterator<Item = char>>(&self, code: S) -> TestRunResults {
         let node = parse(tokenize(code)?)?;
-        Ok(self
-            .test_cases
-            .iter()
-            .map(|t| t.test(node.clone()))
-            .collect())
+        Ok(TestCaseRuns {
+            runs: self
+                .test_cases
+                .iter()
+                .map(|t| t.test(node.clone()))
+                .collect(),
+            code: node,
+        })
     }
 }

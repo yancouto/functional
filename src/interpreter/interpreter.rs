@@ -166,9 +166,9 @@ impl Iterator for InterpretIter {
         } else {
             match self.gen.as_mut().resume(()) {
                 GeneratorState::Yielded(y) => Some(y),
-                GeneratorState::Complete(r) => {
+                GeneratorState::Complete(_) => {
                     self.finished = true;
-                    r.ok()
+                    None
                 }
             }
         }
@@ -297,11 +297,13 @@ mod test {
     }
 
     fn assert_partial(code: &str, intermediates: Vec<&str>) {
-        for (got, expected) in
-            interpret_itermediates(parse_ok(code), false).zip(intermediates.into_iter())
-        {
-            assert_eq!(got, parse_ok(expected));
-        }
+        assert_eq!(
+            interpret_itermediates(parse_ok(code), false).collect::<Vec<_>>(),
+            intermediates
+                .into_iter()
+                .map(|e| parse_ok(e))
+                .collect::<Vec<_>>()
+        );
     }
 
     #[test]

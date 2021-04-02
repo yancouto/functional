@@ -5,7 +5,7 @@ use crate::{
     save_system::SaveProfile,
 };
 
-use super::base::*;
+use super::{base::*, debugger::DebuggerState};
 
 #[derive(Debug)]
 pub struct RunSolutionState {
@@ -20,11 +20,13 @@ impl RunSolutionState {
         code: impl Iterator<Item = char>,
         save_profile: Rc<SaveProfile>,
     ) -> Self {
+        let results = level.test(code);
+        save_profile.mark_level_as_tried(&level.name, get_result(&results));
         Self {
             level,
             save_profile,
             // Do we need to not block here? Probably not.
-            results: level.test(code),
+            results,
         }
     }
 }
@@ -44,7 +46,7 @@ impl GameState for RunSolutionState {
 
         if let Ok(runs) = &self.results {
             let mut cur_i = 26;
-            for (i, run) in runs.iter().enumerate() {
+            for (i, run) in runs.runs.iter().enumerate() {
                 let result_str = match &run.result {
                     Ok(node) => if *node == run.expected_result {
                         "SUCCESS!"
@@ -59,15 +61,13 @@ impl GameState for RunSolutionState {
                     &format!("Test Case #{}: {}", i, result_str),
                 );
                 if data.button("Debug", Pos::new(cur_i - 1, 50)) {
-                    log::info!("Pressed debug {}!", i);
+                    return GameStateEvent::Push(box DebuggerState::new(run.clone()));
                 }
                 cur_i += 3;
             }
         }
 
-        if data.time.as_secs() > 5 {
-            self.save_profile
-                .mark_level_as_tried(&self.level.name, get_result(&self.results));
+        if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
             GameStateEvent::Pop
         } else {
             GameStateEvent::None

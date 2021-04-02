@@ -48,7 +48,9 @@ mod prelude {
     pub const W: i32 = 130;
     pub const H: i32 = 80;
     pub use crate::math::Pos;
+    pub use bracket_lib::prelude as bl;
     pub use std::rc::Rc;
+    pub use vec1::{vec1, Vec1};
 }
 
 use prelude::*;
