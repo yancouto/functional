@@ -75,67 +75,80 @@ macro_rules! yield_from {
     };
 }
 
-fn interpret_req(
-    level: usize,
-    root: Box<Node>,
-    do_apply: bool,
+#[derive(Debug, Clone, Copy)]
+struct Interpreter {
     fully_resolve: bool,
-) -> Pin<Box<dyn Generator<Yield = Box<Node>, Return = Result<Box<Node>, InterpretError>>>> {
-    Box::pin(move || {
-        if level > MAX_LEVEL {
-            return Err(InterpretError::TooDeep);
-        }
-        Ok(match *root {
-            Node::Apply { left, right } => {
-                let left = yield_from!(
-                    interpret_req(level + 1, left, do_apply, fully_resolve),
-                    |left| box Node::Apply {
-                        left,
-                        right: right.clone()
+    yield_intermediates: bool,
+}
+
+impl Interpreter {
+    fn interpret(
+        self,
+        level: usize,
+        root: Box<Node>,
+        do_apply: bool,
+    ) -> Pin<Box<dyn Generator<Yield = Box<Node>, Return = Result<Box<Node>, InterpretError>>>>
+    {
+        Box::pin(move || {
+            if level > MAX_LEVEL {
+                return Err(InterpretError::TooDeep);
+            }
+            Ok(match *root {
+                Node::Apply { left, right } => {
+                    let left = yield_from!(self.interpret(level + 1, left, do_apply), |left| {
+                        box Node::Apply {
+                            left,
+                            right: right.clone(),
+                        }
+                    })?;
+                    let right = yield_from!(
+                        self.interpret(level + 1, right, self.fully_resolve),
+                        |right| box Node::Apply {
+                            left: left.clone(),
+                            right
+                        }
+                    )?;
+                    match *left {
+                        Node::Function { variable, body } if do_apply => {
+                            let body = replace_req(body, variable, right);
+                            if self.yield_intermediates {
+                                yield body.clone();
+                            }
+                            yield_from!(self.interpret(level + 1, body, true))?
+                        }
+                        _ => box Node::Apply { left, right },
                     }
-                )?;
-                let right = yield_from!(
-                    interpret_req(level + 1, right, fully_resolve, fully_resolve,),
-                    |right| box Node::Apply {
-                        left: left.clone(),
-                        right
-                    }
-                )?;
-                match *left {
-                    Node::Function { variable, body } if do_apply => {
-                        let body = replace_req(body, variable, right);
-                        yield body.clone();
-                        yield_from!(interpret_req(level + 1, body, true, fully_resolve))?
-                    }
-                    _ => box Node::Apply { left, right },
                 }
-            }
-            Node::Variable(v) => box Node::Variable(v),
-            Node::Function { variable, body } => {
-                let inner = yield_from!(
-                    interpret_req(level + 1, body, fully_resolve, fully_resolve),
-                    |inner| box Node::Function {
+                Node::Variable(v) => box Node::Variable(v),
+                Node::Function { variable, body } => {
+                    let inner = yield_from!(
+                        self.interpret(level + 1, body, self.fully_resolve),
+                        |inner| box Node::Function {
+                            variable,
+                            body: inner
+                        }
+                    )?;
+                    Box::new(Node::Function {
                         variable,
-                        body: inner
-                    }
-                )?;
-                Box::new(Node::Function {
-                    variable,
-                    body: inner,
-                })
-            }
-            node @ Node::Constant(..) => box node,
+                        body: inner,
+                    })
+                }
+                node @ Node::Constant(..) => box node,
+            })
         })
-    })
+    }
 }
 
 pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, InterpretError> {
-    println!("\nInterpret {:?}", root);
-    let mut gen = interpret_req(0, root, true, fully_resolve);
+    let mut gen = Interpreter {
+        fully_resolve,
+        yield_intermediates: false,
+    }
+    .interpret(0, root, true);
     loop {
         match gen.as_mut().resume(()) {
-            GeneratorState::Yielded(y) => {
-                println!("YIELD {:?}", y);
+            GeneratorState::Yielded(_) => {
+                debug_assert!(false, "yield_intermediates is set to false")
             }
             GeneratorState::Complete(ret) => break ret,
         }
