@@ -1,5 +1,5 @@
-use crate::{gamestates::base::TickData, math::*};
-use bracket_lib::prelude as bl;
+use crate::{gamestates::base::TickData, math::*, prelude::*};
+
 use std::time::Duration;
 
 #[derive(Debug)]

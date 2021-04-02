@@ -1,7 +1,5 @@
-use crate::math::Pos;
-use bracket_lib::prelude as bl;
+use crate::prelude::*;
 use std::{collections::HashSet, time::Duration};
-use vec1::Vec1;
 
 struct GSData {
     cur: Box<dyn GameState>,

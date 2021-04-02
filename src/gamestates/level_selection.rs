@@ -4,7 +4,7 @@ use crate::levels::{Level, LEVELS};
 use crate::prelude::*;
 use crate::save_system::{LevelResult, SaveProfile};
 use crate::utils::vec_with_cursor::VecWithCursor;
-use bracket_lib::prelude as bl;
+
 use std::borrow::Cow;
 use vec1::vec1;
 

@@ -1,7 +1,6 @@
-use bracket_lib::prelude as bl;
-
 use crate::gamestates::base::TickData;
 use crate::math::{Pos, Rect, Size};
+use crate::prelude::*;
 
 fn white() -> bl::RGBA {
     bl::RGBA::named(bl::WHITE)

@@ -9,7 +9,6 @@ use super::base::{GameState, GameStateEvent, TickData};
 use super::{level_selection::LevelSelectionState, run_solution::RunSolutionState};
 use crate::drawables::TextEditor;
 use crate::levels::Level;
-use bracket_lib::prelude as bl;
 
 #[derive(Debug)]
 pub struct EditorState {
