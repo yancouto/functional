@@ -81,14 +81,11 @@ struct Interpreter {
     yield_intermediates: bool,
 }
 
+type InterpretResult =
+    Pin<Box<dyn Generator<Yield = Box<Node>, Return = Result<Box<Node>, InterpretError>>>>;
+
 impl Interpreter {
-    fn interpret(
-        self,
-        level: usize,
-        root: Box<Node>,
-        do_apply: bool,
-    ) -> Pin<Box<dyn Generator<Yield = Box<Node>, Return = Result<Box<Node>, InterpretError>>>>
-    {
+    fn interpret(self, level: usize, root: Box<Node>, do_apply: bool) -> InterpretResult {
         Box::pin(move || {
             if level > MAX_LEVEL {
                 return Err(InterpretError::TooDeep);
@@ -152,6 +149,43 @@ pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, Inte
             }
             GeneratorState::Complete(ret) => break ret,
         }
+    }
+}
+
+struct InterpretIter {
+    gen: InterpretResult,
+    finished: bool,
+}
+
+impl Iterator for InterpretIter {
+    type Item = Box<Node>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.finished {
+            None
+        } else {
+            match self.gen.as_mut().resume(()) {
+                GeneratorState::Yielded(y) => Some(y),
+                GeneratorState::Complete(r) => {
+                    self.finished = true;
+                    r.ok()
+                }
+            }
+        }
+    }
+}
+
+pub fn interpret_itermediates(
+    root: Box<Node>,
+    fully_resolve: bool,
+) -> impl Iterator<Item = Box<Node>> {
+    InterpretIter {
+        gen: Interpreter {
+            fully_resolve,
+            yield_intermediates: true,
+        }
+        .interpret(0, root, true),
+        finished: false,
     }
 }
 
@@ -241,6 +275,15 @@ mod test {
     }
 
     #[test]
+    fn trick_eq() {
+        // This may error if we're copying variables incorrectly, since the replacement
+        // will have two functions with the same variable. This is not really a problem
+        // but the eq checker might fail.
+        interpret_eq("(x: w x x) (x: x)", "z (x: x) (x:x)");
+        interpret_eq("(x: w x x) (y: z)", "z (a: b) (c:b)");
+    }
+
+    #[test]
     fn recursive() {
         assert_eq!(
             interpret_err(&format!("({} (f: x:y: f x y)) a b", Y_COMB)),
@@ -251,5 +294,18 @@ mod test {
     #[test]
     fn some_levels() {
         interpret_eq_full("(f: x: f (f x)) (x: x x) A", "(A A) (A A)", true);
+    }
+
+    fn assert_partial(code: &str, intermediates: Vec<&str>) {
+        for (got, expected) in
+            interpret_itermediates(parse_ok(code), false).zip(intermediates.into_iter())
+        {
+            assert_eq!(got, parse_ok(expected));
+        }
+    }
+
+    #[test]
+    fn partial() {
+        assert_partial("(x: x x) (y: z)", vec!["(y: z) (y:z)", "z"]);
     }
 }

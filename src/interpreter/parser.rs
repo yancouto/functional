@@ -218,6 +218,23 @@ impl<A: Eq + Hash + Copy, B: Eq + Hash + Copy> OneToOne<A, B> {
         *self.left_to_right.entry(a).or_insert(b) == b
             && *self.right_to_left.entry(b).or_insert(a) == a
     }
+
+    fn with_added_eq<F: FnOnce(&mut Self) -> R, R>(&mut self, a: A, b: B, f: F) -> R {
+        let prev_b = self.left_to_right.insert(a, b);
+        let prev_a = self.right_to_left.insert(b, a);
+        let r = f(self);
+        match prev_b {
+            Some(b) => self.left_to_right.insert(a, b),
+            None => self.left_to_right.remove(&a),
+        }
+        .unwrap();
+        match prev_a {
+            Some(a) => self.right_to_left.insert(b, a),
+            None => self.right_to_left.remove(&b),
+        }
+        .unwrap();
+        r
+    }
 }
 
 impl Node {
@@ -231,7 +248,9 @@ impl Node {
                     variable: variable2,
                     body: body2,
                 },
-            ) => var_eqs.check(variable.uid, variable2.uid) && body.synthatic_eq(body2, var_eqs),
+            ) => var_eqs.with_added_eq(variable.uid, variable2.uid, |vars| {
+                body.synthatic_eq(body2, vars)
+            }),
             (
                 Node::Apply { left, right },
                 Node::Apply {
@@ -351,6 +370,12 @@ pub mod test {
         assert_eq!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x z) (y: y z)"));
         assert_ne!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x z) (z: z n)"));
         assert_ne!(parse_ok("(x: x x)"), parse_ok("(x: x y)"));
+        // Variable names may be reused if they're bound, and it still works
+        assert_eq!((0, (0, 0.n()).n()).n(), (0, (1, 1.n()).n()).n(),);
+        assert_eq!(
+            parse_ok("(x: x) (x: x)"),
+            ((0, 0.n()).n(), (0, 0.n()).n()).n(),
+        );
     }
 
     #[test]
