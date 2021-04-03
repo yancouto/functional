@@ -1,13 +1,13 @@
 use crate::{gamestates::base::TickData, math::*, prelude::*};
 
-use std::time::Duration;
+use std::{convert::TryFrom, time::Duration};
 
 #[derive(Debug)]
 pub struct TextEditor {
     pos: Pos,
     cursor: Pos,
     size: Size,
-    text: Vec<Vec<char>>,
+    text: Vec1<Vec<char>>,
     cursor_blink_rate: Duration,
 }
 
@@ -17,7 +17,7 @@ impl TextEditor {
             pos,
             cursor: Pos { i: 0, j: 0 },
             size,
-            text: vec![vec![' '; size.w as usize]; size.h as usize],
+            text: vec1![vec![]],
             cursor_blink_rate: Duration::from_secs_f32(0.5),
         }
     }
@@ -26,9 +26,13 @@ impl TextEditor {
         match event {
             bl::BEvent::Character { c } => {
                 if !c.is_control() {
-                    let cu = &self.cursor;
-                    self.text[cu.i as usize][cu.j as usize] = *c;
-                    self.move_cursor_right();
+                    if self.line_len() < self.size.w - 1 {
+                        let j = self.cursor.j as usize;
+                        self.line_mut().insert(j, *c);
+                        self.cursor.j += 1;
+                    } else {
+                        // line is full
+                    }
                 }
             }
             bl::BEvent::KeyboardInput {
@@ -37,14 +41,34 @@ impl TextEditor {
                 use bl::VirtualKeyCode as K;
                 match key {
                     K::Back => {
-                        if self.move_cursor_left() {
-                            self.text[self.cursor.i as usize][self.cursor.j as usize] = ' ';
-                        };
+                        if self.cursor.j == 0 {
+                            // join lines
+                            if self.cursor.i > 0 {
+                                let new_i = self.cursor.i as usize - 1;
+                                if self.line_len() + (self.text[new_i].len() as i32) < self.size.w {
+                                    let mut second_line = self.text.remove(new_i + 1).unwrap();
+                                    self.cursor.j = self.text[new_i].len() as i32;
+                                    self.text[new_i].append(&mut second_line);
+                                    self.cursor.i = new_i as i32;
+                                } else {
+                                    // cannot delete because lines are big
+                                }
+                            }
+                        } else {
+                            self.cursor.j -= 1; // will now be < length
+                            let j = self.cursor.j as usize;
+                            self.line_mut().remove(j);
+                        }
                     }
                     K::Return | K::NumpadEnter => {
-                        if self.cursor.i < self.size.h - 1 {
+                        if (self.text.len() as i32) < self.size.h {
+                            let j = self.cursor.j as usize;
+                            let rest = self.line_mut().split_off(j);
+                            self.text.insert(self.cursor.i as usize + 1, rest);
                             self.cursor.i += 1;
                             self.cursor.j = 0;
+                        } else {
+                            // Cannot because there are too much lines
                         }
                     }
                     K::Right => {
@@ -56,11 +80,13 @@ impl TextEditor {
                     K::Up => {
                         if self.cursor.i > 0 {
                             self.cursor.i -= 1;
+                            self.cursor.j = self.cursor.j.min(self.line_len());
                         }
                     }
                     K::Down => {
-                        if self.cursor.i < self.size.h - 1 {
+                        if self.cursor.i < self.text.len() as i32 - 1 {
                             self.cursor.i += 1;
+                            self.cursor.j = self.cursor.j.min(self.line_len());
                         }
                     }
                     _ => {}
@@ -72,16 +98,30 @@ impl TextEditor {
 
     pub fn load_text(&mut self, text: &str) {
         let size = &self.size;
-        self.text = text
-            .split('\n')
-            .map(|line| {
-                let mut line: Vec<char> = line.chars().collect();
-                line.resize_with(size.w as usize, || ' ');
-                line
-            })
-            .collect();
-        self.text
-            .resize_with(size.h as usize, || vec![' '; size.w as usize]);
+        self.text = Vec1::try_from(
+            text.split('\n')
+                .map(|line| {
+                    let mut line: Vec<char> = line.chars().collect();
+                    line.truncate(size.w as usize);
+                    line
+                })
+                .collect::<Vec<_>>(),
+        )
+        .unwrap_or(vec1![vec![]]);
+        self.text.truncate(size.h as usize).unwrap();
+
+        for line in &mut self.text {
+            while let Some(c) = line.last() {
+                if c.is_ascii_whitespace() {
+                    line.pop().unwrap();
+                } else {
+                    break;
+                }
+            }
+        }
+        while self.text.len() > 1 && self.text.last().is_empty() {
+            self.text.pop().unwrap();
+        }
     }
 
     pub fn to_string(&self) -> String {
@@ -93,7 +133,10 @@ impl TextEditor {
     }
 
     pub fn get_chars(&self) -> impl Iterator<Item = char> {
-        self.text.clone().into_iter().flatten()
+        self.text.clone().into_iter().flat_map(|mut v| {
+            v.push('\n');
+            v
+        })
     }
 
     pub fn draw(&mut self, data: &mut TickData) {
@@ -126,10 +169,23 @@ impl TextEditor {
 }
 
 impl TextEditor {
+    fn line_mut(&mut self) -> &mut Vec<char> {
+        unsafe { self.text.get_unchecked_mut(self.cursor.i as usize) }
+    }
+
+    fn line(&self) -> &Vec<char> {
+        unsafe { self.text.get_unchecked(self.cursor.i as usize) }
+    }
+
+    fn line_len(&self) -> i32 {
+        self.line().len() as i32
+    }
+
     fn move_cursor_right(&mut self) -> bool {
+        let line_len = self.line_len();
         let c = &mut self.cursor;
-        if c.j == self.size.w - 1 {
-            if c.i == self.size.h - 1 {
+        if c.j == line_len {
+            if c.i == self.text.len() as i32 - 1 {
                 // do nothing, we're on the last char
                 false
             } else {
@@ -150,7 +206,8 @@ impl TextEditor {
                 false
             } else {
                 c.i -= 1;
-                c.j = self.size.w - 1;
+                std::mem::drop(c);
+                self.cursor.j = self.line_len();
                 true
             }
         } else {
