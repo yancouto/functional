@@ -15,8 +15,8 @@ mod interpreter;
 mod levels;
 mod math;
 mod save_system;
+mod text_editor;
 mod utils;
-use std::rc::Rc;
 
 use simplelog::*;
 use structopt::StructOpt;
