@@ -1,8 +1,9 @@
-use crate::prelude::*;
 use std::{collections::HashSet, time::Duration};
 
+use crate::prelude::*;
+
 struct GSData {
-    cur: Box<dyn GameState>,
+    cur:  Box<dyn GameState>,
     time: Duration,
 }
 
@@ -13,16 +14,16 @@ struct EventTickData {
 
 pub struct TickData<'a> {
     /// Time since start of gamestate
-    pub time: Duration,
-    pub console: &'a mut Box<dyn bl::Console>,
+    pub time:         Duration,
+    pub console:      &'a mut Box<dyn bl::Console>,
     /// Was the LMB pressed this frame?
-    pub left_click: bool,
+    pub left_click:   bool,
     /// Was any key pressed this frame?
-    pub pressed_key: Option<bl::VirtualKeyCode>,
+    pub pressed_key:  Option<bl::VirtualKeyCode>,
     /// (i, j)
-    pub mouse_pos: Pos,
+    pub mouse_pos:    Pos,
     /// Is pressing ctrl
-    pub ctrl: bool,
+    pub ctrl:         bool,
     /// Current keys pressed
     pub keys_pressed: &'a HashSet<bl::VirtualKeyCode>,
 }
@@ -66,7 +67,7 @@ impl GameStateManager {
         log::info!("Starting on gamestate {}", first.name());
         Self {
             all_gs: Vec1::new(GSData {
-                cur: first,
+                cur:  first,
                 time: Duration::default(),
             }),
         }
@@ -81,14 +82,14 @@ impl GameStateManager {
                 // Blib stops tracking close events when we activate event queue
                 bl::BEvent::CloseRequested => {
                     ctx.quit();
-                }
+                },
                 bl::BEvent::MouseClick {
                     button: 0,
                     pressed: true,
                 } => {
                     data.left_click = true;
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
         data
@@ -105,7 +106,7 @@ impl GameStateManager {
             self.all_gs.last_mut().cur.tick(tick_data)
         });
         match event {
-            GameStateEvent::None => {}
+            GameStateEvent::None => {},
             GameStateEvent::Switch(new) => {
                 log::info!(
                     "Switching top gamestate from {} to {}",
@@ -113,7 +114,7 @@ impl GameStateManager {
                     new.name()
                 );
                 let new = GSData {
-                    cur: new,
+                    cur:  new,
                     time: Duration::default(),
                 };
                 if self.all_gs.pop().is_err() {
@@ -122,15 +123,15 @@ impl GameStateManager {
                 } else {
                     self.all_gs.push(new);
                 }
-            }
+            },
             GameStateEvent::Push(new) => {
                 log::info!("Pushing gamestate {} to stack", new.name());
                 let new = GSData {
-                    cur: new,
+                    cur:  new,
                     time: Duration::default(),
                 };
                 self.all_gs.push(new);
-            }
+            },
             GameStateEvent::Pop => match self.all_gs.pop() {
                 Err(_) => log::error!("Trying to pop only gamestate, ignoring."),
                 Ok(gs) => log::info!("Popped gamestate {}", gs.cur.name()),
@@ -161,9 +162,7 @@ pub trait GameState {
 // COPIED from bracket lib
 
 #[cfg(feature = "curses")]
-fn pixel_to_char_pos(&self, pos: (i32, i32), _console: &Box<dyn Console>) -> (i32, i32) {
-    pos
-}
+fn pixel_to_char_pos(&self, pos: (i32, i32), _console: &Box<dyn Console>) -> (i32, i32) { pos }
 
 #[cfg(not(feature = "curses"))]
 fn pixel_to_char_pos(

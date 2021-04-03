@@ -1,18 +1,19 @@
-use super::{Level, TestCase};
 use serde::Deserialize;
+
+use super::{Level, TestCase};
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct JLevel {
-    name: String,
+    name:        String,
     description: String,
-    extra_info: Option<String>,
-    test_cases: Vec<(String, String)>,
+    extra_info:  Option<String>,
+    test_cases:  Vec<(String, String)>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct JSection {
-    name: String,
+    name:   String,
     levels: Vec<JLevel>,
 }
 
@@ -31,10 +32,10 @@ fn load_all() -> Vec<Level> {
         .into_iter()
         .flat_map(|s| s.levels)
         .map(|l| Level {
-            name: l.name,
+            name:        l.name,
             description: l.description,
-            extra_info: l.extra_info,
-            test_cases: l
+            extra_info:  l.extra_info,
+            test_cases:  l
                 .test_cases
                 .into_iter()
                 .map(|t| TestCase::from(&t.0, &t.1))

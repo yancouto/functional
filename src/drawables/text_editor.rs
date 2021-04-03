@@ -1,13 +1,13 @@
-use crate::{gamestates::base::TickData, math::*, prelude::*};
-
 use std::{convert::TryFrom, time::Duration};
+
+use crate::{gamestates::base::TickData, math::*, prelude::*};
 
 #[derive(Debug)]
 pub struct TextEditor {
-    pos: Pos,
-    cursor: Pos,
-    size: Size,
-    text: Vec1<Vec<char>>,
+    pos:               Pos,
+    cursor:            Pos,
+    size:              Size,
+    text:              Vec1<Vec<char>>,
     cursor_blink_rate: Duration,
 }
 
@@ -34,7 +34,7 @@ impl TextEditor {
                         // line is full
                     }
                 }
-            }
+            },
             bl::BEvent::KeyboardInput {
                 key, pressed: true, ..
             } => {
@@ -59,7 +59,7 @@ impl TextEditor {
                             let j = self.cursor.j as usize;
                             self.line_mut().remove(j);
                         }
-                    }
+                    },
                     K::Return | K::NumpadEnter => {
                         if (self.text.len() as i32) < self.size.h {
                             let j = self.cursor.j as usize;
@@ -70,29 +70,27 @@ impl TextEditor {
                         } else {
                             // Cannot because there are too much lines
                         }
-                    }
+                    },
                     K::Right => {
                         self.move_cursor_right();
-                    }
+                    },
                     K::Left => {
                         self.move_cursor_left();
-                    }
-                    K::Up => {
+                    },
+                    K::Up =>
                         if self.cursor.i > 0 {
                             self.cursor.i -= 1;
                             self.cursor.j = self.cursor.j.min(self.line_len());
-                        }
-                    }
-                    K::Down => {
+                        },
+                    K::Down =>
                         if self.cursor.i < self.text.len() as i32 - 1 {
                             self.cursor.i += 1;
                             self.cursor.j = self.cursor.j.min(self.line_len());
-                        }
-                    }
-                    _ => {}
+                        },
+                    _ => {},
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -173,13 +171,9 @@ impl TextEditor {
         unsafe { self.text.get_unchecked_mut(self.cursor.i as usize) }
     }
 
-    fn line(&self) -> &Vec<char> {
-        unsafe { self.text.get_unchecked(self.cursor.i as usize) }
-    }
+    fn line(&self) -> &Vec<char> { unsafe { self.text.get_unchecked(self.cursor.i as usize) } }
 
-    fn line_len(&self) -> i32 {
-        self.line().len() as i32
-    }
+    fn line_len(&self) -> i32 { self.line().len() as i32 }
 
     fn move_cursor_right(&mut self) -> bool {
         let line_len = self.line_len();

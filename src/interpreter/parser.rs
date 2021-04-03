@@ -1,12 +1,11 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
-    fmt::{self, Debug},
-    hash::Hash,
+    collections::{hash_map::Entry, HashMap}, fmt::{self, Debug}, hash::Hash
 };
+
 use thiserror::Error;
+use vec1::Vec1;
 
 use super::tokenizer::{Constant, TVariable, Token};
-use vec1::Vec1;
 
 /// uid is used to identify variables in different bindings. For example, in
 /// ((x: x) (x: x x)), the x's on both functions will have different uids, but
@@ -14,7 +13,7 @@ use vec1::Vec1;
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Variable {
     /// Unique number between all variables in the term
-    uid: u32,
+    uid:      u32,
     /// Original name of the variable, may have duplicates
     original: TVariable,
 }
@@ -23,7 +22,7 @@ impl Variable {
     fn new(uid: &mut u32, var: TVariable) -> Self {
         *uid += 1;
         Self {
-            uid: *uid - 1,
+            uid:      *uid - 1,
             original: var,
         }
     }
@@ -39,8 +38,14 @@ impl fmt::Debug for Variable {
 pub enum Node {
     Constant(Constant),
     Variable(Variable),
-    Function { variable: Variable, body: Box<Node> },
-    Apply { left: Box<Node>, right: Box<Node> },
+    Function {
+        variable: Variable,
+        body:     Box<Node>,
+    },
+    Apply {
+        left:  Box<Node>,
+        right: Box<Node>,
+    },
 }
 
 impl fmt::Debug for Node {
@@ -48,9 +53,8 @@ impl fmt::Debug for Node {
         match self {
             Node::Constant(c) => f.write_str(c),
             Node::Variable(v) => v.fmt(f),
-            Node::Function { variable, body } => {
-                f.write_fmt(format_args!("({:?}: {:?})", variable, body))
-            }
+            Node::Function { variable, body } =>
+                f.write_fmt(format_args!("({:?}: {:?})", variable, body)),
             Node::Apply { left, right } => f.write_fmt(format_args!("({:?} {:?})", left, right)),
         }
     }
@@ -75,7 +79,7 @@ pub enum ParseError {
 /// by a single term (which may be the application of several terms in a row).
 #[derive(Debug, Default)]
 struct Level {
-    prev_node: Option<Box<Node>>,
+    prev_node:            Option<Box<Node>>,
     enveloping_functions: Vec<Variable>,
 }
 
@@ -85,13 +89,14 @@ impl Level {
     fn merge(&mut self, node: Box<Node>) {
         self.prev_node = if let Some(prev) = self.prev_node.take() {
             Some(Box::new(Node::Apply {
-                left: prev,
+                left:  prev,
                 right: node,
             }))
         } else {
             Some(node)
         };
     }
+
     /// Finish this level, and turn it into a single term. Fails if prev_node is
     /// None.
     fn close(mut self, bindings: &mut Bindings) -> Result<Box<Node>, ParseError> {
@@ -113,14 +118,14 @@ impl Level {
 
 #[derive(Debug)]
 struct Bindings {
-    map: HashMap<TVariable, Vec1<Variable>>,
+    map:      HashMap<TVariable, Vec1<Variable>>,
     num_vars: u32,
 }
 
 impl Bindings {
     fn new() -> Self {
         Self {
-            map: HashMap::new(),
+            map:      HashMap::new(),
             num_vars: 0,
         }
     }
@@ -131,7 +136,7 @@ impl Bindings {
         match self.map.entry(name) {
             Entry::Vacant(entry) => {
                 entry.insert(Vec1::new(var));
-            }
+            },
             Entry::Occupied(mut entry) => entry.get_mut().push(var),
         };
         var
@@ -151,11 +156,10 @@ impl Bindings {
 
     fn pop_var(&mut self, name: TVariable) {
         match self.map.entry(name) {
-            Entry::Occupied(mut entry) => {
+            Entry::Occupied(mut entry) =>
                 if entry.get_mut().pop().is_err() {
                     entry.remove();
-                }
-            }
+                },
             Entry::Vacant(..) => panic!("Should have entry"),
         }
     }
@@ -169,7 +173,7 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
     let mut bindings = Bindings::new();
     while let Some(token) = iter.next() {
         match token {
-            Token::Variable(name) => {
+            Token::Variable(name) =>
                 if iter.peek() == Some(&Token::Colon) {
                     iter.next().unwrap();
                     if levels.last().prev_node.is_some() {
@@ -183,22 +187,20 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
                     levels
                         .last_mut()
                         .merge(Box::new(Node::Variable(bindings.get_var(name))));
-                }
-            }
+                },
             Token::Constant(c) => {
                 levels.last_mut().merge(Box::new(Node::Constant(c)));
-            }
+            },
             Token::Colon => {
                 return Err(ParseError::ExtraColon);
-            }
+            },
             Token::OpenPar => levels.push(Level::default()),
-            Token::ClosePar => {
+            Token::ClosePar =>
                 if let Ok(last) = levels.pop() {
                     levels.last_mut().merge(last.close(&mut bindings)?);
                 } else {
                     return Err(ParseError::ExtraCloseParenthesis);
-                }
-            }
+                },
         }
     }
     if levels.len() > 1 {
@@ -264,48 +266,35 @@ impl Node {
 }
 
 impl PartialEq for Node {
-    fn eq(&self, other: &Node) -> bool {
-        self.synthatic_eq(other, &mut OneToOne::default())
-    }
+    fn eq(&self, other: &Node) -> bool { self.synthatic_eq(other, &mut OneToOne::default()) }
 }
 
 impl Eq for Node {}
 
 #[cfg(test)]
 pub mod test {
-    use super::super::tokenizer::tokenize;
-    use super::*;
+    use super::{super::tokenizer::tokenize, *};
 
-    pub fn parse_ok(str: &str) -> Box<Node> {
-        parse(tokenize(str.chars()).unwrap()).unwrap()
-    }
+    pub fn parse_ok(str: &str) -> Box<Node> { parse(tokenize(str.chars()).unwrap()).unwrap() }
 
-    fn parse_err(str: &str) -> ParseError {
-        parse(tokenize(str.chars()).unwrap()).unwrap_err()
-    }
+    fn parse_err(str: &str) -> ParseError { parse(tokenize(str.chars()).unwrap()).unwrap_err() }
 
     impl From<u32> for Variable {
-        fn from(uid: u32) -> Self {
-            Self { uid, original: '-' }
-        }
+        fn from(uid: u32) -> Self { Self { uid, original: '-' } }
     }
 
     impl From<u32> for Box<Node> {
-        fn from(uid: u32) -> Self {
-            Box::new(Node::Variable(uid.into()))
-        }
+        fn from(uid: u32) -> Self { Box::new(Node::Variable(uid.into())) }
     }
 
     impl From<&str> for Box<Node> {
-        fn from(val: &str) -> Self {
-            Box::new(Node::Constant(val.to_string()))
-        }
+        fn from(val: &str) -> Self { Box::new(Node::Constant(val.to_string())) }
     }
 
     impl From<(Box<Node>, Box<Node>)> for Box<Node> {
         fn from(args: (Box<Node>, Box<Node>)) -> Self {
             Box::new(Node::Apply {
-                left: args.0,
+                left:  args.0,
                 right: args.1,
             })
         }
@@ -315,7 +304,7 @@ pub mod test {
         fn from(args: (u32, Box<Node>)) -> Self {
             Box::new(Node::Function {
                 variable: args.0.into(),
-                body: args.1,
+                body:     args.1,
             })
         }
     }
@@ -325,9 +314,7 @@ pub mod test {
     }
 
     impl<T: Into<Box<Node>>> ConvertToNode for T {
-        fn n(self) -> Box<Node> {
-            self.into()
-        }
+        fn n(self) -> Box<Node> { self.into() }
     }
 
     #[test]

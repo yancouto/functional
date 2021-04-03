@@ -1,24 +1,21 @@
-use crate::{
-    math::{Rect, Size},
-    prelude::*,
-    save_system::SaveProfile,
-};
 use std::time::Duration;
 
-use super::base::{GameState, GameStateEvent, TickData};
-use super::{level_selection::LevelSelectionState, run_solution::RunSolutionState};
-use crate::drawables::TextEditor;
-use crate::levels::Level;
+use super::{
+    base::{GameState, GameStateEvent, TickData}, level_selection::LevelSelectionState, run_solution::RunSolutionState
+};
+use crate::{
+    drawables::TextEditor, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
+};
 
 #[derive(Debug)]
 pub struct EditorState {
-    time: Duration,
-    level: &'static Level,
-    editor: TextEditor,
-    last_result: Option<bool>,
+    time:                  Duration,
+    level:                 &'static Level,
+    editor:                TextEditor,
+    last_result:           Option<bool>,
     last_result_expire_at: Duration,
-    current_solution: u8,
-    save_profile: Rc<SaveProfile>,
+    current_solution:      u8,
+    save_profile:          Rc<SaveProfile>,
 }
 
 impl EditorState {
@@ -52,9 +49,7 @@ impl EditorState {
 }
 
 impl GameState for EditorState {
-    fn name(&self) -> &'static str {
-        "Editor"
-    }
+    fn name(&self) -> &'static str { "Editor" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         data.text_box(
@@ -106,7 +101,5 @@ impl GameState for EditorState {
         }
     }
 
-    fn on_event(&mut self, event: bl::BEvent) {
-        self.editor.on_event(&event);
-    }
+    fn on_event(&mut self, event: bl::BEvent) { self.editor.on_event(&event); }
 }

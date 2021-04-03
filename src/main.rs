@@ -16,19 +16,17 @@ mod levels;
 mod math;
 mod save_system;
 mod utils;
-use structopt::StructOpt;
+use std::rc::Rc;
 
 use simplelog::*;
-use std::rc::Rc;
+use structopt::StructOpt;
 
 struct MainState {
     manager: gamestates::base::GameStateManager,
 }
 
 impl bl::GameState for MainState {
-    fn tick(&mut self, ctx: &mut bl::BTerm) {
-        self.manager.tick(ctx);
-    }
+    fn tick(&mut self, ctx: &mut bl::BTerm) { self.manager.tick(ctx); }
 }
 
 #[derive(Debug, StructOpt)]
@@ -46,10 +44,12 @@ pub const DEFAULT_PROFILE: &str = "default";
 mod prelude {
     pub const W: i32 = 130;
     pub const H: i32 = 80;
-    pub use crate::math::Pos;
-    pub use bracket_lib::prelude as bl;
     pub use std::rc::Rc;
+
+    pub use bracket_lib::prelude as bl;
     pub use vec1::{vec1, Vec1};
+
+    pub use crate::math::Pos;
 }
 
 use prelude::*;

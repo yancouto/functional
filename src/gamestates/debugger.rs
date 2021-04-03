@@ -1,14 +1,11 @@
-use crate::{
-    interpreter::{interpret_itermediates, Node},
-    levels::TestCaseRun,
-    prelude::*,
-};
-
 use super::base::*;
+use crate::{
+    interpreter::{interpret_itermediates, Node}, levels::TestCaseRun, prelude::*
+};
 
 #[derive(Debug)]
 pub struct DebuggerState {
-    run: TestCaseRun,
+    run:   TestCaseRun,
     steps: Vec1<Box<Node>>,
 }
 
@@ -25,9 +22,7 @@ impl DebuggerState {
 }
 
 impl GameState for DebuggerState {
-    fn name(&self) -> &'static str {
-        "Debugger"
-    }
+    fn name(&self) -> &'static str { "Debugger" }
 
     fn tick(&mut self, data: TickData) -> GameStateEvent {
         data.console.print_centered(3, "Running solution");

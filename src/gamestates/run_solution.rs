@@ -1,17 +1,13 @@
-use crate::{
-    levels::{get_result, Level, TestRunResults},
-    math::*,
-    prelude::*,
-    save_system::SaveProfile,
-};
-
 use super::{base::*, debugger::DebuggerState};
+use crate::{
+    levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
+};
 
 #[derive(Debug)]
 pub struct RunSolutionState {
-    level: &'static Level,
+    level:        &'static Level,
     save_profile: Rc<SaveProfile>,
-    results: TestRunResults,
+    results:      TestRunResults,
 }
 
 impl RunSolutionState {
@@ -32,9 +28,7 @@ impl RunSolutionState {
 }
 
 impl GameState for RunSolutionState {
-    fn name(&self) -> &'static str {
-        "RunSolution"
-    }
+    fn name(&self) -> &'static str { "RunSolution" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         let text = if let Err(err) = &self.results {

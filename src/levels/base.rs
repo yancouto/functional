@@ -1,13 +1,13 @@
-use crate::{
-    interpreter::{interpret, parse, tokenize, InterpretError, Node, ParseError, TokenizeError},
-    save_system::LevelResult,
-};
 use thiserror::Error;
+
+use crate::{
+    interpreter::{interpret, parse, tokenize, InterpretError, Node, ParseError, TokenizeError}, save_system::LevelResult
+};
 
 #[derive(Debug)]
 pub struct TestCase {
     /// Must be a function that receives the code and returns the result.
-    application: Box<Node>,
+    application:     Box<Node>,
     /// Result of the application
     /// TODO: Maybe we need more complex checking?
     expected_result: Box<Node>,
@@ -15,10 +15,10 @@ pub struct TestCase {
 
 #[derive(Debug)]
 pub struct Level {
-    pub name: String,
+    pub name:        String,
     pub description: String,
-    pub extra_info: Option<String>,
-    pub test_cases: Vec<TestCase>,
+    pub extra_info:  Option<String>,
+    pub test_cases:  Vec<TestCase>,
 }
 
 fn parse_or_fail(str: &str) -> Box<Node> {
@@ -28,7 +28,7 @@ fn parse_or_fail(str: &str) -> Box<Node> {
 #[derive(Debug, Clone)]
 pub struct TestCaseRun {
     pub test_expression: Box<Node>,
-    pub result: Result<Box<Node>, InterpretError>,
+    pub result:          Result<Box<Node>, InterpretError>,
     pub expected_result: Box<Node>,
 }
 
@@ -43,14 +43,14 @@ impl TestCaseRun {
 impl TestCase {
     pub fn from(application: &str, result: &str) -> Self {
         Self {
-            application: parse_or_fail(application),
+            application:     parse_or_fail(application),
             expected_result: parse_or_fail(result),
         }
     }
 
     fn test_expression(&self, expression: Box<Node>) -> Box<Node> {
         box Node::Apply {
-            left: self.application.clone(),
+            left:  self.application.clone(),
             right: expression,
         }
     }

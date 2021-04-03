@@ -1,5 +1,6 @@
-use jsonnet::JsonnetVm;
 use std::path::Path;
+
+use jsonnet::JsonnetVm;
 
 fn get_level_config_json() -> String {
     let mut vm = JsonnetVm::new();

@@ -1,16 +1,10 @@
-use crate::gamestates::base::TickData;
-use crate::math::{Pos, Rect, Size};
-use crate::prelude::*;
+use crate::{
+    gamestates::base::TickData, math::{Pos, Rect, Size}, prelude::*
+};
 
-fn white() -> bl::RGBA {
-    bl::RGBA::named(bl::WHITE)
-}
-fn black() -> bl::RGBA {
-    bl::RGBA::named(bl::BLACK)
-}
-fn gray() -> bl::RGBA {
-    bl::RGBA::named(bl::GRAY)
-}
+fn white() -> bl::RGBA { bl::RGBA::named(bl::WHITE) }
+fn black() -> bl::RGBA { bl::RGBA::named(bl::BLACK) }
+fn gray() -> bl::RGBA { bl::RGBA::named(bl::GRAY) }
 
 impl TickData<'_> {
     pub fn draw_box(&mut self, title: &str, rect: Rect) {
@@ -64,7 +58,5 @@ impl TickData<'_> {
             .set(pos.j, pos.i, white(), black(), bl::to_cp437(c));
     }
 
-    pub fn print(&mut self, pos: Pos, text: &str) {
-        self.console.print(pos.j, pos.i, text);
-    }
+    pub fn print(&mut self, pos: Pos, text: &str) { self.console.print(pos.j, pos.i, text); }
 }

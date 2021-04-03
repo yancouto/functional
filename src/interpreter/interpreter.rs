@@ -1,4 +1,5 @@
 use std::ops::{Generator, GeneratorState};
+
 use thiserror::Error;
 
 use super::parser::{Node, Variable};
@@ -17,9 +18,8 @@ trait AlgorithmAssert<T> {
 }
 
 impl<T> AlgorithmAssert<T> for Option<T> {
-    fn assert_some(self) -> Result<T, InterpretError> {
-        self.ok_or(InterpretError::AlgorithmError)
-    }
+    fn assert_some(self) -> Result<T, InterpretError> { self.ok_or(InterpretError::AlgorithmError) }
+
     fn assert_none(self) -> Result<(), InterpretError> {
         if self.is_some() {
             Err(InterpretError::AlgorithmError)
@@ -35,14 +35,13 @@ use std::pin::Pin;
 
 fn replace_req(root: Box<Node>, var: Variable, value: Box<Node>) -> Box<Node> {
     box match *root {
-        Node::Variable(v) => {
+        Node::Variable(v) =>
             if v == var {
                 *value.clone()
             } else {
                 Node::Variable(v)
-            }
-        }
-        Node::Function { variable, body } => {
+            },
+        Node::Function { variable, body } =>
             if variable == var {
                 Node::Function { variable, body }
             } else {
@@ -50,10 +49,9 @@ fn replace_req(root: Box<Node>, var: Variable, value: Box<Node>) -> Box<Node> {
                     variable,
                     body: replace_req(body, var, value),
                 }
-            }
-        }
+            },
         Node::Apply { left, right } => Node::Apply {
-            left: replace_req(left, var, value.clone()),
+            left:  replace_req(left, var, value.clone()),
             right: replace_req(right, var, value.clone()),
         },
         node @ Node::Constant(_) => node,
@@ -77,7 +75,7 @@ macro_rules! yield_from {
 
 #[derive(Debug, Clone, Copy)]
 struct Interpreter {
-    fully_resolve: bool,
+    fully_resolve:       bool,
     yield_intermediates: bool,
 }
 
@@ -112,10 +110,10 @@ impl Interpreter {
                                 yield body.clone();
                             }
                             yield_from!(self.interpret(level + 1, body, true))?
-                        }
+                        },
                         _ => box Node::Apply { left, right },
                     }
-                }
+                },
                 Node::Variable(v) => box Node::Variable(v),
                 Node::Function { variable, body } => {
                     let inner = yield_from!(
@@ -129,7 +127,7 @@ impl Interpreter {
                         variable,
                         body: inner,
                     })
-                }
+                },
                 node @ Node::Constant(..) => box node,
             })
         })
@@ -146,14 +144,14 @@ pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, Inte
         match gen.as_mut().resume(()) {
             GeneratorState::Yielded(_) => {
                 debug_assert!(false, "yield_intermediates is set to false")
-            }
+            },
             GeneratorState::Complete(ret) => break ret,
         }
     }
 }
 
 struct InterpretIter {
-    gen: InterpretResult,
+    gen:      InterpretResult,
     finished: bool,
 }
 
@@ -169,7 +167,7 @@ impl Iterator for InterpretIter {
                 GeneratorState::Complete(_) => {
                     self.finished = true;
                     None
-                }
+                },
             }
         }
     }
@@ -180,7 +178,7 @@ pub fn interpret_itermediates(
     fully_resolve: bool,
 ) -> impl Iterator<Item = Box<Node>> {
     InterpretIter {
-        gen: Interpreter {
+        gen:      Interpreter {
             fully_resolve,
             yield_intermediates: true,
         }
@@ -191,8 +189,7 @@ pub fn interpret_itermediates(
 
 #[cfg(test)]
 mod test {
-    use super::super::parser::test::parse_ok;
-    use super::*;
+    use super::{super::parser::test::parse_ok, *};
 
     const Y_COMB: &str = "(f: (x: f (x x)) (x: f (x x)))";
 
@@ -200,13 +197,9 @@ mod test {
         interpret(root, false)
     }
 
-    fn interpret_ok(str: &str) -> Box<Node> {
-        interpret_lazy(parse_ok(str)).unwrap()
-    }
+    fn interpret_ok(str: &str) -> Box<Node> { interpret_lazy(parse_ok(str)).unwrap() }
 
-    fn interpret_err(str: &str) -> InterpretError {
-        interpret_lazy(parse_ok(str)).unwrap_err()
-    }
+    fn interpret_err(str: &str) -> InterpretError { interpret_lazy(parse_ok(str)).unwrap_err() }
 
     fn interpret_eq_full(src: &str, expected: &str, fully_resolve: bool) {
         assert_eq!(
@@ -228,9 +221,7 @@ mod test {
     }
 
     #[test]
-    fn simple_apply() {
-        interpret_eq("(x: x) z", "z");
-    }
+    fn simple_apply() { interpret_eq("(x: x) z", "z"); }
     #[test]
     fn more_apply() {
         interpret_eq("(x: x x) (y z)", "(y z) (y z)");
@@ -250,9 +241,7 @@ mod test {
         interpret_eq("(x: y: x) y z", "y");
     }
     #[test]
-    fn tricky2() {
-        interpret_eq("(x: x x) (y: x)", "x");
-    }
+    fn tricky2() { interpret_eq("(x: x x) (y: x)", "x"); }
 
     #[test]
     fn infinite() {
@@ -292,9 +281,7 @@ mod test {
     }
 
     #[test]
-    fn some_levels() {
-        interpret_eq_full("(f: x: f (f x)) (x: x x) A", "(A A) (A A)", true);
-    }
+    fn some_levels() { interpret_eq_full("(f: x: f (f x)) (x: x x) A", "(A A) (A A)", true); }
 
     fn assert_partial(code: &str, intermediates: Vec<&str>) {
         assert_eq!(
@@ -307,7 +294,5 @@ mod test {
     }
 
     #[test]
-    fn partial() {
-        assert_partial("(x: x x) (y: z)", vec!["(y: z) (y:z)", "z"]);
-    }
+    fn partial() { assert_partial("(x: x x) (y: z)", vec!["(y: z) (y:z)", "z"]); }
 }

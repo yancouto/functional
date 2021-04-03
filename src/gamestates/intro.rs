@@ -1,6 +1,5 @@
-use crate::{gamestates::base::*, prelude::*, DEFAULT_PROFILE};
-
 use super::level_selection;
+use crate::{gamestates::base::*, prelude::*, DEFAULT_PROFILE};
 
 const OPENING_STR: &str = "this is functional.";
 
@@ -18,9 +17,7 @@ impl IntroState {
 }
 
 impl GameState for IntroState {
-    fn name(&self) -> &'static str {
-        "Intro"
-    }
+    fn name(&self) -> &'static str { "Intro" }
 
     fn tick(&mut self, data: TickData) -> GameStateEvent {
         let mut revealed_letters = (data.time.as_millis() as usize) / 100;

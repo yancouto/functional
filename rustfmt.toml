@@ -1,0 +1,11 @@
+fn_single_line=true
+imports_layout="Horizontal"
+match_arm_blocks=false
+match_block_trailing_comma=true
+imports_granularity="Crate"
+newline_style="Native"
+reorder_impl_items=true
+group_imports="StdExternalCrate"
+reorder_modules=true
+struct_field_align_threshold=20
+use_field_init_shorthand=true

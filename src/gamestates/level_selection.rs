@@ -1,23 +1,22 @@
-use super::base::*;
-use super::editor::EditorState;
-use crate::levels::{Level, LEVELS};
-use crate::prelude::*;
-use crate::save_system::{LevelResult, SaveProfile};
-use crate::utils::vec_with_cursor::VecWithCursor;
-
 use std::borrow::Cow;
+
 use vec1::vec1;
 
+use super::{base::*, editor::EditorState};
+use crate::{
+    levels::{Level, LEVELS}, prelude::*, save_system::{LevelResult, SaveProfile}, utils::vec_with_cursor::VecWithCursor
+};
+
 struct Section<'a> {
-    name: String,
+    name:   String,
     levels: Vec<&'a Level>,
 }
 
 pub struct LevelSelectionState<'a> {
     /// Index of selected section
-    sections: VecWithCursor<Section<'a>>,
+    sections:     VecWithCursor<Section<'a>>,
     /// Index of selected level inside section
-    level_i: Option<usize>,
+    level_i:      Option<usize>,
     save_profile: Rc<SaveProfile>,
 }
 
@@ -30,7 +29,7 @@ impl LevelSelectionState<'static> {
         };
         let l = LevelSelectionState {
             sections: vec1![Section {
-                name: "basic".to_string(),
+                name:   "basic".to_string(),
                 levels: random_levels(5),
             }]
             .into(),
@@ -52,15 +51,11 @@ const LINES_PER_SECTION: i32 = 3;
 const MID_J: i32 = W / 2;
 
 impl<'a> LevelSelectionState<'a> {
-    fn get_i(&self, index: i32) -> i32 {
-        START_I + LINES_PER_SECTION * index
-    }
+    fn get_i(&self, index: i32) -> i32 { START_I + LINES_PER_SECTION * index }
 }
 
 impl GameState for LevelSelectionState<'static> {
-    fn name(&self) -> &'static str {
-        "LevelSelection"
-    }
+    fn name(&self) -> &'static str { "LevelSelection" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         for (i, section) in self.sections.inner().iter().enumerate() {
@@ -78,7 +73,7 @@ impl GameState for LevelSelectionState<'static> {
                 match info.result {
                     LevelResult::Success => text.to_mut().push_str(" (completed)"),
                     LevelResult::Failure => text.to_mut().push_str(" (failed)"),
-                    LevelResult::NotTried => {}
+                    LevelResult::NotTried => {},
                 }
                 data.print(Pos::new(self.get_i(i as i32), MID_J + CURSOR_J + 2), &text);
             }
@@ -114,30 +109,28 @@ impl GameState for LevelSelectionState<'static> {
             bl::BEvent::KeyboardInput {
                 key, pressed: true, ..
             } => match key {
-                bl::VirtualKeyCode::Down => {
+                bl::VirtualKeyCode::Down =>
                     if let Some(li) = self.level_i {
                         self.level_i = Some((li + 1) % self.sections.get().levels.len());
                     } else {
                         self.sections.cursor_increment();
-                    }
-                }
-                bl::VirtualKeyCode::Up => {
+                    },
+                bl::VirtualKeyCode::Up =>
                     if let Some(li) = self.level_i {
                         let len = self.sections.get().levels.len();
                         self.level_i = Some((li + len - 1) % len);
                     } else {
                         self.sections.cursor_decrement();
-                    }
-                }
+                    },
                 bl::VirtualKeyCode::Right if self.level_i.is_none() => {
                     self.level_i = Some(0);
-                }
+                },
                 bl::VirtualKeyCode::Left if self.level_i.is_some() => {
                     self.level_i = None;
-                }
-                _ => {}
+                },
+                _ => {},
             },
-            _ => {}
+            _ => {},
         }
     }
 }

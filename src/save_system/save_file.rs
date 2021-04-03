@@ -1,16 +1,16 @@
+use std::{collections::HashMap, fs, io, path::PathBuf};
+
 use app_dirs::*;
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
-use std::{collections::HashMap, fs};
-use std::{io, path::PathBuf};
 
 pub const APP_INFO: AppInfo = AppInfo {
-    name: "functional",
+    name:   "functional",
     author: "yancouto",
 };
 
 #[derive(Debug)]
 pub struct SaveProfile {
-    path: PathBuf,
+    path:              PathBuf,
     current_save_file: Mutex<SaveFile>,
 }
 
@@ -22,9 +22,7 @@ pub enum LevelResult {
 }
 
 impl Default for LevelResult {
-    fn default() -> Self {
-        Self::NotTried
-    }
+    fn default() -> Self { Self::NotTried }
 }
 
 const CURRENT_SAVE_VERSION: u32 = 0;
@@ -75,9 +73,7 @@ impl SaveProfile {
         MutexGuard::map(self.current_save_file.lock(), |s| &mut s.level_info)
     }
 
-    pub fn reload(&self) {
-        self.read("save.data", &mut *self.current_save_file.lock());
-    }
+    pub fn reload(&self) { self.read("save.data", &mut *self.current_save_file.lock()); }
 }
 
 impl SaveProfile {
@@ -105,9 +101,7 @@ impl SaveProfile {
             Ok(value) => *data = value,
             Err(savefile::SavefileError::IOError { io_error })
                 if io_error.kind() == io::ErrorKind::NotFound =>
-            {
-                *data = Default::default()
-            }
+                *data = Default::default(),
             Err(err) => log::error!("Failed to read save file {}: {:?}", path, err),
         }
     }
