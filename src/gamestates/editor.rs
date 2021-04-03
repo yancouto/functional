@@ -9,13 +9,11 @@ use crate::{
 
 #[derive(Debug)]
 pub struct EditorState {
-    time:                  Duration,
-    level:                 &'static Level,
-    editor:                TextEditor,
-    last_result:           Option<bool>,
-    last_result_expire_at: Duration,
-    current_solution:      u8,
-    save_profile:          Rc<SaveProfile>,
+    time:             Duration,
+    level:            &'static Level,
+    editor:           TextEditor,
+    current_solution: u8,
+    save_profile:     Rc<SaveProfile>,
 }
 
 impl EditorState {
@@ -24,8 +22,6 @@ impl EditorState {
             time: Duration::from_secs(0),
             level,
             editor: TextEditor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
-            last_result: None,
-            last_result_expire_at: Duration::from_secs(0),
             save_profile,
             current_solution: 1,
         };
