@@ -77,6 +77,16 @@ pub enum ServerNotification {
         view_id: String,
         update:  Update,
     },
+    AvailablePlugins {
+        view_id: String,
+        plugins: Vec<Json>,
+    },
+    AvailableLanguages {
+        languages: Vec<String>,
+    },
+    AvailableThemes {
+        themes: Vec<String>,
+    },
 }
 
 #[derive(Debug)]
