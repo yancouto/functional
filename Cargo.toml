@@ -29,9 +29,6 @@ thiserror = "1"
 xi-core-lib = "0.3"
 xi-rpc = "0.3"
 
-[lib]
-name = "functional"
-
 [dependencies.bracket-lib]
 version = "0.8.1"
 default-features = false
