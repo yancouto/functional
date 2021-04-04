@@ -2,16 +2,26 @@ use std::{
     io::{BufRead, Read, Write}, sync::mpsc::{channel, Receiver, Sender}, thread
 };
 
-use serde_json::Value as Json;
+use serde::{Deserialize, Serialize};
+pub use xi_core_lib::rpc::CoreNotification;
 use xi_core_lib::XiCore;
 use xi_rpc::RpcLoop;
 
-struct JsonSender(Sender<Json>);
+#[derive(Debug, Deserialize, Serialize)]
+pub enum ServerMessage {
+    // For non-implemented things. In the future, remove
+    Unknown,
+}
+
+impl Default for ServerMessage {
+    fn default() -> Self { Self::Unknown }
+}
+
+struct JsonSender(Sender<ServerMessage>);
 
 impl Write for JsonSender {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let json = serde_json::from_slice(buf)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::BrokenPipe, e))?;
+        let json = serde_json::from_slice(buf).unwrap_or_default();
         self.0.send(json).expect("Failed to send");
         Ok(buf.len())
     }
@@ -22,13 +32,21 @@ impl Write for JsonSender {
     }
 }
 
+// TODO: Will need to include requests and responses
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ClientMessage(CoreNotification);
+
+impl From<CoreNotification> for ClientMessage {
+    fn from(n: CoreNotification) -> Self { Self(n) }
+}
+
 struct JsonReceiver {
-    recv: Receiver<Json>,
+    recv: Receiver<ClientMessage>,
     buf:  String,
 }
 
 impl JsonReceiver {
-    fn new(recv: Receiver<Json>) -> Self {
+    fn new(recv: Receiver<ClientMessage>) -> Self {
         Self {
             recv,
             buf: String::new(),
@@ -52,7 +70,11 @@ impl BufRead for JsonReceiver {
             self.buf = self
                 .recv
                 .recv()
-                .map(|json| json.to_string())
+                .map(|json| {
+                    let mut str = serde_json::to_string(&json).unwrap();
+                    str.push('\n');
+                    str
+                })
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::BrokenPipe, e))?;
         }
         Ok(self.buf.as_bytes())
@@ -66,7 +88,7 @@ impl BufRead for JsonReceiver {
 
 /// Returns a sender to send messages from client to Xi server, and a receiver
 /// to get messages back from Xi server.
-pub fn start_xi_thread() -> (Sender<Json>, Receiver<Json>) {
+pub fn start_xi_thread() -> (Sender<ClientMessage>, Receiver<ServerMessage>) {
     let mut state = XiCore::new();
     let (server_sender, server_receiver) = channel();
     let (client_sender, client_receiver) = channel();
