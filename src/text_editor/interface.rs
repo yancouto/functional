@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap, io::{BufRead, Read, Write}, rc::Rc, sync::mpsc::{channel, Receiver, Sender}, thread
+    collections::HashMap, convert::{TryFrom, TryInto}, io::{BufRead, Read, Write}, rc::Rc, sync::mpsc::{channel, Receiver, Sender}, thread
 };
 
 use parking_lot::Mutex;
@@ -8,23 +8,29 @@ use serde_json::Value as Json;
 pub use xi_core_lib::rpc::{CoreNotification, CoreRequest};
 use xi_core_lib::XiCore;
 use xi_rpc::{RemoteError, RpcLoop};
-
 type ServerResponse = Result<Json, RemoteError>;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug)]
+pub enum ServerNotification {}
+
+#[derive(Debug)]
+pub enum ServerRequest {}
+
+#[derive(Debug)]
 pub enum ServerMessage {
     Response(u64, ServerResponse),
+    Notification(ServerNotification),
+    Request(u64, ServerRequest),
     // For non-implemented things. In the future, remove
     Unknown,
 }
 
-struct JsonSender(Sender<ServerMessage>);
+impl TryFrom<&[u8]> for ServerMessage {
+    type Error = std::io::Error;
 
-impl Write for JsonSender {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut json = serde_json::from_slice::<Json>(buf)?;
-
-        let msg = if json.get("id").is_some() && json.get("method").is_none() {
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        let mut json = serde_json::from_slice::<Json>(bytes)?;
+        if json.get("id").is_some() && json.get("method").is_none() {
             let json = json.as_object_mut().unwrap();
             let result = json.remove("result");
             let error = json
@@ -32,13 +38,22 @@ impl Write for JsonSender {
                 .map(|e| serde_json::from_value::<RemoteError>(e).unwrap());
             let res = result.ok_or_else(|| error.unwrap());
             // is response
-            ServerMessage::Response(json.get("id").and_then(Json::as_u64).unwrap(), res)
+            Ok(ServerMessage::Response(
+                json.get("id").and_then(Json::as_u64).unwrap(),
+                res,
+            ))
         } else {
-            log::debug!("Unknown message: {}", String::from_utf8_lossy(buf));
-            ServerMessage::Unknown
-        };
+            log::debug!("Unknown message: {}", String::from_utf8_lossy(bytes));
+            Ok(ServerMessage::Unknown)
+        }
+    }
+}
 
-        self.0.send(msg).expect("Failed to send");
+struct JsonSender(Sender<ServerMessage>);
+
+impl Write for JsonSender {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.send(buf.try_into()?).expect("Failed to send");
         Ok(buf.len())
     }
 
@@ -172,9 +187,7 @@ impl ServerMessageReceiver {
     fn add_callback(&self, id: u64, callback: Callback) {
         self.callbacks.lock().insert(id, callback);
     }
-}
 
-impl ServerMessageReceiver {
     pub fn block_until_next_message(&self) -> ServerMessage { self.receiver.recv().unwrap() }
 
     fn process_response(&self, id: u64, response: ServerResponse) {
@@ -190,7 +203,9 @@ impl ServerMessageReceiver {
             match self.receiver.recv() {
                 Ok(msg) => match msg {
                     ServerMessage::Response(id, response) => self.process_response(id, response),
-                    ServerMessage::Unknown => {},
+                    ServerMessage::Notification(_) => todo!(),
+                    ServerMessage::Request(_, _) => todo!(),
+                    ServerMessage::Unknown => {}, // ignore
                 },
                 Err(err) => {
                     log::error!("Error! {:?}", err);
