@@ -10,8 +10,74 @@ use xi_core_lib::XiCore;
 use xi_rpc::{RemoteError, RpcLoop};
 type ServerResponse = Result<Json, RemoteError>;
 
-#[derive(Debug)]
-pub enum ServerNotification {}
+#[derive(Debug, Deserialize)]
+pub struct ConfigChanges {
+    #[serde(flatten)]
+    extra: HashMap<String, Json>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UpdateAnnotation {
+    #[serde(rename = "type")]
+    type_:    String,
+    ranges:   Vec<(u32, u32, u32, u32)>,
+    payloads: Option<Vec<Json>>,
+    n:        u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UpdateOpType {
+    Copy,
+    Skip,
+    Invalidate,
+    Update,
+    Ins,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "op")]
+pub enum UpdateOp {
+    Copy { n: u32, ln: u32 },
+    Skip { n: u32 },
+    Invalidate { n: u32 },
+    Update { n: u32, lines: Vec<Json> },
+    Ins { n: u32, lines: Vec<Json> },
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Update {
+    pristine:    bool,
+    annotations: Vec<UpdateAnnotation>,
+    ops:         Vec<UpdateOp>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "method", content = "params")]
+#[serde(deny_unknown_fields)]
+pub enum ServerNotification {
+    ScrollTo {
+        view_id: String,
+        line:    u32,
+        col:     u32,
+    },
+    LanguageChanged {
+        view_id:     String,
+        language_id: String,
+    },
+    ConfigChanged {
+        view_id: String,
+        changes: ConfigChanges,
+    },
+    Update {
+        view_id: String,
+        update:  Update,
+    },
+}
 
 #[derive(Debug)]
 pub enum ServerRequest {}
@@ -42,9 +108,13 @@ impl TryFrom<&[u8]> for ServerMessage {
                 json.get("id").and_then(Json::as_u64).unwrap(),
                 res,
             ))
-        } else {
-            log::debug!("Unknown message: {}", String::from_utf8_lossy(bytes));
+        } else if json.get("id").is_some() {
+            // request
             Ok(ServerMessage::Unknown)
+        } else {
+            Ok(serde_json::from_value::<ServerNotification>(json)
+                .map(|n| ServerMessage::Notification(n))
+                .unwrap_or(ServerMessage::Unknown))
         }
     }
 }
@@ -53,7 +123,11 @@ struct JsonSender(Sender<ServerMessage>);
 
 impl Write for JsonSender {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.send(buf.try_into()?).expect("Failed to send");
+        let msg = buf.try_into()?;
+        if matches!(msg, ServerMessage::Unknown) {
+            log::debug!("Unknown message: {}", String::from_utf8_lossy(buf));
+        }
+        self.0.send(msg).expect("Failed to send");
         Ok(buf.len())
     }
 
@@ -174,13 +248,18 @@ type Callback = Box<dyn FnOnce(ServerResponse) -> () + Send>;
 pub struct ServerMessageReceiver {
     receiver:  Receiver<ServerMessage>,
     callbacks: Mutex<HashMap<u64, Callback>>,
+    notif_tx:  Sender<ServerNotification>,
+    notif_rx:  Receiver<ServerNotification>,
 }
 
 impl ServerMessageReceiver {
     fn new(receiver: Receiver<ServerMessage>) -> Self {
+        let (notif_tx, notif_rx) = channel();
         Self {
             receiver,
             callbacks: Mutex::new(HashMap::new()),
+            notif_tx,
+            notif_rx,
         }
     }
 
@@ -188,7 +267,7 @@ impl ServerMessageReceiver {
         self.callbacks.lock().insert(id, callback);
     }
 
-    pub fn block_until_next_message(&self) -> ServerMessage { self.receiver.recv().unwrap() }
+    pub fn next_notif(&self) -> Option<ServerNotification> { self.notif_rx.try_recv().ok() }
 
     fn process_response(&self, id: u64, response: ServerResponse) {
         if let Some(callback) = self.callbacks.lock().remove(&id) {
@@ -198,17 +277,18 @@ impl ServerMessageReceiver {
         }
     }
 
-    pub fn main_loop(&self) {
+    pub fn tick(&self) {
         loop {
-            match self.receiver.recv() {
+            match self.receiver.try_recv() {
                 Ok(msg) => match msg {
                     ServerMessage::Response(id, response) => self.process_response(id, response),
-                    ServerMessage::Notification(_) => todo!(),
+                    ServerMessage::Notification(n) => self.notif_tx.send(n).unwrap(),
                     ServerMessage::Request(_, _) => todo!(),
                     ServerMessage::Unknown => {}, // ignore
                 },
-                Err(err) => {
-                    log::error!("Error! {:?}", err);
+                Err(std::sync::mpsc::TryRecvError::Empty) => break,
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    log::error!("Disconnected!");
                     break;
                 },
             }

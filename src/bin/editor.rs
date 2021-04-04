@@ -3,7 +3,7 @@ use simplelog::*;
 
 fn main() {
     TermLogger::init(
-        LevelFilter::Trace,
+        LevelFilter::Debug,
         Config::default(),
         TerminalMode::Mixed,
         ColorChoice::Auto,
@@ -24,10 +24,11 @@ fn main() {
         },
     );
     println!("Sent message");
-    r.main_loop();
-    //let t2 = std::thread::spawn(move || loop {
-    //    let r = r.block_until_next_message();
-    //    println!("Message: {:?}", r);
-    //});
+    loop {
+        r.tick();
+        while let Some(n) = r.next_notif() {
+            println!("Notif: {:?}", n);
+        }
+    }
     //t2.join().unwrap();
 }
