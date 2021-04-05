@@ -4,7 +4,7 @@ use vec1::vec1;
 
 use super::{base::*, editor::EditorState};
 use crate::{
-    levels::{Level, LEVELS}, prelude::*, save_system::{LevelResult, SaveProfile}, utils::vec_with_cursor::VecWithCursor
+    drawables::XiEditor, levels::{Level, LEVELS}, prelude::*, save_system::{LevelResult, SaveProfile}, utils::vec_with_cursor::VecWithCursor
 };
 
 struct Section<'a> {
@@ -97,9 +97,11 @@ impl GameState for LevelSelectionState<'static> {
             );
         }
         match data.pressed_key.zip(self.level_i) {
-            Some((bl::VirtualKeyCode::Return, l_i)) => GameStateEvent::Switch(
-                box EditorState::new(self.sections.get().levels[l_i], self.save_profile.clone()),
-            ),
+            Some((bl::VirtualKeyCode::Return, l_i)) =>
+                GameStateEvent::Switch(box EditorState::<XiEditor>::new(
+                    self.sections.get().levels[l_i],
+                    self.save_profile.clone(),
+                )),
             _ => GameStateEvent::None,
         }
     }

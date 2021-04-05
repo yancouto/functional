@@ -4,24 +4,24 @@ use super::{
     base::{GameState, GameStateEvent, TickData}, level_selection::LevelSelectionState, run_solution::RunSolutionState
 };
 use crate::{
-    drawables::{TextEditor, XiEditor}, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
+    drawables::TextEditor, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
-pub struct EditorState {
+pub struct EditorState<Editor: TextEditor> {
     time:             Duration,
     level:            &'static Level,
-    editor:           XiEditor,
+    editor:           Editor,
     current_solution: u8,
     save_profile:     Rc<SaveProfile>,
 }
 
-impl EditorState {
+impl<Editor: TextEditor> EditorState<Editor> {
     pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
         let mut state = Self {
             time: Duration::from_secs(0),
             level,
-            editor: XiEditor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
+            editor: Editor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
             save_profile,
             current_solution: 1,
         };
@@ -44,7 +44,7 @@ impl EditorState {
     }
 }
 
-impl GameState for EditorState {
+impl<Editor: TextEditor> GameState for EditorState<Editor> {
     fn name(&self) -> &'static str { "Editor" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
@@ -77,7 +77,7 @@ impl GameState for EditorState {
         {
             return GameStateEvent::Push(box RunSolutionState::new(
                 self.level,
-                self.editor.get_chars(),
+                self.editor.to_string().chars(),
                 self.save_profile.clone(),
             ));
         }
