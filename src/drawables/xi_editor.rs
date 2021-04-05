@@ -101,16 +101,22 @@ impl TextEditor for XiEditor {
                     K::V if ctrl => Some(EditNotification::Paste {
                         chars: self.copied_text.clone(),
                     }),
+                    K::Tab => Some(EditNotification::InsertTab),
+                    K::Delete => Some(EditNotification::DeleteForward),
                     _ => None,
                 };
                 if let Some(notif) = notif {
                     self.send_notif(notif);
                 }
                 match key {
-                    K::C if ctrl => {
+                    K::C | K::X if ctrl => {
                         let ans = self.send.send_request_block(CoreRequest::Edit(EditCommand {
                             view_id: self.view_id,
-                            cmd:     EditRequest::Copy,
+                            cmd:     if *key == K::C {
+                                EditRequest::Copy
+                            } else {
+                                EditRequest::Cut
+                            },
                         }));
                         if let Ok(Some(txt)) = ans.map(|v| v.as_str().map(|s| s.to_string())) {
                             self.copied_text = txt;
@@ -118,6 +124,10 @@ impl TextEditor for XiEditor {
                     },
                     _ => {},
                 }
+            },
+            bl::BEvent::MouseClick { button, pressed } => {
+                //println!("Mouse click {} -- {}", button, pressed);
+                // TODO: get mouse location
             },
             _ => {},
         }
