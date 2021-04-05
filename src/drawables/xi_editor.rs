@@ -5,7 +5,7 @@ use xi_core_lib::rpc::{EditCommand, EditNotification};
 use super::TextEditor;
 use crate::{gamestates::base::TickData, math::*, prelude::*, text_editor::interface::*};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Line {
     text: String,
 }
@@ -90,7 +90,7 @@ impl TextEditor for XiEditor {
     }
 
     fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
-        if path.exists() && false {
+        if path.exists() {
             self.send.send_notification(CoreNotification::CloseView {
                 view_id: self.view_id,
             });
@@ -110,7 +110,11 @@ impl TextEditor for XiEditor {
     }
 
     fn to_string(&self) -> String {
-        todo!();
+        self.text
+            .iter()
+            .map(|l| l.text.clone())
+            .collect::<Vec<_>>()
+            .join("")
     }
 
     fn draw(&mut self, data: &mut TickData) {
@@ -167,7 +171,7 @@ impl XiEditor {
                         }
                     },
                 UpdateOp::Skip { n } => old_text.advance_by(n).unwrap(),
-                UpdateOp::Invalidate { .. } => unreachable!(),
+                UpdateOp::Invalidate { n } => new_lines.extend(vec![Line::default(); n]),
                 UpdateOp::Update { .. } => unreachable!(),
                 UpdateOp::Ins { n: _, lines } =>
                     new_lines.extend(lines.into_iter().map(Line::from)),
