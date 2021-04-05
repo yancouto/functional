@@ -3,6 +3,7 @@
 #![feature(try_blocks)]
 #![feature(try_trait)]
 #![feature(generators, generator_trait)]
+#![feature(iter_advance_by)]
 #[macro_use]
 extern crate lazy_static;
 

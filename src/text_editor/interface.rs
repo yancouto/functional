@@ -10,7 +10,7 @@ use xi_core_lib::XiCore;
 use xi_rpc::{RemoteError, RpcLoop};
 type ServerResponse = Result<Json, RemoteError>;
 use crossbeam::channel::{unbounded as channel, Receiver, Sender};
-use serde::de::{Error, Visitor};
+use serde::de::Error;
 #[derive(Debug, Deserialize)]
 pub struct ConfigChanges {
     #[serde(flatten)]
@@ -22,9 +22,9 @@ pub struct ConfigChanges {
 pub struct UpdateAnnotation {
     #[serde(rename = "type")]
     type_:    String,
-    ranges:   Vec<(u32, u32, u32, u32)>,
+    ranges:   Vec<(usize, usize, usize, usize)>,
     payloads: Option<Vec<Json>>,
-    n:        u32,
+    n:        usize,
 }
 
 #[derive(Debug, Deserialize)]
@@ -38,22 +38,31 @@ pub enum UpdateOpType {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct InsLine {
+    pub cursor: Option<Vec<usize>>,
+    pub ln:     usize,
+    pub styles: Option<Vec<Json>>,
+    pub text:   String,
+}
+
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "op")]
 pub enum UpdateOp {
-    Copy { n: u32, ln: u32 },
-    Skip { n: u32 },
-    Invalidate { n: u32 },
-    Update { n: u32, lines: Vec<Json> },
-    Ins { n: u32, lines: Vec<Json> },
+    Copy { n: usize, ln: usize },
+    Skip { n: usize },
+    Invalidate { n: usize },
+    Update { n: usize, lines: Vec<Json> },
+    Ins { n: usize, lines: Vec<InsLine> },
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Update {
-    pristine:    bool,
-    annotations: Vec<UpdateAnnotation>,
-    ops:         Vec<UpdateOp>,
+    pub pristine:    bool,
+    pub annotations: Vec<UpdateAnnotation>,
+    pub ops:         Vec<UpdateOp>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -63,8 +72,8 @@ pub struct Update {
 pub enum ServerNotification {
     ScrollTo {
         view_id: String,
-        line:    u32,
-        col:     u32,
+        line:    usize,
+        col:     usize,
     },
     LanguageChanged {
         view_id:     String,
@@ -242,7 +251,7 @@ impl BufRead for JsonReceiver {
                 })
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::BrokenPipe, e))?;
         }
-        println!("Send: {}", self.buf);
+        log::debug!("Send: {}", self.buf);
         Ok(self.buf.as_bytes())
     }
 
