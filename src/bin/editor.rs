@@ -18,34 +18,26 @@ fn main() {
         config_dir:        None,
         client_extras_dir: None,
     });
-    let s2 = s.clone();
-    s.send_request(
-        CoreRequest::NewView {
-            file_path: std::env::args().skip(1).next(),
-        },
-        move |r| {
-            println!("Got response {:?}", r);
-            let id = r
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .strip_prefix("view-id-")
-                .unwrap()
-                .to_owned()
-                .parse::<usize>()
-                .unwrap()
-                .into();
-            s2.send_request(
-                CoreRequest::Edit(EditCommand {
-                    view_id: id,
-                    cmd:     EditRequest::Copy,
-                }),
-                |r| println!("Response2: {:?}", r),
-            );
-        },
-    );
+    let re = s.send_request_block(CoreRequest::NewView {
+        file_path: std::env::args().skip(1).next(),
+    });
+    println!("Got response {:?}", re);
+    let id = re
+        .unwrap()
+        .as_str()
+        .unwrap()
+        .strip_prefix("view-id-")
+        .unwrap()
+        .to_owned()
+        .parse::<usize>()
+        .unwrap()
+        .into();
+    let re = s.send_request_block(CoreRequest::Edit(EditCommand {
+        view_id: id,
+        cmd:     EditRequest::Copy,
+    }));
+    println!("Got response {:?}", re);
     loop {
-        r.tick();
         while let Some(n) = r.next_notif() {
             println!("Notif: {:?}", n);
         }

@@ -9,7 +9,7 @@ pub use xi_core_lib::rpc::{CoreNotification, CoreRequest};
 use xi_core_lib::XiCore;
 use xi_rpc::{RemoteError, RpcLoop};
 type ServerResponse = Result<Json, RemoteError>;
-use crossbeam::channel::{unbounded as channel, Receiver, Sender, TryRecvError};
+use crossbeam::channel::{unbounded as channel, Receiver, Sender};
 
 #[derive(Debug, Deserialize)]
 pub struct ConfigChanges {
@@ -246,25 +246,21 @@ impl ClientMessageSender {
         self.sender.send(msg.into()).unwrap();
     }
 
-    pub fn send_request<C: FnOnce(ServerResponse) -> () + Send + 'static>(
-        &self,
-        msg: CoreRequest,
-        callback: C,
-    ) {
+    pub fn send_request_block(&self, msg: CoreRequest) -> ServerResponse {
         let id = self
             .id_count
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         self.sender.send((id, msg).into()).unwrap();
-        self.receiver.add_callback(id, box callback);
+        let (tx, rx) = channel();
+        self.receiver.add_callback(id, tx);
+        rx.recv().unwrap()
     }
 }
-
-type Callback = Box<dyn FnOnce(ServerResponse) -> () + Send>;
 
 #[derive(Clone)]
 pub struct ServerMessageReceiver {
     receiver:  Receiver<ServerMessage>,
-    callbacks: Arc<Mutex<HashMap<u64, Callback>>>,
+    callbacks: Arc<Mutex<HashMap<u64, Sender<ServerResponse>>>>,
     notif_tx:  Sender<ServerNotification>,
     notif_rx:  Receiver<ServerNotification>,
 }
@@ -280,8 +276,8 @@ impl ServerMessageReceiver {
         }
     }
 
-    fn add_callback(&self, id: u64, callback: Callback) {
-        self.callbacks.lock().insert(id, callback);
+    fn add_callback(&self, id: u64, sender: Sender<ServerResponse>) {
+        self.callbacks.lock().insert(id, sender);
     }
 
     pub fn next_notif(&self) -> Option<ServerNotification> { self.notif_rx.try_recv().ok() }
@@ -291,24 +287,23 @@ impl ServerMessageReceiver {
         // get before so the lock is dropped when actually calling the callback
         let maybe_callback = self.callbacks.lock().remove(&id);
         if let Some(callback) = maybe_callback {
-            callback(response);
+            callback.send(response).unwrap()
         } else {
             log::error!("Callback for id {} is missing!", id);
         }
     }
 
-    pub fn tick(&self) {
+    pub fn main_loop(&self) {
         loop {
-            match self.receiver.try_recv() {
+            match self.receiver.recv() {
                 Ok(msg) => match msg {
                     ServerMessage::Response(id, response) => self.process_response(id, response),
                     ServerMessage::Notification(n) => self.notif_tx.send(n).unwrap(),
                     ServerMessage::Request(_, _) => todo!(),
                     ServerMessage::Unknown => {}, // ignore
                 },
-                Err(TryRecvError::Empty) => break,
-                Err(TryRecvError::Disconnected) => {
-                    log::error!("Disconnected!");
+                Err(_) => {
+                    log::info!("Disconnected!");
                     break;
                 },
             }
@@ -328,6 +323,8 @@ pub fn start_xi_thread() -> (ClientMessageSender, Arc<ServerMessageReceiver>) {
         log::info!("Out of Xi main loop! {:?}", r);
     });
     let recv = Arc::new(ServerMessageReceiver::new(server_receiver));
+    let recv2 = recv.clone();
+    thread::spawn(move || recv2.main_loop());
     (
         ClientMessageSender {
             sender:   client_sender,
