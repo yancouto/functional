@@ -10,7 +10,7 @@ use xi_core_lib::XiCore;
 use xi_rpc::{RemoteError, RpcLoop};
 type ServerResponse = Result<Json, RemoteError>;
 use crossbeam::channel::{unbounded as channel, Receiver, Sender};
-
+use serde::de::{Error, Visitor};
 #[derive(Debug, Deserialize)]
 pub struct ConfigChanges {
     #[serde(flatten)]
@@ -92,6 +92,24 @@ pub enum ServerNotification {
 
 #[derive(Debug)]
 pub enum ServerRequest {}
+
+pub struct ViewId(pub xi_core_lib::ViewId);
+
+impl<'de> Deserialize<'de> for ViewId {
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let str = String::deserialize(d)?;
+        Ok(Self(
+            str.strip_prefix("view-id-")
+                .ok_or(D::Error::custom("String doesn't start with view-id-"))?
+                .parse::<usize>()
+                .map_err(D::Error::custom)?
+                .into(),
+        ))
+    }
+}
 
 #[derive(Debug)]
 pub enum ServerMessage {
@@ -234,10 +252,10 @@ impl BufRead for JsonReceiver {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ClientMessageSender {
     sender:   Sender<ClientMessage>,
-    receiver: Arc<ServerMessageReceiver>,
+    receiver: ServerMessageReceiver,
     id_count: Arc<AtomicU64>,
 }
 
@@ -257,7 +275,7 @@ impl ClientMessageSender {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ServerMessageReceiver {
     receiver:  Receiver<ServerMessage>,
     callbacks: Arc<Mutex<HashMap<u64, Sender<ServerResponse>>>>,
@@ -313,7 +331,7 @@ impl ServerMessageReceiver {
 
 /// Returns a sender to send messages from client to Xi server, and a receiver
 /// to get messages back from Xi server.
-pub fn start_xi_thread() -> (ClientMessageSender, Arc<ServerMessageReceiver>) {
+pub fn start_xi_thread() -> (ClientMessageSender, ServerMessageReceiver) {
     let mut state = XiCore::new();
     let (server_sender, server_receiver) = channel();
     let (client_sender, client_receiver) = channel();
@@ -322,7 +340,7 @@ pub fn start_xi_thread() -> (ClientMessageSender, Arc<ServerMessageReceiver>) {
             .mainloop(|| JsonReceiver::new(client_receiver), &mut state);
         log::info!("Out of Xi main loop! {:?}", r);
     });
-    let recv = Arc::new(ServerMessageReceiver::new(server_receiver));
+    let recv = ServerMessageReceiver::new(server_receiver);
     let recv2 = recv.clone();
     thread::spawn(move || recv2.main_loop());
     (

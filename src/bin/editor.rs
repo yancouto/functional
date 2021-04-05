@@ -1,7 +1,7 @@
 use functional::text_editor::interface::{start_xi_thread, CoreNotification, CoreRequest};
 use simplelog::*;
 use xi_core_lib::{
-    rpc::{EditCommand, EditRequest}, ViewId
+    rpc::{EditCommand, EditNotification, EditRequest}, ViewId
 };
 
 fn main() {

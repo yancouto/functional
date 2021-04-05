@@ -4,14 +4,14 @@ use super::{
     base::{GameState, GameStateEvent, TickData}, level_selection::LevelSelectionState, run_solution::RunSolutionState
 };
 use crate::{
-    drawables::TextEditor, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
+    drawables::{TextEditor, XiEditor}, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
 pub struct EditorState {
     time:             Duration,
     level:            &'static Level,
-    editor:           TextEditor,
+    editor:           XiEditor,
     current_solution: u8,
     save_profile:     Rc<SaveProfile>,
 }
@@ -21,7 +21,7 @@ impl EditorState {
         let mut state = Self {
             time: Duration::from_secs(0),
             level,
-            editor: TextEditor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
+            editor: XiEditor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
             save_profile,
             current_solution: 1,
         };
