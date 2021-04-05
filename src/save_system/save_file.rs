@@ -45,6 +45,11 @@ impl SaveProfile {
         }
     }
 
+    pub fn level_code_file(&self, level_name: &str, solution: u8) -> PathBuf {
+        self.path
+            .join(format!("levels/{}/{}.code", level_name, solution))
+    }
+
     pub fn read_level(&self, level_name: &str, solution: u8) -> String {
         log::debug!("Reading solution {} of level {}", solution, level_name);
         self.read_level_impl(level_name, solution)
@@ -120,9 +125,7 @@ impl SaveProfile {
     }
 
     fn write_level_impl(&self, level_name: &str, solution: u8, code: &str) -> io::Result<()> {
-        let path = self
-            .path
-            .join(format!("levels/{}/{}.code", level_name, solution));
+        let path = self.level_code_file(level_name, solution);
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
@@ -130,9 +133,7 @@ impl SaveProfile {
     }
 
     fn read_level_impl(&self, level_name: &str, solution: u8) -> io::Result<String> {
-        let path = self
-            .path
-            .join(format!("levels/{}/{}.code", level_name, solution));
+        let path = self.level_code_file(level_name, solution);
         Ok(String::from_utf8_lossy(&fs::read(path)?).into_owned())
     }
 }

@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, time::Duration};
+use std::{convert::TryFrom, path::PathBuf, time::Duration};
 
 use super::TextEditor;
 use crate::{gamestates::base::TickData, math::*, prelude::*};
@@ -95,7 +95,9 @@ impl TextEditor for BasicTextEditor {
         }
     }
 
-    fn load_text(&mut self, text: &str) {
+    fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
+        let file_data = std::fs::read(path)?;
+        let text = String::from_utf8_lossy(&file_data);
         let size = &self.size;
         self.text = Vec1::try_from(
             text.split('\n')
@@ -121,6 +123,7 @@ impl TextEditor for BasicTextEditor {
         while self.text.len() > 1 && self.text.last().is_empty() {
             self.text.pop().unwrap();
         }
+        Ok(())
     }
 
     fn to_string(&self) -> String {

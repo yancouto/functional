@@ -1,4 +1,4 @@
-use std::{iter::FromIterator, time::Duration};
+use std::{convert::TryFrom, iter::FromIterator, path::PathBuf, time::Duration};
 
 use xi_core_lib::rpc::{EditCommand, EditNotification};
 
@@ -89,7 +89,25 @@ impl TextEditor for XiEditor {
         }
     }
 
-    fn load_text(&mut self, _text: &str) {}
+    fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
+        if path.exists() && false {
+            self.send.send_notification(CoreNotification::CloseView {
+                view_id: self.view_id,
+            });
+            let resp = serde_json::from_value::<ViewId>(
+                self.send
+                    .send_request_block(CoreRequest::NewView {
+                        file_path: Some(path.to_string_lossy().to_string()),
+                    })
+                    .unwrap(),
+            )
+            .unwrap();
+            log::info!("Changing view id from {} to {}", self.view_id, resp.0);
+            self.view_id = resp.0;
+            self.text = vec![];
+        }
+        Ok(())
+    }
 
     fn to_string(&self) -> String {
         todo!();
@@ -157,29 +175,25 @@ impl XiEditor {
         }
         std::mem::drop(old_text);
         self.text = new_lines;
-        println!("New lines: {:?}", self.text);
     }
 
-    fn check_view_id(&self, view_id: String) {
-        debug_assert!(
-            match serde_json::from_str::<ViewId>(&view_id).map(|x| x.0) {
-                Ok(id) if id == self.view_id => true,
-                _ => false,
-            },
-            "Invalid view id!"
-        );
+    fn check_view_id(&self, view_id: String) -> bool {
+        match ViewId::try_from(view_id).map(|x| x.0) {
+            Ok(id) if id == self.view_id => true,
+            _ => false,
+        }
     }
 
     fn handle_notif(&mut self, notif: ServerNotification) {
         match notif {
-            ServerNotification::ScrollTo { view_id, line, col } => {
-                self.check_view_id(view_id);
-                self.cursor = Pos::new(line as i32, col as i32);
-            },
-            ServerNotification::Update { view_id, update } => {
-                self.check_view_id(view_id);
-                self.update(update);
-            },
+            ServerNotification::ScrollTo { view_id, line, col } =>
+                if self.check_view_id(view_id) {
+                    self.cursor = Pos::new(line as i32, col as i32);
+                },
+            ServerNotification::Update { view_id, update } =>
+                if self.check_view_id(view_id) {
+                    self.update(update);
+                },
             ServerNotification::ConfigChanged { .. } => {},
             ServerNotification::AvailablePlugins { .. } => {},
             ServerNotification::AvailableLanguages { .. } => {},

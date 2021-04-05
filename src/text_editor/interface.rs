@@ -104,19 +104,36 @@ pub enum ServerRequest {}
 
 pub struct ViewId(pub xi_core_lib::ViewId);
 
+use thiserror::Error;
+#[derive(Debug, Error)]
+pub enum ViewIdParseError {
+    #[error("Doesn't start with view-id-")]
+    WrongPrefix,
+    #[error("Is not an unsigned integer")]
+    NotInt,
+}
+
+impl TryFrom<String> for ViewId {
+    type Error = ViewIdParseError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(Self(
+            value
+                .strip_prefix("view-id-")
+                .ok_or(ViewIdParseError::WrongPrefix)?
+                .parse::<usize>()
+                .map_err(|_| ViewIdParseError::NotInt)?
+                .into(),
+        ))
+    }
+}
+
 impl<'de> Deserialize<'de> for ViewId {
     fn deserialize<D>(d: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        let str = String::deserialize(d)?;
-        Ok(Self(
-            str.strip_prefix("view-id-")
-                .ok_or(D::Error::custom("String doesn't start with view-id-"))?
-                .parse::<usize>()
-                .map_err(D::Error::custom)?
-                .into(),
-        ))
+        ViewId::try_from(String::deserialize(d)?).map_err(D::Error::custom)
     }
 }
 

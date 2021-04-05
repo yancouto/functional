@@ -30,8 +30,10 @@ impl<Editor: TextEditor> EditorState<Editor> {
     }
 
     fn load_solution(&mut self, solution: u8) {
-        self.editor
-            .load_text(&self.save_profile.read_level(&self.level.name, solution));
+        let _ = self.editor.load_file(
+            self.save_profile
+                .level_code_file(&self.level.name, solution),
+        );
         self.current_solution = solution;
     }
 
