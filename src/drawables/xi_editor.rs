@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, iter::FromIterator, path::PathBuf, time::Duration};
 
-use xi_core_lib::rpc::{EditCommand, EditNotification};
+use xi_core_lib::rpc::{EditCommand, EditNotification, EditRequest};
 
 use super::TextEditor;
 use crate::{gamestates::base::TickData, math::*, prelude::*, text_editor::interface::*};
@@ -18,12 +18,15 @@ impl From<InsLine> for Line {
 pub struct XiEditor {
     pos:               Pos,
     cursor:            Pos,
+    selections:        Vec<(Pos, Pos)>,
     size:              Size,
     text:              Vec<Line>,
     cursor_blink_rate: Duration,
     view_id:           xi_core_lib::ViewId,
     send:              ClientMessageSender,
     recv:              ServerMessageReceiver,
+    // TODO: use actual clipboard
+    copied_text:       String,
 }
 
 impl TextEditor for XiEditor {
@@ -48,10 +51,17 @@ impl TextEditor for XiEditor {
             send,
             recv,
             view_id: resp.0,
+            selections: vec![],
+            copied_text: String::new(),
         }
     }
 
     fn on_event(&mut self, event: &bl::BEvent) {
+        use bl::VirtualKeyCode as K;
+        let input = bl::INPUT.lock();
+        let pressed = input.key_pressed_set();
+        let shift = pressed.contains(&K::LShift) || pressed.contains(&K::RShift);
+        let ctrl = pressed.contains(&K::LControl) || pressed.contains(&K::RControl);
         match event {
             bl::BEvent::Character { c } =>
                 if !c.is_control() {
@@ -62,25 +72,49 @@ impl TextEditor for XiEditor {
             bl::BEvent::KeyboardInput {
                 key, pressed: true, ..
             } => {
-                use bl::VirtualKeyCode as K;
+                let notif = match key {
+                    K::Back => Some(EditNotification::DeleteBackward),
+                    K::Return | K::NumpadEnter => Some(EditNotification::InsertNewline),
+                    K::Right => Some(if shift {
+                        EditNotification::MoveRightAndModifySelection
+                    } else {
+                        EditNotification::MoveRight
+                    }),
+                    K::Left => Some(if shift {
+                        EditNotification::MoveLeftAndModifySelection
+                    } else {
+                        EditNotification::MoveLeft
+                    }),
+                    K::Up => Some(if shift {
+                        EditNotification::MoveUpAndModifySelection
+                    } else {
+                        EditNotification::MoveUp
+                    }),
+                    K::Down => Some(if shift {
+                        EditNotification::MoveDownAndModifySelection
+                    } else {
+                        EditNotification::MoveDown
+                    }),
+                    K::A if ctrl => Some(EditNotification::SelectAll),
+                    K::Z if ctrl && !shift => Some(EditNotification::Undo),
+                    K::Z if ctrl && shift => Some(EditNotification::Redo),
+                    K::V if ctrl => Some(EditNotification::Paste {
+                        chars: self.copied_text.clone(),
+                    }),
+                    _ => None,
+                };
+                if let Some(notif) = notif {
+                    self.send_notif(notif);
+                }
                 match key {
-                    K::Back => {
-                        self.send_notif(EditNotification::DeleteBackward);
-                    },
-                    K::Return | K::NumpadEnter => {
-                        self.send_notif(EditNotification::InsertNewline);
-                    },
-                    K::Right => {
-                        self.send_notif(EditNotification::MoveRight);
-                    },
-                    K::Left => {
-                        self.send_notif(EditNotification::MoveLeft);
-                    },
-                    K::Up => {
-                        self.send_notif(EditNotification::MoveUp);
-                    },
-                    K::Down => {
-                        self.send_notif(EditNotification::MoveDown);
+                    K::C if ctrl => {
+                        let ans = self.send.send_request_block(CoreRequest::Edit(EditCommand {
+                            view_id: self.view_id,
+                            cmd:     EditRequest::Copy,
+                        }));
+                        if let Ok(Some(txt)) = ans.map(|v| v.as_str().map(|s| s.to_string())) {
+                            self.copied_text = txt;
+                        }
                     },
                     _ => {},
                 }
@@ -136,6 +170,26 @@ impl TextEditor for XiEditor {
             data.console
                 .print(self.pos.j, i as i32 + self.pos.i, &line.text)
         });
+
+        for select in &self.selections {
+            let mut init_j = select.0.j;
+            for i in select.0.i..=select.1.i {
+                let end_j = if i == select.1.i {
+                    select.1.j
+                } else {
+                    self.text[i as usize].text.len() as i32 - 1
+                };
+                for j in init_j..=end_j {
+                    data.console.set_bg(
+                        j + self.pos.j,
+                        i + self.pos.i,
+                        bl::RGBA::from_f32(1., 1., 1., 0.2),
+                    )
+                }
+                init_j = 0;
+            }
+        }
+
         if cursor_on {
             data.console.set_bg(
                 self.cursor.j + self.pos.j,
@@ -179,6 +233,25 @@ impl XiEditor {
         }
         std::mem::drop(old_text);
         self.text = new_lines;
+        for annotation in update.annotations {
+            match annotation {
+                UpdateAnnotation::Selection {
+                    ranges,
+                    n: _,
+                    payloads: _,
+                } => {
+                    self.selections = ranges
+                        .into_iter()
+                        .map(|(i1, j1, i2, j2)| {
+                            (
+                                Pos::new(i1 as i32, j1 as i32),
+                                Pos::new(i2 as i32, j2 as i32),
+                            )
+                        })
+                        .collect();
+                },
+            }
+        }
     }
 
     fn check_view_id(&self, view_id: String) -> bool {
@@ -198,7 +271,11 @@ impl XiEditor {
                 if self.check_view_id(view_id) {
                     self.update(update);
                 },
-            ServerNotification::ConfigChanged { .. } => {},
+            ServerNotification::ConfigChanged { view_id, changes } => {
+                if self.check_view_id(view_id) {
+                    log::info!("Configs: {:?}", changes);
+                }
+            },
             ServerNotification::AvailablePlugins { .. } => {},
             ServerNotification::AvailableLanguages { .. } => {},
             ServerNotification::AvailableThemes { .. } => {},

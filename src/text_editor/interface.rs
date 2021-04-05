@@ -18,13 +18,15 @@ pub struct ConfigChanges {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "type")]
 #[serde(deny_unknown_fields)]
-pub struct UpdateAnnotation {
-    #[serde(rename = "type")]
-    type_:    String,
-    ranges:   Vec<(usize, usize, usize, usize)>,
-    payloads: Option<Vec<Json>>,
-    n:        usize,
+pub enum UpdateAnnotation {
+    Selection {
+        ranges:   Vec<(usize, usize, usize, usize)>,
+        n:        usize,
+        payloads: Option<Vec<Json>>,
+    },
 }
 
 #[derive(Debug, Deserialize)]
