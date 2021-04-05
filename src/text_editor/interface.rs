@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap, convert::{TryFrom, TryInto}, io::{BufRead, Read, Write}, rc::Rc, sync::mpsc::{channel, Receiver, Sender}, thread
+    collections::HashMap, convert::{TryFrom, TryInto}, io::{BufRead, Read, Write}, sync::{atomic::AtomicU64, Arc}, thread
 };
 
 use parking_lot::Mutex;
@@ -9,6 +9,7 @@ pub use xi_core_lib::rpc::{CoreNotification, CoreRequest};
 use xi_core_lib::XiCore;
 use xi_rpc::{RemoteError, RpcLoop};
 type ServerResponse = Result<Json, RemoteError>;
+use crossbeam::channel::{unbounded as channel, Receiver, Sender, TryRecvError};
 
 #[derive(Debug, Deserialize)]
 pub struct ConfigChanges {
@@ -137,7 +138,9 @@ impl Write for JsonSender {
         if matches!(msg, ServerMessage::Unknown) {
             log::debug!("Unknown message: {}", String::from_utf8_lossy(buf));
         }
-        self.0.send(msg).expect("Failed to send");
+        if let Err(e) = self.0.send(msg) {
+            log::error!("Failed to send {:?}", e.0);
+        }
         Ok(buf.len())
     }
 
@@ -231,10 +234,11 @@ impl BufRead for JsonReceiver {
     }
 }
 
+#[derive(Clone)]
 pub struct ClientMessageSender {
     sender:   Sender<ClientMessage>,
-    receiver: Rc<ServerMessageReceiver>,
-    id_count: u64,
+    receiver: Arc<ServerMessageReceiver>,
+    id_count: Arc<AtomicU64>,
 }
 
 impl ClientMessageSender {
@@ -243,21 +247,24 @@ impl ClientMessageSender {
     }
 
     pub fn send_request<C: FnOnce(ServerResponse) -> () + Send + 'static>(
-        &mut self,
+        &self,
         msg: CoreRequest,
         callback: C,
     ) {
-        let id = self.id_count;
-        self.id_count += 1;
+        let id = self
+            .id_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         self.sender.send((id, msg).into()).unwrap();
         self.receiver.add_callback(id, box callback);
     }
 }
 
 type Callback = Box<dyn FnOnce(ServerResponse) -> () + Send>;
+
+#[derive(Clone)]
 pub struct ServerMessageReceiver {
     receiver:  Receiver<ServerMessage>,
-    callbacks: Mutex<HashMap<u64, Callback>>,
+    callbacks: Arc<Mutex<HashMap<u64, Callback>>>,
     notif_tx:  Sender<ServerNotification>,
     notif_rx:  Receiver<ServerNotification>,
 }
@@ -267,7 +274,7 @@ impl ServerMessageReceiver {
         let (notif_tx, notif_rx) = channel();
         Self {
             receiver,
-            callbacks: Mutex::new(HashMap::new()),
+            callbacks: Arc::new(Mutex::new(HashMap::new())),
             notif_tx,
             notif_rx,
         }
@@ -280,7 +287,10 @@ impl ServerMessageReceiver {
     pub fn next_notif(&self) -> Option<ServerNotification> { self.notif_rx.try_recv().ok() }
 
     fn process_response(&self, id: u64, response: ServerResponse) {
-        if let Some(callback) = self.callbacks.lock().remove(&id) {
+        log::trace!("Process response {}", id);
+        // get before so the lock is dropped when actually calling the callback
+        let maybe_callback = self.callbacks.lock().remove(&id);
+        if let Some(callback) = maybe_callback {
             callback(response);
         } else {
             log::error!("Callback for id {} is missing!", id);
@@ -296,8 +306,8 @@ impl ServerMessageReceiver {
                     ServerMessage::Request(_, _) => todo!(),
                     ServerMessage::Unknown => {}, // ignore
                 },
-                Err(std::sync::mpsc::TryRecvError::Empty) => break,
-                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                Err(TryRecvError::Empty) => break,
+                Err(TryRecvError::Disconnected) => {
                     log::error!("Disconnected!");
                     break;
                 },
@@ -308,7 +318,7 @@ impl ServerMessageReceiver {
 
 /// Returns a sender to send messages from client to Xi server, and a receiver
 /// to get messages back from Xi server.
-pub fn start_xi_thread() -> (ClientMessageSender, Rc<ServerMessageReceiver>) {
+pub fn start_xi_thread() -> (ClientMessageSender, Arc<ServerMessageReceiver>) {
     let mut state = XiCore::new();
     let (server_sender, server_receiver) = channel();
     let (client_sender, client_receiver) = channel();
@@ -317,12 +327,12 @@ pub fn start_xi_thread() -> (ClientMessageSender, Rc<ServerMessageReceiver>) {
             .mainloop(|| JsonReceiver::new(client_receiver), &mut state);
         log::info!("Out of Xi main loop! {:?}", r);
     });
-    let recv = Rc::new(ServerMessageReceiver::new(server_receiver));
+    let recv = Arc::new(ServerMessageReceiver::new(server_receiver));
     (
         ClientMessageSender {
             sender:   client_sender,
             receiver: recv.clone(),
-            id_count: 0,
+            id_count: Arc::new(AtomicU64::new(0)),
         },
         recv,
     )
