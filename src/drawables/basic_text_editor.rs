@@ -23,7 +23,7 @@ impl TextEditor for BasicTextEditor {
         }
     }
 
-    fn on_event(&mut self, event: &bl::BEvent) {
+    fn on_event(&mut self, event: &bl::BEvent, _input: &bl::Input) {
         match event {
             bl::BEvent::Character { c } => {
                 if !c.is_control() {

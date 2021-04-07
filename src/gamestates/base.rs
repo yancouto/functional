@@ -77,22 +77,20 @@ impl GameStateManager {
         let mut input = bl::INPUT.lock();
         let mut data = EventTickData::default();
         while let Some(e) = input.pop() {
-            parking_lot::MutexGuard::unlocked(&mut input, || {
-                self.all_gs.last_mut().cur.on_event(e.clone());
-                match e {
-                    // Blib stops tracking close events when we activate event queue
-                    bl::BEvent::CloseRequested => {
-                        ctx.quit();
-                    },
-                    bl::BEvent::MouseClick {
-                        button: 0,
-                        pressed: true,
-                    } => {
-                        data.left_click = true;
-                    },
-                    _ => {},
-                }
-            })
+            self.all_gs.last_mut().cur.on_event(e.clone(), &input);
+            match e {
+                // Blib stops tracking close events when we activate event queue
+                bl::BEvent::CloseRequested => {
+                    ctx.quit();
+                },
+                bl::BEvent::MouseClick {
+                    button: 0,
+                    pressed: true,
+                } => {
+                    data.left_click = true;
+                },
+                _ => {},
+            }
         }
         data
     }
@@ -158,7 +156,7 @@ pub enum GameStateEvent {
 pub trait GameState {
     fn name(&self) -> &'static str;
     fn tick(&mut self, data: TickData) -> GameStateEvent;
-    fn on_event(&mut self, _event: bl::BEvent) {}
+    fn on_event(&mut self, _event: bl::BEvent, _input: &bl::Input) {}
 }
 
 // COPIED from bracket lib

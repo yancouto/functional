@@ -56,9 +56,8 @@ impl TextEditor for XiEditor {
         }
     }
 
-    fn on_event(&mut self, event: &bl::BEvent) {
+    fn on_event(&mut self, event: &bl::BEvent, input: &bl::Input) {
         use bl::VirtualKeyCode as K;
-        let input = bl::INPUT.lock();
         let pressed = input.key_pressed_set();
         let shift = pressed.contains(&K::LShift) || pressed.contains(&K::RShift);
         let ctrl = pressed.contains(&K::LControl) || pressed.contains(&K::RControl);

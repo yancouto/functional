@@ -99,5 +99,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         }
     }
 
-    fn on_event(&mut self, event: bl::BEvent) { self.editor.on_event(&event); }
+    fn on_event(&mut self, event: bl::BEvent, input: &bl::Input) {
+        self.editor.on_event(&event, input);
+    }
 }

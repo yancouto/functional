@@ -106,7 +106,7 @@ impl GameState for LevelSelectionState<'static> {
         }
     }
 
-    fn on_event(&mut self, event: bl::BEvent) {
+    fn on_event(&mut self, event: bl::BEvent, _input: &bl::Input) {
         match event {
             bl::BEvent::KeyboardInput {
                 key, pressed: true, ..
