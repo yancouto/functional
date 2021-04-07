@@ -36,7 +36,7 @@ impl<'a> TickData<'a> {
         ctx: &mut bl::BTerm,
         input: &'a bl::Input,
     ) -> Self {
-        let mouse = pixel_to_char_pos(&ctx, ctx.mouse_pos, &console);
+        let mouse = input.mouse_tile_pos(ctx.active_console);
         TickData {
             time: data.time,
             console,
@@ -158,40 +158,3 @@ pub trait GameState {
     fn tick(&mut self, data: TickData) -> GameStateEvent;
     fn on_event(&mut self, _event: bl::BEvent, _input: &bl::Input) {}
 }
-
-// COPIED from bracket lib
-
-#[cfg(feature = "curses")]
-fn pixel_to_char_pos(&self, pos: (i32, i32), _console: &Box<dyn Console>) -> (i32, i32) { pos }
-
-#[cfg(not(feature = "curses"))]
-fn pixel_to_char_pos(
-    ctx: &bl::BTerm,
-    pos: (i32, i32),
-    console: &Box<dyn bl::Console>,
-) -> (i32, i32) {
-    let max_sizes = console.get_char_size();
-    let (scale, center_x, center_y) = console.get_scale();
-
-    // Scaling now works by projecting the mouse position to 0..1 in both dimensions and then
-    // multiplying by the console size (with clamping).
-    let font_size = (
-        ctx.width_pixels as f32 / max_sizes.0 as f32,
-        ctx.height_pixels as f32 / max_sizes.1 as f32,
-    );
-    let offsets = (
-        center_x as f32 * font_size.0 * (scale - 1.0),
-        center_y as f32 * font_size.1 * (scale - 1.0),
-    );
-
-    let w = ctx.width_pixels as f32 * scale;
-    let h = ctx.height_pixels as f32 * scale;
-    let extent_x = (pos.0 as f32 + offsets.0) / w;
-    let extent_y = (pos.1 as f32 + offsets.1) / h;
-    let mouse_x = f32::min(extent_x * max_sizes.0 as f32, max_sizes.0 as f32 - 1.0);
-    let mouse_y = f32::min(extent_y * max_sizes.1 as f32, max_sizes.1 as f32 - 1.0);
-
-    (i32::max(0, mouse_x as i32), i32::max(0, mouse_y as i32))
-}
-
-// END copied from bracket lib
