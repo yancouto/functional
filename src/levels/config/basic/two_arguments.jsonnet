@@ -13,7 +13,7 @@
         Notice that terms are left associative, that is:
         - a b c = ((a b) c)
 
-        And that's why you can call \"multi parameter functions\" like this:
+        And that's why you can call "multi parameter functions" like this:
         - FUNC x y z = (((FUNC x) y) z)
     |||,
     test_cases: [

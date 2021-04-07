@@ -130,8 +130,10 @@ impl TextEditor for XiEditor {
             },
             bl::BEvent::CursorMoved { .. } =>
                 if input.is_mouse_button_pressed(0) {
-                    let mouse =
+                    let mut mouse =
                         Pos::from_xy(input.mouse_tile_pos(HARDCODED_MAIN_CONSOLE)) - self.pos;
+                    mouse.i = mouse.i.max(0);
+                    mouse.j = mouse.j.max(0);
                     self.send_notif(EditNotification::Gesture {
                         line: mouse.i as u64,
                         col:  mouse.j as u64,

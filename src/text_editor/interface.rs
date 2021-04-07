@@ -143,7 +143,6 @@ impl<'de> Deserialize<'de> for ViewId {
 pub enum ServerMessage {
     Response(u64, ServerResponse),
     Notification(ServerNotification),
-    Request(u64, ServerRequest),
     // For non-implemented things. In the future, remove
     Unknown,
 }
@@ -270,7 +269,7 @@ impl BufRead for JsonReceiver {
                 })
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::BrokenPipe, e))?;
         }
-        log::debug!("Send: {}", self.buf);
+        log::trace!("Send: {}", self.buf);
         Ok(self.buf.as_bytes())
     }
 
@@ -345,7 +344,6 @@ impl ServerMessageReceiver {
                 Ok(msg) => match msg {
                     ServerMessage::Response(id, response) => self.process_response(id, response),
                     ServerMessage::Notification(n) => self.notif_tx.send(n).unwrap(),
-                    ServerMessage::Request(_, _) => todo!(),
                     ServerMessage::Unknown => {}, // ignore
                 },
                 Err(_) => {
