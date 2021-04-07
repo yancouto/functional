@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops};
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Pos {
     pub i: i32,
@@ -14,6 +14,8 @@ impl fmt::Debug for Pos {
 impl Pos {
     pub fn new(i: i32, j: i32) -> Self { Self { i, j } }
 
+    pub fn from_xy(xy: (i32, i32)) -> Self { Self { i: xy.1, j: xy.0 } }
+
     pub fn inside(&self, r: &Rect) -> bool {
         if self.i < r.pos.i
             || self.i >= r.pos.i + r.size.h
@@ -25,6 +27,12 @@ impl Pos {
             true
         }
     }
+}
+
+impl ops::Sub for Pos {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output { Self::new(self.i - rhs.i, self.j - rhs.j) }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

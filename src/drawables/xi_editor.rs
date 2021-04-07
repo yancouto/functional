@@ -1,6 +1,8 @@
 use std::{convert::TryFrom, iter::FromIterator, path::PathBuf, time::Duration};
 
-use xi_core_lib::rpc::{EditCommand, EditNotification, EditRequest};
+use xi_core_lib::rpc::{
+    EditCommand, EditNotification, EditRequest, GestureType, SelectionGranularity
+};
 
 use super::TextEditor;
 use crate::{gamestates::base::TickData, math::*, prelude::*, text_editor::interface::*};
@@ -28,6 +30,8 @@ pub struct XiEditor {
     // TODO: use actual clipboard
     copied_text:       String,
 }
+
+const HARDCODED_MAIN_CONSOLE: usize = 0;
 
 impl TextEditor for XiEditor {
     fn new(pos: Pos, size: Size) -> Self {
@@ -124,9 +128,26 @@ impl TextEditor for XiEditor {
                     _ => {},
                 }
             },
-            bl::BEvent::MouseClick { button, pressed } => {
-                //println!("Mouse click {} -- {}", button, pressed);
-                // TODO: get mouse location
+            bl::BEvent::CursorMoved { .. } =>
+                if input.is_mouse_button_pressed(0) {
+                    let mouse =
+                        Pos::from_xy(input.mouse_tile_pos(HARDCODED_MAIN_CONSOLE)) - self.pos;
+                    self.send_notif(EditNotification::Gesture {
+                        line: mouse.i as u64,
+                        col:  mouse.j as u64,
+                        ty:   GestureType::Drag,
+                    });
+                },
+            bl::BEvent::MouseClick { button, pressed } if *pressed && *button == 0 => {
+                let mouse = Pos::from_xy(input.mouse_tile_pos(HARDCODED_MAIN_CONSOLE)) - self.pos;
+                self.send_notif(EditNotification::Gesture {
+                    line: mouse.i as u64,
+                    col:  mouse.j as u64,
+                    ty:   GestureType::Select {
+                        granularity: SelectionGranularity::Point,
+                        multi:       false,
+                    },
+                });
             },
             _ => {},
         }

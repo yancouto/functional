@@ -36,12 +36,11 @@ impl<'a> TickData<'a> {
         ctx: &mut bl::BTerm,
         input: &'a bl::Input,
     ) -> Self {
-        let mouse = input.mouse_tile_pos(ctx.active_console);
         TickData {
             time: data.time,
             console,
             pressed_key: ctx.key,
-            mouse_pos: Pos::new(mouse.1, mouse.0),
+            mouse_pos: Pos::from_xy(input.mouse_tile_pos(ctx.active_console)),
             left_click: event_data.left_click,
             ctrl: ctx.control,
             keys_pressed: input.key_pressed_set(),
