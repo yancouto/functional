@@ -9,21 +9,21 @@ use crate::{
 
 #[derive(Debug)]
 pub struct EditorState<Editor: TextEditor> {
-    time:             Duration,
     level:            &'static Level,
     editor:           Editor,
     current_solution: u8,
     save_profile:     Rc<SaveProfile>,
+    last_save:        Duration,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
     pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
         let mut state = Self {
-            time: Duration::from_secs(0),
             level,
             editor: Editor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
             save_profile,
             current_solution: 1,
+            last_save: Duration::from_secs(0),
         };
         state.load_solution(1);
         state
@@ -37,12 +37,13 @@ impl<Editor: TextEditor> EditorState<Editor> {
         self.current_solution = solution;
     }
 
-    fn save_current_solution(&mut self) {
+    fn save_current_solution(&mut self, current_time: Duration) {
         self.save_profile.write_level(
             &self.level.name,
             self.current_solution,
             &self.editor.to_string(),
         );
+        self.last_save = current_time;
     }
 }
 
@@ -67,9 +68,14 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             if data.button(&idx.to_string(), Pos::new(31, (idx as i32 - 1) * 3))
                 && idx != self.current_solution
             {
-                self.save_current_solution();
+                self.save_current_solution(data.time);
                 self.load_solution(idx);
             }
+        }
+
+        if data.time - self.last_save > Duration::from_secs(20) {
+            log::debug!("Auto saving code!");
+            self.save_current_solution(data.time);
         }
 
         self.editor.draw(&mut data);
@@ -89,10 +95,11 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         data.console.print_right(W, H - 1, "Press ESC to go back");
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::F10)) {
-            self.save_current_solution();
+            self.save_current_solution(data.time);
         }
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
+            self.save_current_solution(data.time);
             GameStateEvent::Switch(box LevelSelectionState::new(self.save_profile.clone()))
         } else {
             GameStateEvent::None
