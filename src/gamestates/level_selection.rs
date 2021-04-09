@@ -1,20 +1,13 @@
 use std::borrow::Cow;
 
-use vec1::vec1;
-
 use super::{base::*, editor::EditorState};
 use crate::{
-    drawables::XiEditor, levels::{Level, LEVELS}, prelude::*, save_system::{LevelResult, SaveProfile}, utils::vec_with_cursor::VecWithCursor
+    drawables::XiEditor, levels::{Section, LEVELS}, prelude::*, save_system::{LevelResult, SaveProfile}, utils::vec_with_cursor::VecWithCursor
 };
-
-struct Section<'a> {
-    name:   String,
-    levels: Vec<&'a Level>,
-}
 
 pub struct LevelSelectionState<'a> {
     /// Index of selected section
-    sections:     VecWithCursor<Section<'a>>,
+    sections:     VecWithCursor<&'a Section>,
     /// Index of selected level inside section
     level_i:      Option<usize>,
     save_profile: Rc<SaveProfile>,
@@ -22,17 +15,10 @@ pub struct LevelSelectionState<'a> {
 
 impl LevelSelectionState<'static> {
     pub fn new(save_profile: Rc<SaveProfile>) -> Self {
-        let random_levels = |n: usize| {
-            (0..n)
-                .map(|i| &LEVELS[i % LEVELS.len()])
-                .collect::<Vec<&Level>>()
-        };
         let l = LevelSelectionState {
-            sections: vec1![Section {
-                name:   "basic".to_string(),
-                levels: random_levels(5),
-            }]
-            .into(),
+            sections: Vec1::try_from_vec(LEVELS.iter().map(|x| x).collect())
+                .unwrap()
+                .into(),
             level_i: None,
             save_profile,
         };
@@ -100,7 +86,7 @@ impl GameState for LevelSelectionState<'static> {
         match data.pressed_key.zip(self.level_i) {
             Some((bl::VirtualKeyCode::Return, l_i)) =>
                 GameStateEvent::Switch(box EditorState::<XiEditor>::new(
-                    self.sections.get().levels[l_i],
+                    &self.sections.get().levels[l_i],
                     self.save_profile.clone(),
                 )),
             _ => GameStateEvent::None,

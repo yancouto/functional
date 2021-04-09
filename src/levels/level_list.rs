@@ -1,6 +1,7 @@
 use serde::Deserialize;
 
 use super::{Level, TestCase};
+use crate::prelude::*;
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct JLevel {
@@ -25,25 +26,41 @@ struct JLevelConfig {
 
 const RAW_LEVEL_CONFIG: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/level_config.json"));
 
-fn load_all() -> Vec<Level> {
+fn load_all() -> Vec1<Section> {
     let config: JLevelConfig = serde_json::from_slice(RAW_LEVEL_CONFIG).expect("Invalid json");
-    config
-        .sections
-        .into_iter()
-        .flat_map(|s| s.levels)
-        .map(|l| Level {
-            name:        l.name,
-            description: l.description,
-            extra_info:  l.extra_info,
-            test_cases:  l
-                .test_cases
-                .into_iter()
-                .map(|t| TestCase::from(&t.0, &t.1))
-                .collect(),
-        })
-        .collect()
+    Vec1::try_from_vec(
+        config
+            .sections
+            .into_iter()
+            .map(|s| Section {
+                name:   s.name,
+                levels: Vec1::try_from_vec(
+                    s.levels
+                        .into_iter()
+                        .map(|l| Level {
+                            name:        l.name,
+                            description: l.description,
+                            extra_info:  l.extra_info,
+                            test_cases:  l
+                                .test_cases
+                                .into_iter()
+                                .map(|t| TestCase::from(&t.0, &t.1))
+                                .collect(),
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+            })
+            .collect(),
+    )
+    .unwrap()
+}
+
+pub struct Section {
+    pub name:   String,
+    pub levels: Vec1<Level>,
 }
 
 lazy_static! {
-    pub static ref LEVELS: Vec<Level> = load_all();
+    pub static ref LEVELS: Vec1<Section> = load_all();
 }
