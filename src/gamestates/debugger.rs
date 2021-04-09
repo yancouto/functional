@@ -29,7 +29,7 @@ impl GameState for DebuggerState {
             .print_centered(3, "Step by step test case reduction");
         let mut j = 6;
         for code in &self.steps {
-            data.console.print_centered(j, &format!("{:?}", code));
+            data.console.print_centered(j, &format!("{}", code));
             j += 3;
         }
 

@@ -4,6 +4,7 @@
 #![feature(try_trait)]
 #![feature(generators, generator_trait)]
 #![feature(iter_advance_by)]
+#![feature(map_first_last)]
 #[macro_use]
 extern crate lazy_static;
 

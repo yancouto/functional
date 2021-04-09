@@ -1,4 +1,5 @@
 mod interpreter;
+mod node_display;
 mod parser;
 mod tokenizer;
 

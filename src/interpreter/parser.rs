@@ -13,9 +13,9 @@ use super::tokenizer::{Constant, TVariable, Token};
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Variable {
     /// Unique number between all variables in the term
-    uid:      u32,
+    pub uid:      u32,
     /// Original name of the variable, may have duplicates
-    original: TVariable,
+    pub original: TVariable,
 }
 
 impl Variable {
@@ -46,18 +46,6 @@ pub enum Node {
         left:  Box<Node>,
         right: Box<Node>,
     },
-}
-
-impl fmt::Debug for Node {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Node::Constant(c) => f.write_str(c),
-            Node::Variable(v) => v.fmt(f),
-            Node::Function { variable, body } =>
-                f.write_fmt(format_args!("({:?}: {:?})", variable, body)),
-            Node::Apply { left, right } => f.write_fmt(format_args!("({:?} {:?})", left, right)),
-        }
-    }
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
