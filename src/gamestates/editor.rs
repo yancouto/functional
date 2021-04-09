@@ -83,6 +83,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         if data.button("Run", Pos::new(H - 3, 2))
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
         {
+            self.save_current_solution(data.time);
             return GameStateEvent::Push(box RunSolutionState::new(
                 self.level,
                 self.editor.to_string().chars(),
@@ -90,9 +91,10 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             ));
         }
 
-        data.console
-            .print_right(W, H - 3, "Click Run or press CTRL+ENTER to run");
-        data.console.print_right(W, H - 1, "Press ESC to go back");
+        data.instructions(&[
+            "Click Run or press CTRL+ENTER to run code",
+            "Press ESC to go back",
+        ]);
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::F10)) {
             self.save_current_solution(data.time);

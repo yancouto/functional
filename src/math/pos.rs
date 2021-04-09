@@ -1,4 +1,6 @@
 use std::{fmt, ops};
+
+use crate::prelude::*;
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Pos {
     pub i: i32,
@@ -55,6 +57,16 @@ impl Rect {
     pub fn new(i: i32, j: i32, w: i32, h: i32) -> Self {
         Self {
             pos:  Pos { i, j },
+            size: Size { w, h },
+        }
+    }
+
+    pub fn centered(w: i32, h: i32) -> Self {
+        Self {
+            pos:  Pos {
+                i: H / 2 - h / 2,
+                j: W / 2 - w / 2,
+            },
             size: Size { w, h },
         }
     }

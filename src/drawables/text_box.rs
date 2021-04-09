@@ -59,4 +59,12 @@ impl TickData<'_> {
     }
 
     pub fn print(&mut self, pos: Pos, text: &str) { self.console.print(pos.j, pos.i, text); }
+
+    pub fn instructions(&mut self, texts: &[&str]) {
+        let size = texts.len();
+        texts.into_iter().enumerate().for_each(|(i, txt)| {
+            self.console
+                .print_right(W - 1, H - 2 * (size - i) as i32, *txt)
+        });
+    }
 }

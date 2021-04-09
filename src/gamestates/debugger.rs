@@ -24,13 +24,17 @@ impl DebuggerState {
 impl GameState for DebuggerState {
     fn name(&self) -> &'static str { "Debugger" }
 
-    fn tick(&mut self, data: TickData) -> GameStateEvent {
-        data.console.print_centered(3, "Running solution");
-        let mut j = 5;
+    fn tick(&mut self, mut data: TickData) -> GameStateEvent {
+        data.console
+            .print_centered(3, "Step by step test case reduction");
+        let mut j = 6;
         for code in &self.steps {
             data.console.print_centered(j, &format!("{:?}", code));
-            j += 2;
+            j += 3;
         }
+
+        data.instructions(&["Press ESC to go back"]);
+
         if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
             GameStateEvent::Pop
         } else {

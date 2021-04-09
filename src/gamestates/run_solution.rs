@@ -1,6 +1,6 @@
 use super::{base::*, debugger::DebuggerState};
 use crate::{
-    levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
+    interpreter::InterpretError, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
@@ -27,34 +27,46 @@ impl RunSolutionState {
     }
 }
 
+const DEBUG: &str = "Explain";
+
 impl GameState for RunSolutionState {
     fn name(&self) -> &'static str { "RunSolution" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         let text = if let Err(err) = &self.results {
-            format!("Failed to parse code:\n{}", err)
+            format!("Failed to parse expression:\n{}", err)
         } else {
-            "Code compiled successfully.".to_owned()
+            "Parsed expression successfully.".to_owned()
         };
-        data.text_box("Solution results", &text, Rect::new(20, 20, 40, 20));
+        let ret = Rect::centered(60, 30);
+        data.text_box("Solution results", &text, ret.clone());
+
+        data.instructions(&["Press ESC to go back"]);
 
         if let Ok(runs) = &self.results {
-            let mut cur_i = 26;
+            let mut cur_i = ret.pos.i + 5;
             for (i, run) in runs.runs.iter().enumerate() {
                 let result_str = match &run.result {
-                    Ok(node) => if *node == run.expected_result {
-                        "SUCCESS!"
-                    } else {
-                        "WRONG ANSWER!"
-                    }
-                    .to_owned(),
-                    Err(err) => format!("ERROR ({})", err),
-                };
+                    Ok(node) =>
+                        if *node == run.expected_result {
+                            "SUCCESS!"
+                        } else {
+                            "WRONG ANSWER!"
+                        },
+                    Err(err) => match err {
+                        InterpretError::AlgorithmError => "UNKNOWN ERROR, CONTACT DEVELOPERS!",
+                        InterpretError::TooDeep => "NO REDUCTION (INFINITE LOOP)",
+                    },
+                }
+                .to_owned();
                 data.print(
-                    Pos::new(cur_i, 21),
+                    Pos::new(cur_i, ret.pos.j + 2),
                     &format!("Test Case #{}: {}", i, result_str),
                 );
-                if data.button("Debug", Pos::new(cur_i - 1, 50)) {
+                if data.button(
+                    DEBUG,
+                    Pos::new(cur_i - 1, ret.pos.j + ret.size.w - DEBUG.len() as i32 - 4),
+                ) {
                     return GameStateEvent::Push(box DebuggerState::new(run.clone()));
                 }
                 cur_i += 3;

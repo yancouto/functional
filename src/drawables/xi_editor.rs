@@ -77,7 +77,7 @@ impl TextEditor for XiEditor {
             } => {
                 let notif = match key {
                     K::Back => Some(EditNotification::DeleteBackward),
-                    K::Return | K::NumpadEnter => Some(EditNotification::InsertNewline),
+                    K::Return | K::NumpadEnter if !ctrl => Some(EditNotification::InsertNewline),
                     K::Right => Some(if shift {
                         EditNotification::MoveRightAndModifySelection
                     } else {

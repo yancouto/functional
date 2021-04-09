@@ -65,7 +65,7 @@ impl GameState for LevelSelectionState<'static> {
             );
         }
         let cursor_on = ((data.time.as_millis() / 500) % 2) == 0;
-        if let Some(l_i) = self.level_i {
+        if self.level_i.is_some() {
             let mut levels_info = self.save_profile.get_levels_info();
             for (i, level) in self.sections.get().levels.iter().enumerate() {
                 let info = levels_info.entry(level.name.clone()).or_default();
@@ -77,15 +77,16 @@ impl GameState for LevelSelectionState<'static> {
                 }
                 data.print(Pos::new(self.get_i(i as i32), MID_J + CURSOR_J + 2), &text);
             }
-            data.print(
-                Pos::new(self.get_i(l_i as i32) + 1, MID_J + CURSOR_J + 5),
-                "press ENTER to select level",
-            )
+            data.instructions(&[
+                "Press LEFT to close section",
+                "Use UP/DOWN to navigate tasks",
+                "Press ENTER to select task",
+            ]);
         } else {
-            data.print(
-                Pos::new(self.get_i(self.sections.cursor() as i32), MID_J + CURSOR_J),
-                "press RIGHT to open section",
-            );
+            data.instructions(&[
+                "Use UP/DOWN to navigate sections",
+                "Press RIGHT to open section",
+            ]);
         }
         if cursor_on {
             data.print(
