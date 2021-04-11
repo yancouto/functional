@@ -156,22 +156,24 @@ impl TextEditor for XiEditor {
     }
 
     fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
-        if path.exists() {
-            self.send.send_notification(CoreNotification::CloseView {
-                view_id: self.view_id,
-            });
-            let resp = serde_json::from_value::<ViewId>(
-                self.send
-                    .send_request_block(CoreRequest::NewView {
-                        file_path: Some(path.to_string_lossy().to_string()),
-                    })
-                    .unwrap(),
-            )
-            .unwrap();
-            log::info!("Changing view id from {} to {}", self.view_id, resp.0);
-            self.view_id = resp.0;
-            self.text = vec![];
-        }
+        self.send.send_notification(CoreNotification::CloseView {
+            view_id: self.view_id,
+        });
+        let resp = serde_json::from_value::<ViewId>(
+            self.send
+                .send_request_block(CoreRequest::NewView {
+                    file_path: if path.exists() {
+                        Some(path.to_string_lossy().to_string())
+                    } else {
+                        None
+                    },
+                })
+                .unwrap(),
+        )
+        .unwrap();
+        log::info!("Changing view id from {} to {}", self.view_id, resp.0);
+        self.view_id = resp.0;
+        self.text = vec![];
         Ok(())
     }
 

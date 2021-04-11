@@ -4,7 +4,7 @@ use super::{
     base::{GameState, GameStateEvent, TickData}, level_selection::LevelSelectionState, run_solution::RunSolutionState
 };
 use crate::{
-    drawables::TextEditor, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
+    drawables::{black, dark_gray, TextEditor}, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
@@ -65,8 +65,15 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         }
 
         for idx in 1..4u8 {
-            if data.button(&idx.to_string(), Pos::new(31, (idx as i32 - 1) * 3))
-                && idx != self.current_solution
+            if data.button(
+                &idx.to_string(),
+                Pos::new(31, (idx as i32 - 1) * 3),
+                if idx == self.current_solution {
+                    dark_gray()
+                } else {
+                    black()
+                },
+            ) && idx != self.current_solution
             {
                 self.save_current_solution(data.time);
                 self.load_solution(idx);
@@ -80,7 +87,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
 
         self.editor.draw(&mut data);
 
-        if data.button("Run", Pos::new(H - 3, 2))
+        if data.button("Run", Pos::new(H - 3, 2), black())
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
         {
             self.save_current_solution(data.time);

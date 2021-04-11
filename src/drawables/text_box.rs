@@ -2,9 +2,10 @@ use crate::{
     gamestates::base::TickData, math::{Pos, Rect, Size}, prelude::*
 };
 
-fn white() -> bl::RGBA { bl::RGBA::named(bl::WHITE) }
-fn black() -> bl::RGBA { bl::RGBA::named(bl::BLACK) }
-fn gray() -> bl::RGBA { bl::RGBA::named(bl::GRAY) }
+pub fn white() -> bl::RGBA { bl::RGBA::named(bl::WHITE) }
+pub fn black() -> bl::RGBA { bl::RGBA::named(bl::BLACK) }
+pub fn gray() -> bl::RGBA { bl::RGBA::named(bl::GRAY) }
+pub fn dark_gray() -> bl::RGBA { bl::RGBA::named(bl::DARK_GRAY) }
 
 impl TickData<'_> {
     pub fn draw_box(&mut self, title: &str, rect: Rect) {
@@ -31,7 +32,7 @@ impl TickData<'_> {
     }
 
     /// Button has height 3, width is the width of the string plus 2
-    pub fn button(&mut self, text: &str, pos: Pos) -> bool {
+    pub fn button(&mut self, text: &str, pos: Pos, background: bl::RGBA) -> bool {
         let size = Size::new(text.len() as i32 + 2, 3);
         let rect = Rect { pos, size };
         let mut was_clicked = false;
@@ -43,7 +44,7 @@ impl TickData<'_> {
                 gray()
             }
         } else {
-            black()
+            background
         };
         self.console
             .draw_box(pos.j, pos.i, size.w - 1, size.h - 1, white(), bg);

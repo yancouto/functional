@@ -1,6 +1,6 @@
 use super::{base::*, debugger::DebuggerState};
 use crate::{
-    interpreter::InterpretError, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
+    drawables::black, interpreter::InterpretError, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
@@ -66,6 +66,7 @@ impl GameState for RunSolutionState {
                 if data.button(
                     DEBUG,
                     Pos::new(cur_i - 1, ret.pos.j + ret.size.w - DEBUG.len() as i32 - 4),
+                    black(),
                 ) {
                     return GameStateEvent::Push(box DebuggerState::new(run.clone()));
                 }
