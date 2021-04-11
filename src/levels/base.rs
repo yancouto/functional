@@ -44,7 +44,8 @@ impl TestCase {
     pub fn from(application: &str, result: &str) -> Self {
         Self {
             application:     parse_or_fail(application),
-            expected_result: parse_or_fail(result),
+            expected_result: interpret(parse_or_fail(result), true)
+                .expect("Failed to interpret result"),
         }
     }
 

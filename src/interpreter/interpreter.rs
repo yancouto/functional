@@ -2,7 +2,9 @@ use std::ops::{Generator, GeneratorState};
 
 use thiserror::Error;
 
-use super::parser::{Node, Variable};
+use super::{
+    parser::{Node, Variable}, ConstantProvider
+};
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum InterpretError {
@@ -77,6 +79,7 @@ macro_rules! yield_from {
 struct Interpreter {
     fully_resolve:       bool,
     yield_intermediates: bool,
+    provider:            ConstantProvider,
 }
 
 type InterpretResult =
@@ -128,7 +131,11 @@ impl Interpreter {
                         body: inner,
                     })
                 },
-                node @ Node::Constant(..) => box node,
+                Node::Constant(c) => self
+                    .provider
+                    // No need to interpret constants here... they should be fully reduced
+                    .get(&c)
+                    .unwrap_or_else(|| box Node::Constant(c)),
             })
         })
     }
@@ -138,6 +145,8 @@ pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, Inte
     let mut gen = Interpreter {
         fully_resolve,
         yield_intermediates: false,
+        // TODO: Not use all constants all the time
+        provider: ConstantProvider::new(100),
     }
     .interpret(0, root, true);
     loop {
@@ -181,6 +190,7 @@ pub fn interpret_itermediates(
         gen:      Interpreter {
             fully_resolve,
             yield_intermediates: true,
+            provider: ConstantProvider::new(100),
         }
         .interpret(0, root, true),
         finished: false,
@@ -204,7 +214,7 @@ mod test {
     fn interpret_eq_full(src: &str, expected: &str, fully_resolve: bool) {
         assert_eq!(
             interpret(parse_ok(src), fully_resolve).unwrap(),
-            parse_ok(expected)
+            interpret(parse_ok(expected), fully_resolve).unwrap(),
         );
     }
 
@@ -295,4 +305,11 @@ mod test {
 
     #[test]
     fn partial() { assert_partial("(x: x x) (y: z)", vec!["(y: z) (y:z)", "z"]); }
+
+    #[test]
+    fn test_constants() {
+        interpret_eq("TRUE A B", "A");
+        interpret_eq("FALSE A B", "B");
+        interpret_eq_full("(f:a:b: f b a) FALSE", "TRUE", true);
+    }
 }

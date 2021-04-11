@@ -1,8 +1,6 @@
 use std::{collections::HashMap, convert::TryInto};
 
-use crate::{
-    interpreter::{parse, tokenize, Node}, prelude::*
-};
+use crate::interpreter::{parse, tokenize, Node};
 
 struct ConstantNode {
     term:   Box<Node>,
@@ -31,7 +29,7 @@ lazy_static! {
     };
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct ConstantProvider {
     known_cts: u8,
 }
@@ -50,6 +48,7 @@ impl ConstantProvider {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::interpreter::interpret;
     #[test]
     fn test_constants() {
         // Can we load the constants without crashing?
@@ -66,5 +65,12 @@ mod test {
         let p2 = ConstantProvider::new(2);
         assert!(p2.get("TRUE").is_some());
         assert!(p2.get("FALSE").is_some());
+    }
+
+    #[test]
+    fn test_constants_are_resolved() {
+        ALL_CONSTANTS.iter().for_each(|(_, node)| {
+            assert_eq!(interpret(node.term.clone(), true), Ok(node.term.clone()))
+        });
     }
 }
