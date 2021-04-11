@@ -199,7 +199,9 @@ pub fn interpret_itermediates(
 
 #[cfg(test)]
 mod test {
-    use super::{super::parser::test::parse_ok, *};
+    use super::{
+        super::parser::test::{parse_ok, ConvertToNode}, *
+    };
 
     const Y_COMB: &str = "(f: (x: f (x x)) (x: f (x x)))";
 
@@ -211,10 +213,14 @@ mod test {
 
     fn interpret_err(str: &str) -> InterpretError { interpret_lazy(parse_ok(str)).unwrap_err() }
 
+    fn interpret_ok_full(str: &str, fully_resolve: bool) -> Box<Node> {
+        interpret(parse_ok(str), fully_resolve).unwrap()
+    }
+
     fn interpret_eq_full(src: &str, expected: &str, fully_resolve: bool) {
         assert_eq!(
-            interpret(parse_ok(src), fully_resolve).unwrap(),
-            interpret(parse_ok(expected), fully_resolve).unwrap(),
+            interpret_ok_full(src, fully_resolve),
+            interpret_ok_full(expected, fully_resolve)
         );
     }
 
@@ -252,6 +258,22 @@ mod test {
     }
     #[test]
     fn tricky2() { interpret_eq("(x: x x) (y: x)", "x"); }
+
+    #[test]
+    fn tricky3() {
+        // (0: 1: 0 1) 1
+        // Using pure expressions to create the conflict in var uids that might
+        // come from e.g. concatenating variables
+        let expr = ((0, (1, (0.n(), 1.n()).n()).n()).n(), 1.n()).n();
+        assert_eq!(interpret(expr, false).unwrap(), parse_ok("x: z x"));
+        // No variable conflicts when replacing
+        let ex = "y: (x: y: x y) y";
+        interpret_eq_full(ex, "y: z: y z", true);
+        interpret_eq_full(&format!("({}) A B", ex), "A B", true);
+        interpret_eq_full(&format!("({}) A B", ex), "A B", false);
+        // Display can't reuse variable names for different vars
+        assert_eq!(format!("{}", interpret_ok_full(ex, true)), "y: z: y z");
+    }
 
     #[test]
     fn infinite() {

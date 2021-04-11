@@ -92,7 +92,7 @@ fn rec(
             if needs_assoc_par {
                 "(".fmt(f)?;
             }
-            rec(&left, data, f, false, needs_assoc_par)?;
+            rec(&left, data, f, false, false)?;
             " ".fmt(f)?;
             rec(&right, data, f, false, true)?;
             if needs_assoc_par {
@@ -139,5 +139,6 @@ mod test {
         display_eq("(a (b c))", "a (b c)");
         display_eq("((a b) c) d", "a b c d");
         display_eq("((a: b) c)", "(a: b) c");
+        display_eq("x: x ((a b) c)", "x: x (a b c)");
     }
 }

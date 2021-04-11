@@ -297,7 +297,7 @@ pub mod test {
         }
     }
 
-    trait ConvertToNode {
+    pub trait ConvertToNode {
         fn n(self) -> Box<Node>;
     }
 
