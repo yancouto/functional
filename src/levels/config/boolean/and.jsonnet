@@ -1,15 +1,13 @@
 {
     name: "and",
     description: |||
-        We can define booleans as follows:
-        - TRUE  = a: b: a
-        - FALSE = a: b: b
+        Write function AND, that is, a function that is given two booleans, and only reduces to TRUE if both values are TRUE.
 
-        That is, TRUE is a two argument function that returns the first element, and FALSE returns the second.
+        Examples:
+        - AND TRUE TRUE  -> TRUE
+        - AND FALSE TRUE -> FALSE
 
-        Write function AND, that is, a function that is given two booleans, and only returns TRUE if both values are TRUE.
-
-        Note that you can assume that the received values are always booleans! Input is always well formed.
+        As always, the input is well formed, both arguments are booleans.
     |||,
     test_cases: [
         ["f: f TRUE TRUE", "TRUE"],

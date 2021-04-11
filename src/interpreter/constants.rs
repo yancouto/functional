@@ -9,7 +9,12 @@ struct ConstantNode {
 
 lazy_static! {
     static ref ALL_CONSTANTS: HashMap<String, ConstantNode> = {
-        let constants = [("TRUE", "a: b: a"), ("FALSE", "a: b: b")];
+        let constants = [
+            ("TRUE", "a: b: a"),
+            ("FALSE", "a: b: b"),
+            ("NOT", "b:x:y: b y x"),
+            ("AND", "a:b: x:y: a (b x y) y"),
+        ];
         constants
             .iter()
             .enumerate()
