@@ -64,3 +64,14 @@ pub struct Section {
 lazy_static! {
     pub static ref LEVELS: Vec1<Section> = load_all();
 }
+
+#[cfg(test)]
+mod test {
+    use super::LEVELS;
+
+    #[test]
+    fn test_level_load() {
+        // Can we load the levels without crashing?
+        assert!(LEVELS.len() > 0);
+    }
+}

@@ -50,6 +50,7 @@ impl SaveProfile {
             .join(format!("levels/{}/{}.code", level_name, solution))
     }
 
+    #[allow(dead_code)]
     pub fn read_level(&self, level_name: &str, solution: u8) -> String {
         log::debug!("Reading solution {} of level {}", solution, level_name);
         self.read_level_impl(level_name, solution)
