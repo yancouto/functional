@@ -7,22 +7,25 @@ use vec1::Vec1;
 
 use super::tokenizer::{Constant, TVariable, Token};
 
-/// uid is used to identify variables in different bindings. For example, in
-/// ((x: x) (x: x x)), the x's on both functions will have different uids, but
-/// on the same function they will have the same uid.
+/// depth can be uniquely used to determine the expression, as it points to
+/// which function binded the variable.
+/// It's better than an uid as replacing values make sense. For example,
+/// on (f: f f) (x: y: x y) we may end up with (y: y: y y), but each y
+/// points to a different function.
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Variable {
-    /// Unique number between all variables in the term
-    pub uid:      u32,
+    /// How many "levels above" is the variable created
+    /// If unbound, then this should be the depth of this node
+    /// Depth is inside how many functions
+    pub depth:    usize,
     /// Original name of the variable, may have duplicates
     pub original: TVariable,
 }
 
 impl Variable {
-    fn new(uid: &mut u32, var: TVariable) -> Self {
-        *uid += 1;
+    fn new(depth: usize, var: TVariable) -> Self {
         Self {
-            uid:      *uid - 1,
+            depth,
             original: var,
         }
     }
@@ -30,7 +33,7 @@ impl Variable {
 
 impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("{}_{}", self.original, self.uid))
+        f.write_fmt(format_args!("{}_{}", self.original, self.depth))
     }
 }
 
@@ -39,7 +42,8 @@ pub enum Node {
     Constant(Constant),
     Variable(Variable),
     Function {
-        variable: Variable,
+        // This variable doesn't have a depth.
+        variable: TVariable,
         body:     Box<Node>,
     },
     Apply {
@@ -68,7 +72,7 @@ pub enum ParseError {
 #[derive(Debug, Default)]
 struct Level {
     prev_node:            Option<Box<Node>>,
-    enveloping_functions: Vec<Variable>,
+    enveloping_functions: Vec<TVariable>,
 }
 
 impl Level {
@@ -94,7 +98,7 @@ impl Level {
             return Err(ParseError::MissingExpression);
         };
         while let Some(variable) = self.enveloping_functions.pop() {
-            bindings.pop_var(variable.original);
+            bindings.pop_var(variable);
             node = Box::new(Node::Function {
                 variable,
                 body: node,
@@ -106,40 +110,34 @@ impl Level {
 
 #[derive(Debug)]
 struct Bindings {
-    map:      HashMap<TVariable, Vec1<Variable>>,
-    num_vars: u32,
+    /// For each variable, at which depths it was defined
+    /// Example, for (x: x: x), you would get x with depth 1 and 2
+    map:       HashMap<TVariable, Vec1<usize>>,
+    cur_depth: usize,
 }
 
 impl Bindings {
     fn new() -> Self {
         Self {
-            map:      HashMap::new(),
-            num_vars: 0,
+            map:       HashMap::new(),
+            cur_depth: 0,
         }
     }
 
     /// Create a new variable with given name, register and return it.
-    fn push_var(&mut self, name: TVariable) -> Variable {
-        let var = Variable::new(&mut self.num_vars, name);
+    fn push_var(&mut self, name: TVariable) {
+        self.cur_depth += 1;
         match self.map.entry(name) {
             Entry::Vacant(entry) => {
-                entry.insert(Vec1::new(var));
+                entry.insert(Vec1::new(self.cur_depth));
             },
-            Entry::Occupied(mut entry) => entry.get_mut().push(var),
+            Entry::Occupied(mut entry) => entry.get_mut().push(self.cur_depth),
         };
-        var
     }
 
-    /// Get given variable, creating a new one if it doesn't exist (that will
-    /// happen only if it is a free variable)
-    fn get_var(&mut self, name: TVariable) -> Variable {
-        // Need to borrow this outside for compiler to understand we're not double borrowing
-        let num_vars = &mut self.num_vars;
-        self.map
-            .entry(name)
-            .or_insert_with(|| Vec1::new(Variable::new(num_vars, name)))
-            .last()
-            .clone()
+    /// Get the depth for the variable if it was added now
+    fn get_var(&mut self, name: TVariable) -> usize {
+        self.cur_depth - self.map.get(&name).map(|v| *v.last()).unwrap_or(0)
     }
 
     fn pop_var(&mut self, name: TVariable) {
@@ -148,6 +146,7 @@ impl Bindings {
                 if entry.get_mut().pop().is_err() {
                     entry.remove();
                 },
+            // TODO: Add algorithm error here
             Entry::Vacant(..) => panic!("Should have entry"),
         }
     }
@@ -167,14 +166,15 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
                     if levels.last().prev_node.is_some() {
                         return Err(ParseError::FunctionInsideBody);
                     }
-                    levels
-                        .last_mut()
-                        .enveloping_functions
-                        .push(bindings.push_var(name));
+                    bindings.push_var(name);
+                    levels.last_mut().enveloping_functions.push(name);
                 } else {
                     levels
                         .last_mut()
-                        .merge(Box::new(Node::Variable(bindings.get_var(name))));
+                        .merge(Box::new(Node::Variable(Variable::new(
+                            bindings.get_var(name),
+                            name,
+                        ))));
                 },
             Token::Constant(c) => {
                 levels.last_mut().merge(Box::new(Node::Constant(c)));
@@ -228,33 +228,33 @@ impl<A: Eq + Hash + Copy, B: Eq + Hash + Copy> OneToOne<A, B> {
 }
 
 impl Node {
-    fn synthatic_eq(&self, other: &Node, var_eqs: &mut OneToOne<u32, u32>) -> bool {
+    fn synthatic_eq(&self, other: &Node, cur_depth: usize) -> bool {
         match (self, other) {
             (Node::Constant(c1), Node::Constant(c2)) => c1 == c2,
-            (Node::Variable(v1), Node::Variable(v2)) => var_eqs.check(v1.uid, v2.uid),
+            (Node::Variable(v1), Node::Variable(v2)) =>
+            // Unbound vars (depth = cur_depth) need to have same char
+                v1.depth == v2.depth && (v1.depth < cur_depth || v1.original == v2.original),
             (
                 Node::Function { variable, body },
                 Node::Function {
                     variable: variable2,
                     body: body2,
                 },
-            ) => var_eqs.with_added_eq(variable.uid, variable2.uid, |vars| {
-                body.synthatic_eq(body2, vars)
-            }),
+            ) => body.synthatic_eq(body2, cur_depth + 1),
             (
                 Node::Apply { left, right },
                 Node::Apply {
                     left: left2,
                     right: right2,
                 },
-            ) => left.synthatic_eq(left2, var_eqs) && right.synthatic_eq(right2, var_eqs),
+            ) => left.synthatic_eq(left2, cur_depth) && right.synthatic_eq(right2, cur_depth),
             _ => false,
         }
     }
 }
 
 impl PartialEq for Node {
-    fn eq(&self, other: &Node) -> bool { self.synthatic_eq(other, &mut OneToOne::default()) }
+    fn eq(&self, other: &Node) -> bool { self.synthatic_eq(other, 0) }
 }
 
 impl Eq for Node {}
@@ -267,12 +267,17 @@ pub mod test {
 
     fn parse_err(str: &str) -> ParseError { parse(tokenize(str.chars()).unwrap()).unwrap_err() }
 
-    impl From<u32> for Variable {
-        fn from(uid: u32) -> Self { Self { uid, original: '-' } }
+    impl From<usize> for Variable {
+        fn from(depth: usize) -> Self {
+            Self {
+                depth,
+                original: '-',
+            }
+        }
     }
 
-    impl From<u32> for Box<Node> {
-        fn from(uid: u32) -> Self { Box::new(Node::Variable(uid.into())) }
+    impl From<usize> for Box<Node> {
+        fn from(depth: usize) -> Self { Box::new(Node::Variable(depth.into())) }
     }
 
     impl From<&str> for Box<Node> {
@@ -288,10 +293,10 @@ pub mod test {
         }
     }
 
-    impl From<(u32, Box<Node>)> for Box<Node> {
-        fn from(args: (u32, Box<Node>)) -> Self {
+    impl From<((), Box<Node>)> for Box<Node> {
+        fn from(args: ((), Box<Node>)) -> Self {
             Box::new(Node::Function {
-                variable: args.0.into(),
+                variable: '-',
                 body:     args.1,
             })
         }
@@ -311,7 +316,7 @@ pub mod test {
         assert_eq!(parse(vec![Token::Variable('x')]).unwrap(), 12.into(),);
         assert_eq!(parse_ok("a bc c"), ((0.n(), "bc".n()).n(), 2.n()).n());
         assert_eq!(parse_ok("a b c"), ((1.n(), 3.n()).n(), 13.n()).n(),);
-        assert_eq!(parse_ok("x:y:x"), (0, (1, 0.n()).n()).n());
+        assert_eq!(parse_ok("x:y:x"), ((), ((), 0.n()).n()).n());
         assert_eq!(parse_err(""), ParseError::MissingExpression);
     }
 
@@ -319,7 +324,7 @@ pub mod test {
     fn parenthesis() {
         assert_eq!(
             parse_ok("((x) (x: x))"),
-            (Box::<Node>::from(9), (3, 3.n()).n()).n()
+            (Box::<Node>::from(9), ((), 3.n()).n()).n()
         );
         assert_eq!(parse_ok("a b c"), parse_ok("((a b) c)"));
         assert_eq!(parse_err("(a b ())"), ParseError::MissingExpression);
@@ -346,10 +351,10 @@ pub mod test {
         assert_ne!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x z) (z: z n)"));
         assert_ne!(parse_ok("(x: x x)"), parse_ok("(x: x y)"));
         // Variable names may be reused if they're bound, and it still works
-        assert_eq!((0, (0, 0.n()).n()).n(), (0, (1, 1.n()).n()).n(),);
+        assert_eq!(((), ((), 0.n()).n()).n(), ((), ((), 1.n()).n()).n(),);
         assert_eq!(
             parse_ok("(x: x) (x: x)"),
-            ((0, 0.n()).n(), (0, 0.n()).n()).n(),
+            (((), 0.n()).n(), ((), 0.n()).n()).n(),
         );
     }
 

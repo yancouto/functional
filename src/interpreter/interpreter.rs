@@ -35,26 +35,44 @@ const MAX_LEVEL: usize = 100;
 
 use std::pin::Pin;
 
-fn replace_req(root: Box<Node>, var: Variable, value: Box<Node>) -> Box<Node> {
+fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(
+    root: &mut Box<Node>,
+    cur_depth: usize,
+    f: F,
+) {
+    match root.as_mut() {
+        Node::Constant(_) => {},
+        Node::Variable(v) =>
+            if v.depth == cur_depth {
+                f(&mut v.depth);
+            },
+        Node::Function { variable, body } => {
+            for_each_unbound_req(body, cur_depth + 1, f);
+        },
+        Node::Apply { left, right } => {
+            for_each_unbound_req(left, cur_depth, f);
+            for_each_unbound_req(right, cur_depth, f);
+        },
+    }
+}
+
+fn replace_req(root: Box<Node>, cur_depth: usize, value: Box<Node>) -> Box<Node> {
     box match *root {
         Node::Variable(v) =>
-            if v == var {
-                *value.clone()
+            if v.depth == cur_depth {
+                let mut value = value.clone();
+                for_each_unbound_req(&mut value, 0, |depth| *depth += cur_depth);
+                *value
             } else {
                 Node::Variable(v)
             },
-        Node::Function { variable, body } =>
-            if variable == var {
-                Node::Function { variable, body }
-            } else {
-                Node::Function {
-                    variable,
-                    body: replace_req(body, var, value),
-                }
-            },
+        Node::Function { variable, body } => Node::Function {
+            variable,
+            body: replace_req(body, cur_depth + 1, value),
+        },
         Node::Apply { left, right } => Node::Apply {
-            left:  replace_req(left, var, value.clone()),
-            right: replace_req(right, var, value.clone()),
+            left:  replace_req(left, cur_depth, value.clone()),
+            right: replace_req(right, cur_depth, value.clone()),
         },
         node @ Node::Constant(_) => node,
     }
@@ -108,7 +126,7 @@ impl Interpreter {
                     )?;
                     match *left {
                         Node::Function { variable, body } if do_apply => {
-                            let body = replace_req(body, variable, right);
+                            let body = replace_req(body, 0, right);
                             if self.yield_intermediates {
                                 yield body.clone();
                             }
@@ -260,11 +278,15 @@ mod test {
     fn tricky2() { interpret_eq("(x: x x) (y: x)", "x"); }
 
     #[test]
+    // Problems regarding conflicting variable names
     fn tricky3() {
+        // Issue is we'll copy the function twice, with same var names, and at the end we'll have
+        // something like (y: y': y y'), which is very easy to interpret as (y: y: y y) which is wrong
+        interpret_eq_full("(f: f f) (x: y: x y)", "(x: y: x y)", true);
         // (0: 1: 0 1) 1
         // Using pure expressions to create the conflict in var uids that might
-        // come from e.g. concatenating variables
-        let expr = ((0, (1, (0.n(), 1.n()).n()).n()).n(), 1.n()).n();
+        // come from e.g. concatenating terms
+        let expr = (((), ((), (0.n(), 1.n()).n()).n()).n(), 1.n()).n();
         assert_eq!(interpret(expr, false).unwrap(), parse_ok("x: z x"));
         // No variable conflicts when replacing
         let ex = "y: (x: y: x y) y";

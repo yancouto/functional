@@ -17,52 +17,49 @@ impl fmt::Debug for Node {
 }
 
 struct Data {
-    unused_unbound_vars: BTreeSet<TVariable>,
-    unbound_vars:        HashMap<u32, String>,
-    bound_vars:          BTreeSet<u32>,
+    // Bound variables by level. First the actual name of it, and second the String name, which may
+    // have a suffix if the expression has two variables with the same name
+    bound_vars:  Vec<String>,
+    // How many times this is variable is bound
+    bound_times: HashMap<char, usize>,
 }
 
 impl Data {
     fn new() -> Self {
         Self {
-            unused_unbound_vars: ('a'..='z').into_iter().collect(),
-            unbound_vars:        HashMap::new(),
-            bound_vars:          BTreeSet::new(),
+            bound_vars:  Vec::new(),
+            bound_times: HashMap::new(),
         }
     }
 
-    fn unbound_var(&mut self, var: Variable) -> String {
-        let unused = &mut self.unused_unbound_vars;
-        self.unbound_vars
-            .entry(var.uid)
-            .or_insert_with(|| {
-                if unused.remove(&var.original) {
-                    var.original.into()
-                } else if let Some(c) = unused.pop_first() {
-                    c.into()
-                } else {
-                    format!("{}_{}", var.original, var.uid)
-                }
-            })
-            .clone()
-    }
-
     fn get_text(&mut self, var: Variable) -> String {
-        if self.bound_vars.contains(&var.uid) {
-            var.original.into()
+        let cur_depth = self.bound_vars.len();
+        if var.depth >= cur_depth {
+            debug_assert!(var.depth == cur_depth, "Can't have more depth than current");
+            // Unbound variables start with _ to differentiate them
+            format!("_{}", var.original)
         } else {
-            self.unbound_var(var)
+            self.bound_vars[cur_depth - var.depth - 1].clone()
         }
     }
 
     fn with_bound_var<F: FnOnce(&mut Data) -> fmt::Result>(
         &mut self,
         f: F,
-        var: Variable,
+        var: char,
     ) -> fmt::Result {
-        self.bound_vars.insert(var.uid);
+        {
+            let times = self.bound_times.entry(var).or_insert(0);
+            let mut str: String = var.into();
+            for _ in 0..*times {
+                str.push('\'');
+            }
+            *times += 1;
+            self.bound_vars.push(str);
+        }
         let r = f(self);
-        self.bound_vars.remove(&var.uid);
+        *self.bound_times.get_mut(&var).unwrap() -= 1;
+        self.bound_vars.pop().unwrap();
         r
     }
 }
@@ -82,7 +79,7 @@ fn rec(
             if !func_prefix || needs_assoc_par {
                 "(".fmt(f)?;
             }
-            f.write_fmt(format_args!("{}: ", variable.original))?;
+            f.write_fmt(format_args!("{}: ", variable))?;
             data.with_bound_var(|data| rec(&body, data, f, true, false), *variable)?;
             if !func_prefix || needs_assoc_par {
                 ")".fmt(f)?;
