@@ -2,9 +2,7 @@ use std::ops::{Generator, GeneratorState};
 
 use thiserror::Error;
 
-use super::{
-    parser::{Node, Variable}, ConstantProvider
-};
+use super::{parser::Node, ConstantProvider};
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum InterpretError {
@@ -46,7 +44,7 @@ fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(
             if v.depth == cur_depth {
                 f(&mut v.depth);
             },
-        Node::Function { variable, body } => {
+        Node::Function { variable: _, body } => {
             for_each_unbound_req(body, cur_depth + 1, f);
         },
         Node::Apply { left, right } => {
@@ -58,12 +56,18 @@ fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(
 
 fn replace_req(root: Box<Node>, cur_depth: usize, value: Box<Node>) -> Box<Node> {
     box match *root {
-        Node::Variable(v) =>
+        Node::Variable(mut v) =>
             if v.depth == cur_depth {
                 let mut value = value.clone();
+                // We need to increase the depth for unbound vars so they keep being unbound
                 for_each_unbound_req(&mut value, 0, |depth| *depth += cur_depth);
                 *value
             } else {
+                if v.depth > cur_depth {
+                    // for variables that are "unbound" in the root note (may be bound before)
+                    // we need to decrease depth by one
+                    v.depth -= 1;
+                }
                 Node::Variable(v)
             },
         Node::Function { variable, body } => Node::Function {
@@ -125,7 +129,7 @@ impl Interpreter {
                         }
                     )?;
                     match *left {
-                        Node::Function { variable, body } if do_apply => {
+                        Node::Function { variable: _, body } if do_apply => {
                             let body = replace_req(body, 0, right);
                             if self.yield_intermediates {
                                 yield body.clone();
@@ -216,7 +220,7 @@ pub fn interpret_itermediates(
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use super::{
         super::parser::test::{parse_ok, ConvertToNode}, *
     };
@@ -227,11 +231,11 @@ mod test {
         interpret(root, false)
     }
 
-    fn interpret_ok(str: &str) -> Box<Node> { interpret_lazy(parse_ok(str)).unwrap() }
+    pub fn interpret_ok(str: &str) -> Box<Node> { interpret_lazy(parse_ok(str)).unwrap() }
 
     fn interpret_err(str: &str) -> InterpretError { interpret_lazy(parse_ok(str)).unwrap_err() }
 
-    fn interpret_ok_full(str: &str, fully_resolve: bool) -> Box<Node> {
+    pub fn interpret_ok_full(str: &str, fully_resolve: bool) -> Box<Node> {
         interpret(parse_ok(str), fully_resolve).unwrap()
     }
 
@@ -248,9 +252,12 @@ mod test {
 
     #[test]
     fn no_apply() {
-        interpret_eq("z", "x");
+        interpret_eq("z", "z");
         interpret_eq("y:y", "y : y");
+        interpret_eq("y:y", "x : x");
         interpret_eq("y:hello", "z : hello");
+        // unbound vars are not equal
+        assert_ne!(interpret_ok("a"), interpret_ok("b"));
         assert_ne!(interpret_ok("y:hello"), parse_ok("y:other"));
     }
 
@@ -275,7 +282,10 @@ mod test {
         interpret_eq("(x: y: x) y z", "y");
     }
     #[test]
-    fn tricky2() { interpret_eq("(x: x x) (y: x)", "x"); }
+    fn tricky2() {
+        interpret_eq("(x: x) (y: x)", "y: x");
+        interpret_eq("(x: x x) (y: x)", "x");
+    }
 
     #[test]
     // Problems regarding conflicting variable names
@@ -286,7 +296,7 @@ mod test {
         // (0: 1: 0 1) 1
         // Using pure expressions to create the conflict in var uids that might
         // come from e.g. concatenating terms
-        let expr = (((), ((), (0.n(), 1.n()).n()).n()).n(), 1.n()).n();
+        let expr = (((), ((), (1.n(), 0.n()).n()).n()).n(), (0, 'z').n()).n();
         assert_eq!(interpret(expr, false).unwrap(), parse_ok("x: z x"));
         // No variable conflicts when replacing
         let ex = "y: (x: y: x y) y";
@@ -294,7 +304,7 @@ mod test {
         interpret_eq_full(&format!("({}) A B", ex), "A B", true);
         interpret_eq_full(&format!("({}) A B", ex), "A B", false);
         // Display can't reuse variable names for different vars
-        assert_eq!(format!("{}", interpret_ok_full(ex, true)), "y: z: y z");
+        assert_eq!(format!("{}", interpret_ok_full(ex, true)), "y: y': y y'");
     }
 
     #[test]
@@ -313,7 +323,7 @@ mod test {
 
     #[test]
     fn actually_not_infinite() {
-        interpret_eq("(x: z) ((x: x x) (x: x x))", "k");
+        interpret_eq("(x: z) ((x: x x) (x: x x))", "z");
         interpret_eq(&format!("({} (f: x:y: y x)) a b", Y_COMB), "b a");
     }
 
@@ -322,8 +332,8 @@ mod test {
         // This may error if we're copying variables incorrectly, since the replacement
         // will have two functions with the same variable. This is not really a problem
         // but the eq checker might fail.
-        interpret_eq("(x: w x x) (x: x)", "z (x: x) (x:x)");
-        interpret_eq("(x: w x x) (y: z)", "z (a: b) (c:b)");
+        interpret_eq("(x: w x x) (x: x)", "w (x: x) (x:x)");
+        interpret_eq("(x: w x x) (y: z)", "w (a: z) (c:z)");
     }
 
     #[test]

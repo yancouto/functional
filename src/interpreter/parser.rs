@@ -141,6 +141,7 @@ impl Bindings {
     }
 
     fn pop_var(&mut self, name: TVariable) {
+        self.cur_depth -= 1;
         match self.map.entry(name) {
             Entry::Occupied(mut entry) =>
                 if entry.get_mut().pop().is_err() {
@@ -197,36 +198,6 @@ pub fn parse<T: IntoIterator<Item = Token>>(tokens: T) -> Result<Box<Node>, Pars
     Vec::from(levels).pop().unwrap().close(&mut bindings)
 }
 
-#[derive(Debug, Default)]
-struct OneToOne<A: Eq + Hash, B: Eq + Hash> {
-    left_to_right: HashMap<A, B>,
-    right_to_left: HashMap<B, A>,
-}
-
-impl<A: Eq + Hash + Copy, B: Eq + Hash + Copy> OneToOne<A, B> {
-    fn check(&mut self, a: A, b: B) -> bool {
-        *self.left_to_right.entry(a).or_insert(b) == b
-            && *self.right_to_left.entry(b).or_insert(a) == a
-    }
-
-    fn with_added_eq<F: FnOnce(&mut Self) -> R, R>(&mut self, a: A, b: B, f: F) -> R {
-        let prev_b = self.left_to_right.insert(a, b);
-        let prev_a = self.right_to_left.insert(b, a);
-        let r = f(self);
-        match prev_b {
-            Some(b) => self.left_to_right.insert(a, b),
-            None => self.left_to_right.remove(&a),
-        }
-        .unwrap();
-        match prev_a {
-            Some(a) => self.right_to_left.insert(b, a),
-            None => self.right_to_left.remove(&b),
-        }
-        .unwrap();
-        r
-    }
-}
-
 impl Node {
     fn synthatic_eq(&self, other: &Node, cur_depth: usize) -> bool {
         match (self, other) {
@@ -235,9 +206,9 @@ impl Node {
             // Unbound vars (depth = cur_depth) need to have same char
                 v1.depth == v2.depth && (v1.depth < cur_depth || v1.original == v2.original),
             (
-                Node::Function { variable, body },
+                Node::Function { variable: _, body },
                 Node::Function {
-                    variable: variable2,
+                    variable: _,
                     body: body2,
                 },
             ) => body.synthatic_eq(body2, cur_depth + 1),
@@ -280,6 +251,12 @@ pub mod test {
         fn from(depth: usize) -> Self { Box::new(Node::Variable(depth.into())) }
     }
 
+    impl From<(usize, char)> for Box<Node> {
+        fn from((depth, original): (usize, char)) -> Self {
+            box Node::Variable(Variable { depth, original })
+        }
+    }
+
     impl From<&str> for Box<Node> {
         fn from(val: &str) -> Self { Box::new(Node::Constant(val.to_string())) }
     }
@@ -313,10 +290,20 @@ pub mod test {
     #[test]
     fn simple() {
         assert_eq!(parse_ok("A"), Box::new(Node::Constant("A".to_string())));
-        assert_eq!(parse(vec![Token::Variable('x')]).unwrap(), 12.into(),);
-        assert_eq!(parse_ok("a bc c"), ((0.n(), "bc".n()).n(), 2.n()).n());
-        assert_eq!(parse_ok("a b c"), ((1.n(), 3.n()).n(), 13.n()).n(),);
-        assert_eq!(parse_ok("x:y:x"), ((), ((), 0.n()).n()).n());
+        assert_eq!(parse(vec![Token::Variable('x')]).unwrap(), (0, 'x').n());
+        assert_ne!(parse(vec![Token::Variable('x')]).unwrap(), (0, 'y').n());
+        assert_eq!(
+            parse_ok("a bc c"),
+            (((0, 'a').n(), "bc".n()).n(), (0, 'c').n()).n()
+        );
+        assert_eq!(
+            parse_ok("a b c"),
+            (((0, 'a').n(), (0, 'b').n()).n(), (0, 'c').n()).n(),
+        );
+        assert_eq!(parse_ok("x:y:x"), ((), ((), 1.n()).n()).n());
+        assert_eq!(parse_ok("x:y:y"), ((), ((), 0.n()).n()).n());
+        assert_eq!(parse_ok("x:y:z"), ((), ((), (2, 'z').n()).n()).n());
+        assert_eq!(parse_ok("(x: x) x"), (((), 0.n()).n(), (0, 'x').n()).n());
         assert_eq!(parse_err(""), ParseError::MissingExpression);
     }
 
@@ -324,7 +311,7 @@ pub mod test {
     fn parenthesis() {
         assert_eq!(
             parse_ok("((x) (x: x))"),
-            (Box::<Node>::from(9), ((), 3.n()).n()).n()
+            (Box::<Node>::from((0, 'x')), ((), 0.n()).n()).n()
         );
         assert_eq!(parse_ok("a b c"), parse_ok("((a b) c)"));
         assert_eq!(parse_err("(a b ())"), ParseError::MissingExpression);
@@ -334,24 +321,28 @@ pub mod test {
 
     #[test]
     fn test_eq() {
-        assert_eq!(12.n(), 2.n());
+        assert_eq!((0, 'x').n(), (0, 'x').n());
+        assert_ne!((0, 'x').n(), (0, 'y').n());
         assert_ne!("ab".n(), "hi".n());
-        // (x y) == (z w)
-        assert_eq!((0.n(), 0.n()).n(), (1.n(), 1.n()).n());
-        // (x y) != (x x)
-        assert_ne!((0.n(), 1.n()).n(), (0.n(), 0.n()).n());
-        assert_ne!((0.n(), 0.n()).n(), (0.n(), 1.n()).n());
+        // (x: x) == (y: y)
+        assert_eq!(((), (0, 'x').n()).n(), ((), (0, 'y').n()).n());
+        // (x: z) != (x: y)
+        assert_ne!(((), (1, 'z').n()).n(), ((), (1, 'y').n()).n());
     }
 
     #[test]
     fn parse_eq() {
-        assert_eq!(parse_ok("(x: x) x"), parse_ok("(y: y) z"));
+        assert_eq!(parse_ok("(x: x) x"), parse_ok("(y: y) x"));
         assert_eq!(parse_ok("(x: x) (x: x)"), parse_ok("(y: y) (z :z)"));
-        assert_eq!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x z) (y: y z)"));
-        assert_ne!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x z) (z: z n)"));
+        assert_eq!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x y) (x: x y)"));
+        assert_ne!(parse_ok("(x: x y) (z: z y)"), parse_ok("(x: x y) (z: z a)"));
         assert_ne!(parse_ok("(x: x x)"), parse_ok("(x: x y)"));
         // Variable names may be reused if they're bound, and it still works
-        assert_eq!(((), ((), 0.n()).n()).n(), ((), ((), 1.n()).n()).n(),);
+        assert_eq!(
+            ((), ((), (0, 'x').n()).n()).n(),
+            ((), ((), (0, 'y').n()).n()).n()
+        );
+        assert_ne!(((), ((), 0.n()).n()).n(), ((), ((), 1.n()).n()).n());
         assert_eq!(
             parse_ok("(x: x) (x: x)"),
             (((), 0.n()).n(), ((), 0.n()).n()).n(),

@@ -197,7 +197,6 @@ impl BasicTextEditor {
                 false
             } else {
                 c.i -= 1;
-                std::mem::drop(c);
                 self.cursor.j = self.line_len();
                 true
             }
