@@ -33,15 +33,13 @@ const MAX_LEVEL: usize = 100;
 
 use std::pin::Pin;
 
-fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(
-    root: &mut Box<Node>,
-    cur_depth: usize,
-    f: F,
-) {
-    match root.as_mut() {
+fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(root: &mut Node, cur_depth: usize, f: F) {
+    match root {
         Node::Constant(_) => {},
         Node::Variable(v) =>
-            if v.depth == cur_depth {
+        // unbound variables in the root expression, not necessarily in the whole expression
+        // for example, on (x:y: x), x is considered unbound in the subterm (y: x).
+            if v.depth >= cur_depth {
                 f(&mut v.depth);
             },
         Node::Function { variable: _, body } => {
@@ -60,7 +58,7 @@ fn replace_req(root: Box<Node>, cur_depth: usize, value: Box<Node>) -> Box<Node>
             if v.depth == cur_depth {
                 let mut value = value.clone();
                 // We need to increase the depth for unbound vars so they keep being unbound
-                for_each_unbound_req(&mut value, 0, |depth| *depth += cur_depth);
+                for_each_unbound_req(value.as_mut(), 0, |depth| *depth += cur_depth);
                 *value
             } else {
                 if v.depth > cur_depth {
@@ -305,6 +303,13 @@ pub mod test {
         interpret_eq_full(&format!("({}) A B", ex), "A B", false);
         // Display can't reuse variable names for different vars
         assert_eq!(format!("{}", interpret_ok_full(ex, true)), "y: y': y y'");
+    }
+
+    #[test]
+    fn tricky4() {
+        interpret_eq_full("(a: b: a) A B", "A", true);
+        interpret_eq_full("(x: y: (a: b: a) x)", "(x: y: b: x)", true);
+        interpret_eq_full("(b: x: y: b x y) (a: b: a) A B", "A", true);
     }
 
     #[test]
