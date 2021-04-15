@@ -19,9 +19,10 @@ pub struct Level {
     pub description: String,
     pub extra_info:  Option<String>,
     pub test_cases:  Vec<TestCase>,
+    pub solutions:   Vec<String>,
 }
 
-fn parse_or_fail(str: &str) -> Box<Node> {
+pub fn parse_or_fail(str: &str) -> Box<Node> {
     parse(tokenize(str.chars()).expect("Failed to tokenize")).expect("Failed to parse")
 }
 

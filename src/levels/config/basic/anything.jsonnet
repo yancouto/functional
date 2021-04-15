@@ -19,5 +19,6 @@
     test_cases: [
         # This should always pass
         ["f: A", "A"]
-    ]
+    ],
+    solutions: ["x"]
 }

@@ -9,6 +9,7 @@ struct JLevel {
     description: String,
     extra_info:  Option<String>,
     test_cases:  Vec<(String, String)>,
+    solutions:   Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -46,6 +47,7 @@ fn load_all() -> Vec1<Section> {
                                 .into_iter()
                                 .map(|t| TestCase::from(&t.0, &t.1))
                                 .collect(),
+                            solutions:   l.solutions,
                         })
                         .collect(),
                 )
@@ -67,11 +69,21 @@ lazy_static! {
 
 #[cfg(test)]
 mod test {
-    use super::LEVELS;
+    use super::{super::get_result, LEVELS};
+    use crate::save_system::LevelResult;
 
     #[test]
     fn test_level_load() {
         // Can we load the levels without crashing?
         assert!(LEVELS.len() > 0);
+    }
+
+    #[test]
+    fn test_solutions() {
+        LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
+            l.solutions
+                .iter()
+                .for_each(|s| assert_eq!(get_result(&l.test(s.chars())), LevelResult::Success))
+        });
     }
 }

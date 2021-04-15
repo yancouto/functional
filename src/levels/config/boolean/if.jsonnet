@@ -14,5 +14,6 @@
         ["f: f FALSE A B", "B"],
         ["f: f FALSE X Y", "Y"],
         ["f: f TRUE  X Y", "X"],
-    ]
+    ],
+    solutions: ["b:x:y: b x y"]
 }

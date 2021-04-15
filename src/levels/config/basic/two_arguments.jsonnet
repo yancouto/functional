@@ -20,5 +20,6 @@
         ["f: f A B", "B A"],
         ["f: f X (x: x)", "X"],
         ["f: f (x: x) A", "A (y: y)"],
-    ]
+    ],
+    solutions: ["a:b: b a"]
 }
