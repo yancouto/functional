@@ -1,5 +1,5 @@
-use super::level_selection;
-use crate::{gamestates::base::*, prelude::*, DEFAULT_PROFILE};
+use super::save_loader::SaveLoaderState;
+use crate::{gamestates::base::*, DEFAULT_PROFILE};
 
 const OPENING_STR: &str = "this is functional.";
 
@@ -35,9 +35,7 @@ impl GameState for IntroState {
         if !switch {
             GameStateEvent::None
         } else {
-            GameStateEvent::Switch(Box::new(level_selection::LevelSelectionState::new(
-                Rc::new(crate::save_system::load_profile(DEFAULT_PROFILE)),
-            )))
+            GameStateEvent::Switch(SaveLoaderState::try_load(DEFAULT_PROFILE.to_string()))
         }
     }
 }

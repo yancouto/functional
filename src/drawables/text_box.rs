@@ -8,15 +8,23 @@ pub fn gray() -> bl::RGBA { bl::RGBA::named(bl::GRAY) }
 pub fn dark_gray() -> bl::RGBA { bl::RGBA::named(bl::DARK_GRAY) }
 
 impl TickData<'_> {
-    pub fn draw_box(&mut self, title: &str, rect: Rect) {
+    pub fn draw_box_color(&mut self, rect: Rect, fg: bl::RGBA, bg: bl::RGBA) {
         let Rect { pos, size } = rect;
         self.console
-            .draw_box(pos.j, pos.i, size.w - 1, size.h - 1, white(), black());
-        self.console.print(pos.j + 1, pos.i, title);
+            .draw_box(pos.j, pos.i, size.w - 1, size.h - 1, fg, bg);
+    }
+
+    pub fn title_box_color(&mut self, title: &str, rect: Rect, fg: bl::RGBA, bg: bl::RGBA) {
+        self.draw_box_color(rect, fg, bg);
+        self.print(Pos::new(rect.pos.i, rect.pos.j + 1), title);
+    }
+
+    pub fn title_box(&mut self, title: &str, rect: Rect) {
+        self.title_box_color(title, rect, white(), black());
     }
 
     pub fn text_box(&mut self, title: &str, text: &str, rect: Rect) {
-        self.draw_box(title, rect);
+        self.title_box(title, rect);
         let Rect { pos, size } = rect;
         let mut tb = bl::TextBuilder::empty();
         // TODO: support \n's
@@ -31,7 +39,8 @@ impl TickData<'_> {
         block.render(&mut self.console);
     }
 
-    /// Button has height 3, width is the width of the string plus 2
+    /// Position given is the position of the top left corner of the rectangle
+    /// Button has height 3, width is the width of the string plus 2.
     pub fn button(&mut self, text: &str, pos: Pos, background: bl::RGBA) -> bool {
         let size = Size::new(text.len() as i32 + 2, 3);
         let rect = Rect { pos, size };
@@ -46,11 +55,35 @@ impl TickData<'_> {
         } else {
             background
         };
-        self.console
-            .draw_box(pos.j, pos.i, size.w - 1, size.h - 1, white(), bg);
+        self.draw_box_color(rect, white(), bg);
         self.console
             .print_color(pos.j + 1, pos.i + 1, white(), bg, text);
         was_clicked
+    }
+
+    /// Draw a text box, with text and a few buttons, returns the clicked button
+    pub fn box_with_options(
+        &mut self,
+        title: &str,
+        text: &str,
+        rect: Rect,
+        buttons: &[&str],
+    ) -> Option<usize> {
+        self.text_box(title, text, rect);
+        let mut ans = None;
+        for (i, txt) in buttons.iter().enumerate() {
+            if self.button(
+                *txt,
+                Pos::new(
+                    rect.bottom() - 3 * (buttons.len() - i) as i32,
+                    rect.left() + 1,
+                ),
+                black(),
+            ) {
+                ans = Some(i);
+            }
+        }
+        ans
     }
 
     #[allow(dead_code)]

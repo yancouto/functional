@@ -1,7 +1,7 @@
 use std::{convert::TryFrom, iter::FromIterator, path::PathBuf, time::Duration};
 
 use xi_core_lib::rpc::{
-    EditCommand, EditNotification, EditRequest, GestureType, SelectionGranularity
+    EditCommand, EditNotification, EditRequest, GestureType, LineRange, SelectionGranularity
 };
 
 use super::TextEditor;
@@ -46,7 +46,7 @@ impl TextEditor for XiEditor {
         )
         .unwrap();
 
-        Self {
+        let this = Self {
             pos,
             cursor: Pos { i: 0, j: 0 },
             size,
@@ -57,7 +57,12 @@ impl TextEditor for XiEditor {
             view_id: resp.0,
             selections: vec![],
             copied_text: String::new(),
-        }
+        };
+        this.send_notif(EditNotification::Scroll(LineRange {
+            first: 0,
+            last:  size.h as i64,
+        }));
+        this
     }
 
     fn on_event(&mut self, event: &bl::BEvent, input: &bl::Input) {
@@ -190,7 +195,7 @@ impl TextEditor for XiEditor {
             self.handle_notif(n);
         }
         let cursor_on = (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
-        data.draw_box(
+        data.title_box(
             "Text editor",
             Rect::new(
                 self.pos.i - 2,

@@ -136,7 +136,7 @@ impl TextEditor for BasicTextEditor {
 
     fn draw(&mut self, data: &mut TickData) {
         let cursor_on = (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
-        data.draw_box(
+        data.title_box(
             "Text editor",
             Rect::new(
                 self.pos.i - 2,

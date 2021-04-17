@@ -51,7 +51,7 @@ mod prelude {
     pub use bracket_lib::prelude as bl;
     pub use vec1::{vec1, Vec1};
 
-    pub use crate::math::Pos;
+    pub use crate::math::{Pos, Rect};
 }
 
 use prelude::*;
@@ -82,11 +82,9 @@ fn main() -> bl::BError {
         .build()?;
     let gs = MainState {
         manager: gamestates::base::GameStateManager::new(if opt.skip_intro {
-            Box::new(gamestates::level_selection::LevelSelectionState::new(
-                Rc::new(save_system::load_profile(DEFAULT_PROFILE)),
-            ))
+            gamestates::save_loader::SaveLoaderState::try_load(DEFAULT_PROFILE.to_string())
         } else {
-            Box::new(gamestates::intro::IntroState::new())
+            box gamestates::intro::IntroState::new()
         }),
     };
     bl::main_loop(ctx, gs)

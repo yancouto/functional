@@ -2,6 +2,7 @@ use std::{collections::HashMap, fs, io, path::PathBuf};
 
 use app_dirs::*;
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
+use savefile::SavefileError;
 
 pub const APP_INFO: AppInfo = AppInfo {
     name:   "functional",
@@ -26,10 +27,12 @@ impl Default for LevelResult {
 }
 
 const CURRENT_SAVE_VERSION: u32 = 0;
+const SAVE_FILE: &str = "save.data";
 
 #[derive(Savefile, Debug, Default, Clone)]
 pub struct LevelInfo {
-    pub result: LevelResult,
+    pub result:     LevelResult,
+    pub best_score: Option<f32>,
 }
 
 #[derive(Savefile, Debug, Default)]
@@ -71,7 +74,7 @@ impl SaveProfile {
             .result;
         if *stored_result != LevelResult::Success {
             *stored_result = result;
-            self.write("save.data", &*save_file);
+            self.write(SAVE_FILE, &*save_file);
         }
     }
 
@@ -79,36 +82,41 @@ impl SaveProfile {
         MutexGuard::map(self.current_save_file.lock(), |s| &mut s.level_info)
     }
 
-    pub fn reload(&self) { self.read("save.data", &mut *self.current_save_file.lock()); }
+    pub fn reload(&self) -> Result<(), SavefileError> {
+        *self.current_save_file.lock() = self.read(SAVE_FILE)?;
+        Ok(())
+    }
 }
 
 impl SaveProfile {
-    fn load(path: PathBuf) -> Self {
+    fn load(path: PathBuf) -> Result<Self, SavefileError> {
         log::debug!("Loading save profile from {:?}", path);
         // TODO: load save file
         let this = Self {
             path,
             current_save_file: Mutex::from(SaveFile::default()),
         };
-        this.reload();
-        this
+        this.reload()?;
+        Ok(this)
     }
 
     fn read<T: savefile::WithSchema + savefile::Deserialize + Default>(
         &self,
         path: &str,
-        data: &mut T,
-    ) {
+    ) -> Result<T, SavefileError> {
         log::debug!("Loading save file {}", path);
         // Better error message without having to implement a new error type?
         let result =
             savefile::load_file(self.path.join(path).to_str().unwrap(), CURRENT_SAVE_VERSION);
         match result {
-            Ok(value) => *data = value,
-            Err(savefile::SavefileError::IOError { io_error })
+            Ok(value) => Ok(value),
+            Err(SavefileError::IOError { io_error })
                 if io_error.kind() == io::ErrorKind::NotFound =>
-                *data = Default::default(),
-            Err(err) => log::error!("Failed to read save file {}: {:?}", path, err),
+                Ok(Default::default()),
+            Err(err) => {
+                log::error!("Failed to read save file {}: {:?}", path, err);
+                Err(err)
+            },
         }
     }
 
@@ -145,13 +153,25 @@ impl Drop for SaveProfile {
     }
 }
 
-/// Will create a folder if it doesn't exist
-pub fn load_profile(name: &str) -> SaveProfile {
-    let path = app_dir(
+fn get_save_profile(name: &str) -> PathBuf {
+    app_dir(
         AppDataType::UserConfig,
         &APP_INFO,
         &format!("savegames/{}", name),
     )
-    .expect("Failed to load save file");
-    SaveProfile::load(path)
+    .expect("Failed to load save file")
+}
+
+/// Will create a folder if it doesn't exist
+pub fn load_profile(name: &str) -> Result<SaveProfile, SavefileError> {
+    SaveProfile::load(get_save_profile(name))
+}
+
+/// Deletes only save profile. Leaves code there.
+pub fn reset_profile(name: &str) {
+    let r = fs::remove_file(get_save_profile(name).join(SAVE_FILE));
+    if let Err(err) = &r {
+        log::error!("While deleting save file: {}", err);
+    }
+    debug_assert!(r.is_ok());
 }

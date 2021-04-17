@@ -47,6 +47,7 @@ impl Size {
     pub fn new(w: i32, h: i32) -> Self { Self { w, h } }
 }
 
+/// A rectangle that's a single point is represented as a rectangle with size (1, 1)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Rect {
     pub pos:  Pos,
@@ -70,4 +71,8 @@ impl Rect {
             size: Size { w, h },
         }
     }
+
+    pub fn bottom(&self) -> i32 { self.pos.i + self.size.h - 1 }
+
+    pub fn left(&self) -> i32 { self.pos.j }
 }
