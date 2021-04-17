@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use super::{base::*, editor::EditorState};
+use super::{base::*, editor::EditorState, main_menu::MainMenuState};
 use crate::{
     drawables::XiEditor, levels::{Section, LEVELS}, prelude::*, save_system::{LevelResult, SaveProfile}, utils::vec_with_cursor::VecWithCursor
 };
@@ -69,11 +69,13 @@ impl GameState for LevelSelectionState<'static> {
                 "Press LEFT to close section",
                 "Use UP/DOWN to navigate tasks",
                 "Press ENTER to select task",
+                "Press ESC to go to main menu",
             ]);
         } else {
             data.instructions(&[
                 "Use UP/DOWN to navigate sections",
                 "Press RIGHT to open section",
+                "Press ESC to go to main menu",
             ]);
         }
         if cursor_on {
@@ -85,13 +87,17 @@ impl GameState for LevelSelectionState<'static> {
                 ">",
             );
         }
-        match data.pressed_key.zip(self.level_i) {
-            Some((bl::VirtualKeyCode::Return, l_i)) =>
-                GameStateEvent::Switch(box EditorState::<XiEditor>::new(
-                    &self.sections.get().levels[l_i],
-                    self.save_profile.clone(),
-                )),
-            _ => GameStateEvent::None,
+        if data.pressed_key == Some(Key::Escape) {
+            GameStateEvent::Switch(box MainMenuState::new(self.save_profile.clone()))
+        } else {
+            match data.pressed_key.zip(self.level_i) {
+                Some((Key::Return, l_i)) =>
+                    GameStateEvent::Switch(box EditorState::<XiEditor>::new(
+                        &self.sections.get().levels[l_i],
+                        self.save_profile.clone(),
+                    )),
+                _ => GameStateEvent::None,
+            }
         }
     }
 
@@ -100,23 +106,23 @@ impl GameState for LevelSelectionState<'static> {
             bl::BEvent::KeyboardInput {
                 key, pressed: true, ..
             } => match key {
-                bl::VirtualKeyCode::Down =>
+                Key::Down =>
                     if let Some(li) = self.level_i {
                         self.level_i = Some((li + 1) % self.sections.get().levels.len());
                     } else {
                         self.sections.cursor_increment();
                     },
-                bl::VirtualKeyCode::Up =>
+                Key::Up =>
                     if let Some(li) = self.level_i {
                         let len = self.sections.get().levels.len();
                         self.level_i = Some((li + len - 1) % len);
                     } else {
                         self.sections.cursor_decrement();
                     },
-                bl::VirtualKeyCode::Right if self.level_i.is_none() => {
+                Key::Right if self.level_i.is_none() => {
                     self.level_i = Some(0);
                 },
-                bl::VirtualKeyCode::Left if self.level_i.is_some() => {
+                Key::Left if self.level_i.is_some() => {
                     self.level_i = None;
                 },
                 _ => {},

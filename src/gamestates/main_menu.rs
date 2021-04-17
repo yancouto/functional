@@ -40,7 +40,7 @@ pub struct MainMenuState {
 }
 
 impl MainMenuState {
-    pub fn new(save_profile: SaveProfile) -> Self {
+    pub fn new(save_profile: Rc<SaveProfile>) -> Self {
         Self {
             items:        vec1![
                 MenuItem::Play,
@@ -49,7 +49,7 @@ impl MainMenuState {
                 MenuItem::Quit
             ]
             .into(),
-            save_profile: Rc::new(save_profile),
+            save_profile,
         }
     }
 }
@@ -66,7 +66,7 @@ impl GameState for MainMenuState {
             Pos::new(2, CURSOR_J),
             &format!("Hello, {}.", self.save_profile.name()),
         );
-        data.instructions(&["Press ENTER to choose option."]);
+        data.instructions(&["Press ENTER to choose option"]);
         for (i, item) in self.items.inner().iter().enumerate() {
             data.print(
                 Pos::new(START_I + LINES_PER_SECTION * i as i32, CURSOR_J + 2),
