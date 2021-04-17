@@ -5,6 +5,7 @@
 #![feature(generators, generator_trait)]
 #![feature(iter_advance_by)]
 #![feature(map_first_last)]
+#![feature(trait_alias)]
 #[macro_use]
 extern crate lazy_static;
 
@@ -39,15 +40,13 @@ struct Opt {
     skip_intro: bool,
 }
 
-// TODO: profile selection
-pub const DEFAULT_PROFILE: &str = "default";
-
 // Things useful for everyone
 mod prelude {
     pub const W: i32 = 130;
     pub const H: i32 = 80;
     pub use std::rc::Rc;
 
+    pub use bl::VirtualKeyCode as Key;
     pub use bracket_lib::prelude as bl;
     pub use vec1::{vec1, Vec1};
 
@@ -82,11 +81,12 @@ fn main() -> bl::BError {
     let ctx = bl::BTermBuilder::simple(W, H)?
         .with_title("functional")
         .build()?;
+    let first_state = || gamestates::profile_selection::try_load_default_profile();
     let gs = MainState {
         manager: gamestates::base::GameStateManager::new(if opt.skip_intro {
-            gamestates::save_loader::SaveLoaderState::try_load(DEFAULT_PROFILE.to_string())
+            first_state()
         } else {
-            box gamestates::intro::IntroState::new()
+            box gamestates::intro::IntroState::new(first_state)
         }),
     };
     bl::main_loop(ctx, gs)

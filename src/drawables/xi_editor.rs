@@ -18,10 +18,10 @@ impl From<InsLine> for Line {
 
 #[derive(Debug)]
 pub struct XiEditor {
-    pos:               Pos,
+    title:             String,
+    rect:              Rect,
     cursor:            Pos,
     selections:        Vec<(Pos, Pos)>,
-    size:              Size,
     text:              Vec<Line>,
     cursor_blink_rate: Duration,
     view_id:           xi_core_lib::ViewId,
@@ -34,7 +34,7 @@ pub struct XiEditor {
 const HARDCODED_MAIN_CONSOLE: usize = 0;
 
 impl TextEditor for XiEditor {
-    fn new(pos: Pos, size: Size) -> Self {
+    fn new(title: String, rect: Rect) -> Self {
         let (send, recv) = start_xi_thread();
         send.send_notification(CoreNotification::ClientStarted {
             config_dir:        None,
@@ -47,9 +47,9 @@ impl TextEditor for XiEditor {
         .unwrap();
 
         let this = Self {
-            pos,
+            title,
+            rect,
             cursor: Pos { i: 0, j: 0 },
-            size,
             text: vec![],
             cursor_blink_rate: Duration::from_secs_f32(0.5),
             send,
@@ -60,7 +60,7 @@ impl TextEditor for XiEditor {
         };
         this.send_notif(EditNotification::Scroll(LineRange {
             first: 0,
-            last:  size.h as i64,
+            last:  rect.size.h as i64,
         }));
         this
     }
@@ -136,7 +136,7 @@ impl TextEditor for XiEditor {
             bl::BEvent::CursorMoved { .. } =>
                 if input.is_mouse_button_pressed(0) {
                     let mut mouse =
-                        Pos::from_xy(input.mouse_tile_pos(HARDCODED_MAIN_CONSOLE)) - self.pos;
+                        Pos::from_xy(input.mouse_tile_pos(HARDCODED_MAIN_CONSOLE)) - self.rect.pos;
                     mouse.i = mouse.i.max(0);
                     mouse.j = mouse.j.max(0);
                     self.send_notif(EditNotification::Gesture {
@@ -146,7 +146,8 @@ impl TextEditor for XiEditor {
                     });
                 },
             bl::BEvent::MouseClick { button, pressed } if *pressed && *button == 0 => {
-                let mouse = Pos::from_xy(input.mouse_tile_pos(HARDCODED_MAIN_CONSOLE)) - self.pos;
+                let mouse =
+                    Pos::from_xy(input.mouse_tile_pos(HARDCODED_MAIN_CONSOLE)) - self.rect.pos;
                 self.send_notif(EditNotification::Gesture {
                     line: mouse.i as u64,
                     col:  mouse.j as u64,
@@ -196,18 +197,18 @@ impl TextEditor for XiEditor {
         }
         let cursor_on = (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
         data.title_box(
-            "Text editor",
+            &self.title,
             Rect::new(
-                self.pos.i - 2,
-                self.pos.j - 1,
-                self.size.w + 2,
-                self.size.h + 3,
+                self.rect.pos.i - 2,
+                self.rect.pos.j - 1,
+                self.rect.size.w + 2,
+                self.rect.size.h + 3,
             ),
         );
 
         self.text.iter().enumerate().for_each(|(i, line)| {
             data.console
-                .print(self.pos.j, i as i32 + self.pos.i, &line.text)
+                .print(self.rect.pos.j, i as i32 + self.rect.pos.i, &line.text)
         });
 
         for select in &self.selections {
@@ -220,8 +221,8 @@ impl TextEditor for XiEditor {
                 };
                 for j in init_j..=end_j {
                     data.console.set_bg(
-                        j + self.pos.j,
-                        i + self.pos.i,
+                        j + self.rect.pos.j,
+                        i + self.rect.pos.i,
                         bl::RGBA::from_f32(1., 1., 1., 0.2),
                     )
                 }
@@ -231,8 +232,8 @@ impl TextEditor for XiEditor {
 
         if cursor_on {
             data.console.set_bg(
-                self.cursor.j + self.pos.j,
-                self.cursor.i + self.pos.i,
+                self.cursor.j + self.rect.pos.j,
+                self.cursor.i + self.rect.pos.i,
                 bl::RGBA::from_f32(1., 1., 1., 0.5),
             );
         }

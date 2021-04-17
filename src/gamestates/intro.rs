@@ -1,22 +1,25 @@
-use super::save_loader::SaveLoaderState;
-use crate::{gamestates::base::*, DEFAULT_PROFILE};
+use crate::gamestates::base::*;
 
 const OPENING_STR: &str = "this is functional.";
 
+// In practice will only be called once, but it's not FnOnce
+pub trait GameStateBuilder = Fn() -> Box<dyn GameState>;
 #[derive(Debug)]
-pub struct IntroState {
+pub struct IntroState<F: GameStateBuilder> {
     time_since_creation_ms: f32,
+    next:                   F,
 }
 
-impl IntroState {
-    pub fn new() -> Self {
+impl<F: GameStateBuilder> IntroState<F> {
+    pub fn new(next: F) -> Self {
         IntroState {
             time_since_creation_ms: 0.0,
+            next,
         }
     }
 }
 
-impl GameState for IntroState {
+impl<F: GameStateBuilder> GameState for IntroState<F> {
     fn name(&self) -> &'static str { "Intro" }
 
     fn tick(&mut self, data: TickData) -> GameStateEvent {
@@ -35,7 +38,7 @@ impl GameState for IntroState {
         if !switch {
             GameStateEvent::None
         } else {
-            GameStateEvent::Switch(SaveLoaderState::try_load(DEFAULT_PROFILE.to_string()))
+            GameStateEvent::Switch((self.next)())
         }
     }
 }

@@ -20,7 +20,13 @@ impl<Editor: TextEditor> EditorState<Editor> {
     pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
         let mut state = Self {
             level,
-            editor: Editor::new(Pos { i: 36, j: 1 }, Size { w: W / 2, h: 25 }),
+            editor: Editor::new(
+                "Text Editor".to_string(),
+                Rect {
+                    pos:  Pos { i: 36, j: 1 },
+                    size: Size { w: W / 2, h: 25 },
+                },
+            ),
             save_profile,
             current_solution: 1,
             last_save: Duration::from_secs(0),

@@ -1,4 +1,4 @@
-use super::{intro::IntroState, main_menu::MainMenuState};
+use super::{main_menu::MainMenuState, profile_selection::try_load_default_profile};
 use crate::{gamestates::base::*, prelude::*, save_system};
 
 #[derive(Debug)]
@@ -12,6 +12,7 @@ impl SaveLoaderState {
         let profile = save_system::load_profile(&user);
         match profile {
             Ok(p) => box MainMenuState::new(p),
+            // Save corrupted
             Err(err) => box Self {
                 user,
                 err_text: format!(
@@ -40,8 +41,8 @@ impl GameState for SaveLoaderState {
                 save_system::reset_profile(&self.user);
                 Self::try_load(self.user.clone())
             } else {
-                // TODO: use correct state
-                box IntroState::new()
+                save_system::write_common(Default::default());
+                try_load_default_profile()
             })
         } else {
             GameStateEvent::None

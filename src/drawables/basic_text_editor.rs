@@ -5,19 +5,19 @@ use crate::{gamestates::base::TickData, math::*, prelude::*};
 
 #[derive(Debug)]
 pub struct BasicTextEditor {
-    pos:               Pos,
+    title:             String,
+    rect:              Rect,
     cursor:            Pos,
-    size:              Size,
     text:              Vec1<Vec<char>>,
     cursor_blink_rate: Duration,
 }
 
 impl TextEditor for BasicTextEditor {
-    fn new(pos: Pos, size: Size) -> Self {
+    fn new(title: String, rect: Rect) -> Self {
         Self {
-            pos,
+            title,
+            rect,
             cursor: Pos { i: 0, j: 0 },
-            size,
             text: vec1![vec![]],
             cursor_blink_rate: Duration::from_secs_f32(0.5),
         }
@@ -27,7 +27,7 @@ impl TextEditor for BasicTextEditor {
         match event {
             bl::BEvent::Character { c } => {
                 if !c.is_control() {
-                    if self.line_len() < self.size.w - 1 {
+                    if self.line_len() < self.rect.size.w - 1 {
                         let j = self.cursor.j as usize;
                         self.line_mut().insert(j, *c);
                         self.cursor.j += 1;
@@ -46,7 +46,9 @@ impl TextEditor for BasicTextEditor {
                             // join lines
                             if self.cursor.i > 0 {
                                 let new_i = self.cursor.i as usize - 1;
-                                if self.line_len() + (self.text[new_i].len() as i32) < self.size.w {
+                                if self.line_len() + (self.text[new_i].len() as i32)
+                                    < self.rect.size.w
+                                {
                                     let mut second_line = self.text.remove(new_i + 1).unwrap();
                                     self.cursor.j = self.text[new_i].len() as i32;
                                     self.text[new_i].append(&mut second_line);
@@ -62,7 +64,7 @@ impl TextEditor for BasicTextEditor {
                         }
                     },
                     K::Return | K::NumpadEnter => {
-                        if (self.text.len() as i32) < self.size.h {
+                        if (self.text.len() as i32) < self.rect.size.h {
                             let j = self.cursor.j as usize;
                             let rest = self.line_mut().split_off(j);
                             self.text.insert(self.cursor.i as usize + 1, rest);
@@ -98,7 +100,7 @@ impl TextEditor for BasicTextEditor {
     fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
         let file_data = std::fs::read(path)?;
         let text = String::from_utf8_lossy(&file_data);
-        let size = &self.size;
+        let size = &self.rect.size;
         self.text = Vec1::try_from(
             text.split('\n')
                 .map(|line| {
@@ -137,26 +139,26 @@ impl TextEditor for BasicTextEditor {
     fn draw(&mut self, data: &mut TickData) {
         let cursor_on = (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
         data.title_box(
-            "Text editor",
+            &self.title,
             Rect::new(
-                self.pos.i - 2,
-                self.pos.j - 1,
-                self.size.w + 2,
-                self.size.h + 3,
+                self.rect.pos.i - 2,
+                self.rect.pos.j - 1,
+                self.rect.size.w + 2,
+                self.rect.size.h + 3,
             ),
         );
 
         self.text.iter().enumerate().for_each(|(i, line)| {
             data.console.print(
-                self.pos.j,
-                i as i32 + self.pos.i,
+                self.rect.pos.j,
+                i as i32 + self.rect.pos.i,
                 &line.iter().collect::<String>(),
             )
         });
         if cursor_on {
             data.console.set_bg(
-                self.cursor.j + self.pos.j,
-                self.cursor.i + self.pos.i,
+                self.cursor.j + self.rect.pos.j,
+                self.cursor.i + self.rect.pos.i,
                 bl::RGBA::from_f32(1., 1., 1., 0.5),
             );
         }

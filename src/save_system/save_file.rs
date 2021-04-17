@@ -169,7 +169,9 @@ fn get_save_profile(name: &str) -> PathBuf {
     .expect("Failed to load save file")
 }
 
-fn get_app_root() -> Result<PathBuf, AppDirsError> { app_root(AppDataType::UserConfig, &APP_INFO) }
+fn get_common_file() -> Result<PathBuf, AppDirsError> {
+    app_root(AppDataType::UserConfig, &APP_INFO).map(|p| p.join("common.data"))
+}
 
 /// Will create a folder if it doesn't exist
 pub fn load_profile(name: &str) -> Result<SaveProfile, SavefileError> {
@@ -184,15 +186,15 @@ pub fn reset_profile(name: &str) {
 const CURRENT_COMMON_VERSION: u32 = 0;
 #[derive(Savefile, Debug, Default)]
 pub struct CommonConfig {
-    default_profile: Option<String>,
+    pub default_profile: Option<String>,
 }
 
 pub fn load_common() -> CommonConfig {
-    get_app_root()
+    get_common_file()
         .map(|p| read(p, CURRENT_COMMON_VERSION).debug_unwrap_or_default())
         .debug_unwrap_or_default()
 }
 
 pub fn write_common(common: CommonConfig) {
-    write(get_app_root().unwrap(), CURRENT_COMMON_VERSION, &common);
+    write(get_common_file().unwrap(), CURRENT_COMMON_VERSION, &common);
 }

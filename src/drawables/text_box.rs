@@ -6,6 +6,7 @@ pub fn white() -> bl::RGBA { bl::RGBA::named(bl::WHITE) }
 pub fn black() -> bl::RGBA { bl::RGBA::named(bl::BLACK) }
 pub fn gray() -> bl::RGBA { bl::RGBA::named(bl::GRAY) }
 pub fn dark_gray() -> bl::RGBA { bl::RGBA::named(bl::DARK_GRAY) }
+pub fn light_red() -> bl::RGBA { bl::RGBA::from_u8(255, 100, 100, 255) }
 
 impl TickData<'_> {
     pub fn draw_box_color(&mut self, rect: Rect, fg: bl::RGBA, bg: bl::RGBA) {
