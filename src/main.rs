@@ -12,6 +12,9 @@ extern crate lazy_static;
 #[macro_use]
 extern crate savefile_derive;
 
+#[macro_use]
+extern crate maplit;
+
 mod drawables;
 mod gamestates;
 mod interpreter;

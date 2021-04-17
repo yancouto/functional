@@ -3,6 +3,7 @@ use std::ops::{Generator, GeneratorState};
 use thiserror::Error;
 
 use super::{parser::Node, ConstantProvider};
+use crate::levels::SectionName;
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum InterpretError {
@@ -166,7 +167,7 @@ pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, Inte
         fully_resolve,
         yield_intermediates: false,
         // TODO: Not use all constants all the time
-        provider: ConstantProvider::new(100),
+        provider: ConstantProvider::new((SectionName::Boolean, 100)),
     }
     .interpret(0, root, true);
     loop {
@@ -210,7 +211,7 @@ pub fn interpret_itermediates(
         gen:      Interpreter {
             fully_resolve,
             yield_intermediates: true,
-            provider: ConstantProvider::new(100),
+            provider: ConstantProvider::new((SectionName::Boolean, 100)),
         }
         .interpret(0, root, true),
         finished: false,

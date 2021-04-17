@@ -23,7 +23,7 @@ impl LevelSelectionState<'static> {
             save_profile,
         };
         for section in l.sections.inner() {
-            if section.name.len() as i32 + CURSOR_J + 2 > MID_J {
+            if section.name.to_string().len() as i32 + CURSOR_J + 2 > MID_J {
                 panic!("Too long name");
             }
         }
@@ -48,7 +48,7 @@ impl GameState for LevelSelectionState<'static> {
         for (i, section) in self.sections.inner().iter().enumerate() {
             data.print(
                 Pos::new(START_I + LINES_PER_SECTION * i as i32, CURSOR_J + 2),
-                &section.name,
+                &section.name.to_string(),
             );
         }
         let cursor_on = ((data.time.as_millis() / 500) % 2) == 0;

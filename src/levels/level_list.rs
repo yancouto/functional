@@ -1,4 +1,7 @@
+use std::str::FromStr;
+
 use serde::Deserialize;
+use strum::EnumString;
 
 use super::{Level, TestCase};
 use crate::prelude::*;
@@ -34,7 +37,7 @@ fn load_all() -> Vec1<Section> {
             .sections
             .into_iter()
             .map(|s| Section {
-                name:   s.name,
+                name:   SectionName::from_str(&s.name).unwrap(),
                 levels: Vec1::try_from_vec(
                     s.levels
                         .into_iter()
@@ -58,8 +61,15 @@ fn load_all() -> Vec1<Section> {
     .unwrap()
 }
 
+#[derive(Debug, EnumString, strum::Display, PartialEq, Eq, Hash, Clone, Copy)]
+#[strum(serialize_all = "snake_case")]
+pub enum SectionName {
+    Basic,
+    Boolean,
+}
+
 pub struct Section {
-    pub name:   String,
+    pub name:   SectionName,
     pub levels: Vec1<Level>,
 }
 
