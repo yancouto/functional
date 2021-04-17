@@ -17,7 +17,7 @@ impl RunSolutionState {
         save_profile: Rc<SaveProfile>,
     ) -> Self {
         // TODO: not use 100 here
-        let results = level.test(code, ConstantProvider::new((level.section, 100)));
+        let results = level.test(code, ConstantProvider::new(level));
         save_profile.mark_level_as_tried(&level.name, get_result(&results));
         Self {
             level,

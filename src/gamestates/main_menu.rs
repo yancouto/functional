@@ -42,7 +42,7 @@ pub struct MainMenuState {
 impl MainMenuState {
     pub fn new(save_profile: Rc<SaveProfile>) -> Self {
         Self {
-            items:        vec1![
+            items: vec1![
                 MenuItem::Play,
                 MenuItem::Settings,
                 MenuItem::ChangeProfile,

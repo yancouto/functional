@@ -9,14 +9,14 @@ pub struct DebuggerState {
 }
 
 impl DebuggerState {
-    pub fn new(level: &Level, run: TestCaseRun) -> Self {
+    pub fn new(level: &'static Level, run: TestCaseRun) -> Self {
         let mut steps = vec1![run.test_expression.clone()];
         steps.append(
             &mut interpret_itermediates(
                 run.test_expression.clone(),
                 true,
                 // TODO: Remove 100 from here
-                ConstantProvider::new((level.section, 100)),
+                ConstantProvider::new(level),
             )
             .take(30)
             .collect(),

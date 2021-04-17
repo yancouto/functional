@@ -21,6 +21,8 @@ pub struct Level {
     pub name:        String,
     pub description: String,
     pub section:     SectionName,
+    /// index of the level in the section
+    pub idx:         usize,
     pub extra_info:  Option<String>,
     pub test_cases:  Vec<TestCase>,
     pub solutions:   Vec<String>,
@@ -49,6 +51,7 @@ impl TestCase {
     pub fn from(application: &str, result: &str) -> Self {
         Self {
             application:     parse_or_fail(application),
+            // fine to use all here since this is not user supplied
             expected_result: interpret(parse_or_fail(result), true, ConstantProvider::all())
                 .expect("Failed to interpret result"),
         }

@@ -226,11 +226,10 @@ pub mod test {
     use super::{
         super::parser::test::{parse_ok, ConvertToNode}, *
     };
-    use crate::levels::SectionName;
 
     const Y_COMB: &str = "(f: (x: f (x x)) (x: f (x x)))";
 
-    fn provider() -> ConstantProvider { ConstantProvider::new((SectionName::Boolean, 100)) }
+    fn provider() -> ConstantProvider { ConstantProvider::all() }
 
     fn interpret_lazy(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
         interpret(root, false, provider())
@@ -362,9 +361,9 @@ pub mod test {
     #[test]
     fn some_levels() { interpret_eq_full("(f: x: f (f x)) (x: x x) A", "(A A) (A A)", true); }
 
-    fn assert_partial(code: &str, intermediates: Vec<&str>) {
+    fn assert_partial_impl(code: &str, intermediates: Vec<&str>, fully_resolve: bool) {
         assert_eq!(
-            interpret_itermediates(parse_ok(code), false, provider()).collect::<Vec<_>>(),
+            interpret_itermediates(parse_ok(code), fully_resolve, provider()).collect::<Vec<_>>(),
             intermediates
                 .into_iter()
                 .map(|e| parse_ok(e))
@@ -372,13 +371,19 @@ pub mod test {
         );
     }
 
+    fn assert_partial(code: &str, intermediates: Vec<&str>) {
+        assert_partial_impl(code, intermediates, false);
+    }
+
     #[test]
     fn partial() { assert_partial("(x: x x) (y: z)", vec!["(y: z) (y:z)", "z"]); }
 
     #[test]
-    fn test_constants() {
+    fn test_with_constants() {
         interpret_eq("TRUE A B", "A");
         interpret_eq("FALSE A B", "B");
         interpret_eq_full("(f:a:b: f b a) FALSE", "TRUE", true);
+
+        interpret_eq_full("(a:b: NOT (AND (NOT a) (NOT b))) TRUE TRUE", "TRUE", true);
     }
 }

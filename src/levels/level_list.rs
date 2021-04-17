@@ -1,59 +1,66 @@
-use std::str::FromStr;
-
 use serde::Deserialize;
-use strum::EnumString;
 
 use super::{Level, TestCase};
 use crate::prelude::*;
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct JLevel {
-    name:        String,
-    description: String,
-    extra_info:  Option<String>,
-    test_cases:  Vec<(String, String)>,
-    solutions:   Vec<String>,
+pub struct JLevel {
+    pub name:              String,
+    pub description:       String,
+    pub extra_info:        Option<String>,
+    pub test_cases:        Vec<(String, String)>,
+    pub solutions:         Vec<String>,
+    #[serde(default)]
+    pub provides_constant: bool,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct JSection {
-    name:   String,
-    levels: Vec<JLevel>,
+pub struct JSection {
+    pub name:              SectionName,
+    pub levels:            Vec<JLevel>,
+    #[serde(default)]
+    pub section_constants: Vec<(String, String)>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct JLevelConfig {
-    sections: Vec<JSection>,
+pub struct JLevelConfig {
+    pub sections: Vec<JSection>,
 }
 
 const RAW_LEVEL_CONFIG: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/level_config.json"));
 
+pub fn raw_load_level_config() -> JLevelConfig {
+    serde_json::from_slice(RAW_LEVEL_CONFIG).expect("Invalid json")
+}
+
 fn load_all() -> Vec1<Section> {
-    let config: JLevelConfig = serde_json::from_slice(RAW_LEVEL_CONFIG).expect("Invalid json");
+    let config = raw_load_level_config();
     Vec1::try_from_vec(
         config
             .sections
             .into_iter()
             .map(|s| {
-                let section_name = SectionName::from_str(&s.name).unwrap();
+                let section_name = s.name;
                 Section {
-                    name:   section_name,
+                    name:   s.name,
                     levels: Vec1::try_from_vec(
                         s.levels
                             .into_iter()
-                            .map(|l| Level {
-                                name:        l.name,
+                            .enumerate()
+                            .map(|(idx, l)| Level {
+                                idx,
+                                name: l.name,
                                 description: l.description,
-                                extra_info:  l.extra_info,
-                                section:     section_name,
-                                test_cases:  l
+                                extra_info: l.extra_info,
+                                section: section_name,
+                                test_cases: l
                                     .test_cases
                                     .into_iter()
                                     .map(|t| TestCase::from(&t.0, &t.1))
                                     .collect(),
-                                solutions:   l.solutions,
+                                solutions: l.solutions,
                             })
                             .collect(),
                     )
@@ -65,8 +72,9 @@ fn load_all() -> Vec1<Section> {
     .unwrap()
 }
 
-#[derive(Debug, EnumString, strum::Display, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, strum::Display, PartialEq, Eq, Hash, Clone, Copy, Deserialize)]
 #[strum(serialize_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 pub enum SectionName {
     Basic,
     Boolean,

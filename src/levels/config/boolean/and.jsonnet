@@ -15,5 +15,6 @@
         ["f: f FALSE TRUE", "FALSE"],
         ["f: f FALSE FALSE", "FALSE"],
     ],
+    provides_constant: true,
     solutions: ["a:b: x:y: a (b x y) y"]
 }
