@@ -89,6 +89,28 @@ impl SaveProfile {
     }
 }
 
+/// On file not found, return default value.
+fn read<T: savefile::WithSchema + savefile::Deserialize + Default>(
+    path: PathBuf,
+    version: u32,
+) -> Result<T, SavefileError> {
+    match savefile::load_file(path.to_str().unwrap(), version) {
+        Ok(value) => Ok(value),
+        Err(SavefileError::IOError { io_error }) if io_error.kind() == io::ErrorKind::NotFound =>
+            Ok(Default::default()),
+        Err(err) => {
+            log::error!("Failed to read save file {:?}: {:?}", path, err);
+            Err(err)
+        },
+    }
+}
+
+fn write<T: savefile::WithSchema + savefile::Serialize>(path: PathBuf, version: u32, data: &T) {
+    log::debug!("Writing save file {:?}", path);
+    savefile::save_file(path.to_str().unwrap(), version, data)
+        .debug_expect("Failed to write save file");
+}
+
 impl SaveProfile {
     fn load(path: PathBuf) -> Result<Self, SavefileError> {
         log::debug!("Loading save profile from {:?}", path);
@@ -106,30 +128,13 @@ impl SaveProfile {
         path: &str,
     ) -> Result<T, SavefileError> {
         log::debug!("Loading save file {}", path);
-        // Better error message without having to implement a new error type?
-        let result =
-            savefile::load_file(self.path.join(path).to_str().unwrap(), CURRENT_SAVE_VERSION);
-        match result {
-            Ok(value) => Ok(value),
-            Err(SavefileError::IOError { io_error })
-                if io_error.kind() == io::ErrorKind::NotFound =>
-                Ok(Default::default()),
-            Err(err) => {
-                log::error!("Failed to read save file {}: {:?}", path, err);
-                Err(err)
-            },
-        }
+        read(self.path.join(path), CURRENT_SAVE_VERSION)
     }
 
     fn write<T: savefile::WithSchema + savefile::Serialize>(&self, path: &str, data: &T) {
         log::debug!("Writing save file {}", path);
         // Better error message without having to implement a new error type?
-        savefile::save_file(
-            self.path.join(path).to_str().unwrap(),
-            CURRENT_SAVE_VERSION,
-            data,
-        )
-        .debug_expect("Failed to write save file");
+        write(self.path.join(path), CURRENT_SAVE_VERSION, data);
     }
 
     fn write_level_impl(&self, level_name: &str, solution: u8, code: &str) -> io::Result<()> {
@@ -161,6 +166,8 @@ fn get_save_profile(name: &str) -> PathBuf {
     .expect("Failed to load save file")
 }
 
+fn get_app_root() -> Result<PathBuf, AppDirsError> { app_root(AppDataType::UserConfig, &APP_INFO) }
+
 /// Will create a folder if it doesn't exist
 pub fn load_profile(name: &str) -> Result<SaveProfile, SavefileError> {
     SaveProfile::load(get_save_profile(name))
@@ -169,4 +176,20 @@ pub fn load_profile(name: &str) -> Result<SaveProfile, SavefileError> {
 /// Deletes only save profile. Leaves code there.
 pub fn reset_profile(name: &str) {
     fs::remove_file(get_save_profile(name).join(SAVE_FILE)).debug_unwrap();
+}
+
+const CURRENT_COMMON_VERSION: u32 = 0;
+#[derive(Savefile, Debug, Default)]
+pub struct CommonConfig {
+    default_profile: Option<String>,
+}
+
+pub fn load_common() -> CommonConfig {
+    get_app_root()
+        .map(|p| read(p, CURRENT_COMMON_VERSION).debug_unwrap_or_default())
+        .debug_unwrap_or_default()
+}
+
+pub fn write_common(common: CommonConfig) {
+    write(get_app_root().unwrap(), CURRENT_COMMON_VERSION, &common);
 }
