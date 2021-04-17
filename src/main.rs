@@ -83,11 +83,13 @@ fn main() -> bl::BError {
         .build()?;
     let first_state = || gamestates::profile_selection::try_load_default_profile();
     let gs = MainState {
-        manager: gamestates::base::GameStateManager::new(if opt.skip_intro {
-            first_state()
-        } else {
-            box gamestates::intro::IntroState::new(first_state)
-        }),
+        manager: gamestates::base::GameStateManager::new(
+            if opt.skip_intro || cfg!(debug_assertions) {
+                first_state()
+            } else {
+                box gamestates::intro::IntroState::new(first_state)
+            },
+        ),
     };
     bl::main_loop(ctx, gs)
 }

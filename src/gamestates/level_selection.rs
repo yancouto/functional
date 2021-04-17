@@ -32,7 +32,7 @@ impl LevelSelectionState<'static> {
 }
 
 const CURSOR_J: i32 = 3;
-const START_I: i32 = 2;
+const START_I: i32 = 7;
 const LINES_PER_SECTION: i32 = 3;
 const MID_J: i32 = W / 2;
 
@@ -44,6 +44,7 @@ impl GameState for LevelSelectionState<'static> {
     fn name(&self) -> &'static str { "LevelSelection" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
+        data.print(Pos::new(2, CURSOR_J), "All sections");
         for (i, section) in self.sections.inner().iter().enumerate() {
             data.print(
                 Pos::new(START_I + LINES_PER_SECTION * i as i32, CURSOR_J + 2),
@@ -52,6 +53,7 @@ impl GameState for LevelSelectionState<'static> {
         }
         let cursor_on = ((data.time.as_millis() / 500) % 2) == 0;
         if self.level_i.is_some() {
+            data.print(Pos::new(2, MID_J + CURSOR_J), "Levels in section");
             let mut levels_info = self.save_profile.get_levels_info();
             for (i, level) in self.sections.get().levels.iter().enumerate() {
                 let info = levels_info.entry(level.name.clone()).or_default();
