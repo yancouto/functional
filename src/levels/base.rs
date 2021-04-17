@@ -1,7 +1,10 @@
 use thiserror::Error;
 
+use super::SectionName;
 use crate::{
-    interpreter::{interpret, parse, tokenize, InterpretError, Node, ParseError, TokenizeError}, save_system::LevelResult
+    interpreter::{
+        interpret, parse, tokenize, ConstantProvider, InterpretError, Node, ParseError, TokenizeError
+    }, save_system::LevelResult
 };
 
 #[derive(Debug)]
@@ -17,6 +20,7 @@ pub struct TestCase {
 pub struct Level {
     pub name:        String,
     pub description: String,
+    pub section:     SectionName,
     pub extra_info:  Option<String>,
     pub test_cases:  Vec<TestCase>,
     pub solutions:   Vec<String>,
@@ -45,7 +49,7 @@ impl TestCase {
     pub fn from(application: &str, result: &str) -> Self {
         Self {
             application:     parse_or_fail(application),
-            expected_result: interpret(parse_or_fail(result), true)
+            expected_result: interpret(parse_or_fail(result), true, ConstantProvider::all())
                 .expect("Failed to interpret result"),
         }
     }
@@ -57,9 +61,9 @@ impl TestCase {
         }
     }
 
-    fn test(&self, expression: Box<Node>) -> TestCaseRun {
+    fn test(&self, expression: Box<Node>, provider: ConstantProvider) -> TestCaseRun {
         let test_expression = self.test_expression(expression);
-        let result = interpret(test_expression.clone(), true);
+        let result = interpret(test_expression.clone(), true, provider);
         TestCaseRun {
             test_expression,
             result,
@@ -97,13 +101,17 @@ pub fn get_result(results: &TestRunResults) -> LevelResult {
 }
 
 impl Level {
-    pub fn test<S: IntoIterator<Item = char>>(&self, code: S) -> TestRunResults {
+    pub fn test<S: IntoIterator<Item = char>>(
+        &self,
+        code: S,
+        provider: ConstantProvider,
+    ) -> TestRunResults {
         let node = parse(tokenize(code)?)?;
         Ok(TestCaseRuns {
             runs: self
                 .test_cases
                 .iter()
-                .map(|t| t.test(node.clone()))
+                .map(|t| t.test(node.clone(), provider))
                 .collect(),
             code: node,
         })

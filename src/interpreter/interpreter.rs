@@ -3,7 +3,6 @@ use std::ops::{Generator, GeneratorState};
 use thiserror::Error;
 
 use super::{parser::Node, ConstantProvider};
-use crate::levels::SectionName;
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum InterpretError {
@@ -162,12 +161,15 @@ impl Interpreter {
     }
 }
 
-pub fn interpret(root: Box<Node>, fully_resolve: bool) -> Result<Box<Node>, InterpretError> {
+pub fn interpret(
+    root: Box<Node>,
+    fully_resolve: bool,
+    provider: ConstantProvider,
+) -> Result<Box<Node>, InterpretError> {
     let mut gen = Interpreter {
         fully_resolve,
         yield_intermediates: false,
-        // TODO: Not use all constants all the time
-        provider: ConstantProvider::new((SectionName::Boolean, 100)),
+        provider,
     }
     .interpret(0, root, true);
     loop {
@@ -206,12 +208,13 @@ impl Iterator for InterpretIter {
 pub fn interpret_itermediates(
     root: Box<Node>,
     fully_resolve: bool,
+    provider: ConstantProvider,
 ) -> impl Iterator<Item = Box<Node>> {
     InterpretIter {
         gen:      Interpreter {
             fully_resolve,
             yield_intermediates: true,
-            provider: ConstantProvider::new((SectionName::Boolean, 100)),
+            provider,
         }
         .interpret(0, root, true),
         finished: false,
@@ -223,11 +226,14 @@ pub mod test {
     use super::{
         super::parser::test::{parse_ok, ConvertToNode}, *
     };
+    use crate::levels::SectionName;
 
     const Y_COMB: &str = "(f: (x: f (x x)) (x: f (x x)))";
 
+    fn provider() -> ConstantProvider { ConstantProvider::new((SectionName::Boolean, 100)) }
+
     fn interpret_lazy(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
-        interpret(root, false)
+        interpret(root, false, provider())
     }
 
     pub fn interpret_ok(str: &str) -> Box<Node> { interpret_lazy(parse_ok(str)).unwrap() }
@@ -235,7 +241,7 @@ pub mod test {
     fn interpret_err(str: &str) -> InterpretError { interpret_lazy(parse_ok(str)).unwrap_err() }
 
     pub fn interpret_ok_full(str: &str, fully_resolve: bool) -> Box<Node> {
-        interpret(parse_ok(str), fully_resolve).unwrap()
+        interpret(parse_ok(str), fully_resolve, provider()).unwrap()
     }
 
     fn interpret_eq_full(src: &str, expected: &str, fully_resolve: bool) {
@@ -296,7 +302,10 @@ pub mod test {
         // Using pure expressions to create the conflict in var uids that might
         // come from e.g. concatenating terms
         let expr = (((), ((), (1.n(), 0.n()).n()).n()).n(), (0, 'z').n()).n();
-        assert_eq!(interpret(expr, false).unwrap(), parse_ok("x: z x"));
+        assert_eq!(
+            interpret(expr, false, provider()).unwrap(),
+            parse_ok("x: z x")
+        );
         // No variable conflicts when replacing
         let ex = "y: (x: y: x y) y";
         interpret_eq_full(ex, "y: z: y z", true);
@@ -322,7 +331,7 @@ pub mod test {
             InterpretError::TooDeep
         );
         assert_eq!(
-            interpret(parse_ok("(x: z) ((x: x x) (x: x x))"), true).unwrap_err(),
+            interpret(parse_ok("(x: z) ((x: x x) (x: x x))"), true, provider()).unwrap_err(),
             InterpretError::TooDeep
         );
     }
@@ -355,7 +364,7 @@ pub mod test {
 
     fn assert_partial(code: &str, intermediates: Vec<&str>) {
         assert_eq!(
-            interpret_itermediates(parse_ok(code), false).collect::<Vec<_>>(),
+            interpret_itermediates(parse_ok(code), false, provider()).collect::<Vec<_>>(),
             intermediates
                 .into_iter()
                 .map(|e| parse_ok(e))

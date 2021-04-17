@@ -1,6 +1,6 @@
 use super::{base::*, debugger::DebuggerState};
 use crate::{
-    drawables::black, interpreter::InterpretError, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
+    drawables::black, interpreter::{ConstantProvider, InterpretError}, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
@@ -16,7 +16,8 @@ impl RunSolutionState {
         code: impl Iterator<Item = char>,
         save_profile: Rc<SaveProfile>,
     ) -> Self {
-        let results = level.test(code);
+        // TODO: not use 100 here
+        let results = level.test(code, ConstantProvider::new((level.section, 100)));
         save_profile.mark_level_as_tried(&level.name, get_result(&results));
         Self {
             level,
@@ -68,7 +69,7 @@ impl GameState for RunSolutionState {
                     Pos::new(cur_i - 1, ret.pos.j + ret.size.w - DEBUG.len() as i32 - 4),
                     black(),
                 ) {
-                    return GameStateEvent::Push(box DebuggerState::new(run.clone()));
+                    return GameStateEvent::Push(box DebuggerState::new(self.level, run.clone()));
                 }
                 cur_i += 3;
             }

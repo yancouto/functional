@@ -11,7 +11,7 @@ struct ConstantNode {
 }
 
 impl ConstantNode {
-    fn accepts(&self, (s, n): (SectionName, u8)) -> bool { self.section == s && self.number <= n }
+    fn accepts(&self, (s, n): (SectionName, u8)) -> bool { self.section == s && self.number < n }
 }
 
 lazy_static! {
@@ -57,6 +57,18 @@ pub struct ConstantProvider {
 impl ConstantProvider {
     pub fn new(known_cts: (SectionName, u8)) -> Self { Self { known_cts } }
 
+    #[allow(dead_code)]
+    pub fn none() -> Self {
+        Self {
+            known_cts: (SectionName::Basic, 0),
+        }
+    }
+
+    pub fn all() -> Self {
+        // TODO: fix this when we add more sections
+        Self::new((SectionName::Boolean, 100))
+    }
+
     pub fn get(&self, name: &str) -> Option<Box<Node>> {
         ALL_CONSTANTS
             .get(name)
@@ -78,12 +90,12 @@ mod test {
 
     #[test]
     fn test_provider() {
-        let p0 = ConstantProvider::new(0);
+        let p0 = ConstantProvider::new((SectionName::Boolean, 0));
         assert!(p0.get("TRUE").is_none());
-        let p1 = ConstantProvider::new(1);
+        let p1 = ConstantProvider::new((SectionName::Boolean, 1));
         assert!(p1.get("TRUE").is_some());
         assert!(p1.get("FALSE").is_none());
-        let p2 = ConstantProvider::new(2);
+        let p2 = ConstantProvider::new((SectionName::Boolean, 2));
         assert!(p2.get("TRUE").is_some());
         assert!(p2.get("FALSE").is_some());
     }
@@ -91,7 +103,10 @@ mod test {
     #[test]
     fn test_constants_are_resolved() {
         ALL_CONSTANTS.iter().for_each(|(_, node)| {
-            assert_eq!(interpret(node.term.clone(), true), Ok(node.term.clone()))
+            assert_eq!(
+                interpret(node.term.clone(), true, ConstantProvider::none()),
+                Ok(node.term.clone())
+            )
         });
     }
 }

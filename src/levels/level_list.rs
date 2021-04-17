@@ -36,25 +36,29 @@ fn load_all() -> Vec1<Section> {
         config
             .sections
             .into_iter()
-            .map(|s| Section {
-                name:   SectionName::from_str(&s.name).unwrap(),
-                levels: Vec1::try_from_vec(
-                    s.levels
-                        .into_iter()
-                        .map(|l| Level {
-                            name:        l.name,
-                            description: l.description,
-                            extra_info:  l.extra_info,
-                            test_cases:  l
-                                .test_cases
-                                .into_iter()
-                                .map(|t| TestCase::from(&t.0, &t.1))
-                                .collect(),
-                            solutions:   l.solutions,
-                        })
-                        .collect(),
-                )
-                .unwrap(),
+            .map(|s| {
+                let section_name = SectionName::from_str(&s.name).unwrap();
+                Section {
+                    name:   section_name,
+                    levels: Vec1::try_from_vec(
+                        s.levels
+                            .into_iter()
+                            .map(|l| Level {
+                                name:        l.name,
+                                description: l.description,
+                                extra_info:  l.extra_info,
+                                section:     section_name,
+                                test_cases:  l
+                                    .test_cases
+                                    .into_iter()
+                                    .map(|t| TestCase::from(&t.0, &t.1))
+                                    .collect(),
+                                solutions:   l.solutions,
+                            })
+                            .collect(),
+                    )
+                    .unwrap(),
+                }
             })
             .collect(),
     )
@@ -80,7 +84,7 @@ lazy_static! {
 #[cfg(test)]
 mod test {
     use super::{super::get_result, LEVELS};
-    use crate::save_system::LevelResult;
+    use crate::{interpreter::ConstantProvider, save_system::LevelResult};
 
     #[test]
     fn test_level_load() {
@@ -91,9 +95,15 @@ mod test {
     #[test]
     fn test_solutions() {
         LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
-            l.solutions
-                .iter()
-                .for_each(|s| assert_eq!(get_result(&l.test(s.chars())), LevelResult::Success))
+            l.solutions.iter().for_each(|s| {
+                assert_eq!(
+                    get_result(&l.test(s.chars(), ConstantProvider::all())),
+                    LevelResult::Success,
+                    "Code was not solution {} on level {}",
+                    s,
+                    l.name
+                )
+            })
         });
     }
 }
