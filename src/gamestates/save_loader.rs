@@ -1,4 +1,4 @@
-use super::{intro::IntroState, level_selection::LevelSelectionState};
+use super::{intro::IntroState, main_menu::MainMenuState};
 use crate::{gamestates::base::*, prelude::*, save_system};
 
 #[derive(Debug)]
@@ -11,7 +11,7 @@ impl SaveLoaderState {
     pub fn try_load(user: String) -> Box<dyn GameState> {
         let profile = save_system::load_profile(&user);
         match profile {
-            Ok(p) => box LevelSelectionState::new(Rc::new(p)),
+            Ok(p) => box MainMenuState::new(p),
             Err(err) => box Self {
                 user,
                 err_text: format!(
