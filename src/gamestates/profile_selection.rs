@@ -7,14 +7,20 @@ pub struct ProfileSelectionState {
     editor: BasicTextEditor,
 }
 
+impl ProfileSelectionState {
+    pub fn new() -> Self {
+        Self {
+            editor: BasicTextEditor::new("Enter profile name:".to_string(), Rect::centered(20, 1)),
+        }
+    }
+}
+
 pub fn try_load_default_profile() -> Box<dyn GameState> {
     let common = load_common();
     match common.default_profile {
         Some(user) => SaveLoaderState::try_load(user),
         // Maybe also go to ProfileSelection if the save was deleted
-        None => box ProfileSelectionState {
-            editor: BasicTextEditor::new("Enter profile name:".to_string(), Rect::centered(20, 1)),
-        },
+        None => box ProfileSelectionState::new(),
     }
 }
 
@@ -29,7 +35,7 @@ impl ValidationError {
         match self {
             ValidationError::TooLong => "Must be at most 18 digits",
             ValidationError::NonASCII => "Characters must be ASCII",
-            ValidationError::NonAlphaNumeric => "Characters must be alphanumberic or _",
+            ValidationError::NonAlphaNumeric => "Characters must be alphanumeric or _",
         }
     }
 }

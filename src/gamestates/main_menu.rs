@@ -1,10 +1,13 @@
-use super::{base::*, level_selection::LevelSelectionState};
+use super::{
+    base::*, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState
+};
 use crate::{prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor};
 
 enum MenuItem {
     Play,
     Settings,
     ChangeProfile,
+    Quit,
 }
 
 impl MenuItem {
@@ -12,16 +15,21 @@ impl MenuItem {
         match self {
             MenuItem::Play => "play",
             MenuItem::Settings => "settings (TODO!)",
-            MenuItem::ChangeProfile => "change profile (TODO!)",
+            MenuItem::ChangeProfile => "change profile",
+            MenuItem::Quit => "quit game",
         }
     }
 
-    fn on_click(&self, menu: &MainMenuState) -> GameStateEvent {
+    fn on_click(&self, menu: &MainMenuState, data: &mut TickData) -> GameStateEvent {
         match self {
             MenuItem::Play =>
                 GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),
             MenuItem::Settings => todo!(),
-            MenuItem::ChangeProfile => todo!(),
+            MenuItem::ChangeProfile => GameStateEvent::Switch(box ProfileSelectionState::new()),
+            MenuItem::Quit => {
+                data.quit();
+                GameStateEvent::None
+            },
         }
     }
 }
@@ -34,7 +42,13 @@ pub struct MainMenuState {
 impl MainMenuState {
     pub fn new(save_profile: SaveProfile) -> Self {
         Self {
-            items:        vec1![MenuItem::Play, MenuItem::Settings, MenuItem::ChangeProfile].into(),
+            items:        vec1![
+                MenuItem::Play,
+                MenuItem::Settings,
+                MenuItem::ChangeProfile,
+                MenuItem::Quit
+            ]
+            .into(),
             save_profile: Rc::new(save_profile),
         }
     }
@@ -52,6 +66,7 @@ impl GameState for MainMenuState {
             Pos::new(2, CURSOR_J),
             &format!("Hello, {}.", self.save_profile.name()),
         );
+        data.instructions(&["Press ENTER to choose option."]);
         for (i, item) in self.items.inner().iter().enumerate() {
             data.print(
                 Pos::new(START_I + LINES_PER_SECTION * i as i32, CURSOR_J + 2),
@@ -69,7 +84,7 @@ impl GameState for MainMenuState {
             );
         }
         if data.pressed_key == Some(bl::VirtualKeyCode::Return) {
-            self.items.get().on_click(&self)
+            self.items.get().on_click(&self, &mut data)
         } else {
             if data.pressed_key == Some(bl::VirtualKeyCode::Down) {
                 self.items.cursor_increment();

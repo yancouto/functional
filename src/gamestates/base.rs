@@ -26,6 +26,7 @@ pub struct TickData<'a> {
     pub ctrl:         bool,
     /// Current keys pressed
     pub keys_pressed: &'a HashSet<bl::VirtualKeyCode>,
+    ctx:              &'a mut bl::BTerm,
 }
 
 impl<'a> TickData<'a> {
@@ -33,7 +34,7 @@ impl<'a> TickData<'a> {
         data: &GSData,
         event_data: EventTickData,
         console: &'a mut Box<dyn bl::Console>,
-        ctx: &mut bl::BTerm,
+        ctx: &'a mut bl::BTerm,
         input: &'a bl::Input,
     ) -> Self {
         TickData {
@@ -44,8 +45,11 @@ impl<'a> TickData<'a> {
             left_click: event_data.left_click,
             ctrl: ctx.control,
             keys_pressed: input.key_pressed_set(),
+            ctx,
         }
     }
+
+    pub fn quit(&mut self) { self.ctx.quit(); }
 }
 
 pub struct GameStateManager {
