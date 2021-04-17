@@ -109,19 +109,19 @@ impl TextEditor for BasicTextEditor {
                 .collect::<Vec<_>>(),
         )
         .unwrap_or(vec1![vec![]]);
-        self.text.truncate(size.h as usize).unwrap();
+        self.text.truncate(size.h as usize).debug_unwrap();
 
         for line in &mut self.text {
             while let Some(c) = line.last() {
                 if c.is_ascii_whitespace() {
-                    line.pop().unwrap();
+                    line.pop().debug_unwrap();
                 } else {
                     break;
                 }
             }
         }
         while self.text.len() > 1 && self.text.last().is_empty() {
-            self.text.pop().unwrap();
+            self.text.pop().debug_unwrap();
         }
         Ok(())
     }

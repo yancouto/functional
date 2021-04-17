@@ -51,7 +51,9 @@ mod prelude {
     pub use bracket_lib::prelude as bl;
     pub use vec1::{vec1, Vec1};
 
-    pub use crate::math::{Pos, Rect};
+    pub use crate::{
+        math::{Pos, Rect}, utils::debug_asserts::DebugUnwrap
+    };
 }
 
 use prelude::*;

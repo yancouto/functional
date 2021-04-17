@@ -263,7 +263,7 @@ impl XiEditor {
                             new_lines.push(x);
                         }
                     },
-                UpdateOp::Skip { n } => old_text.advance_by(n).unwrap(),
+                UpdateOp::Skip { n } => old_text.advance_by(n).debug_unwrap(),
                 UpdateOp::Invalidate { n } => new_lines.extend(vec![Line::default(); n]),
                 UpdateOp::Update { .. } => unreachable!(),
                 UpdateOp::Ins { n: _, lines } =>

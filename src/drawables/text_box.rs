@@ -35,7 +35,7 @@ impl TickData<'_> {
         tb.reset();
 
         let mut block = bl::TextBlock::new(pos.j + 1, pos.i + 1, size.w - 3, size.h - 3);
-        block.print(&tb).unwrap();
+        block.print(&tb).debug_unwrap();
         block.render(&mut self.console);
     }
 

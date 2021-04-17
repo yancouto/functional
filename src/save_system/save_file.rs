@@ -4,6 +4,8 @@ use app_dirs::*;
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use savefile::SavefileError;
 
+use crate::prelude::*;
+
 pub const APP_INFO: AppInfo = AppInfo {
     name:   "functional",
     author: "yancouto",
@@ -43,9 +45,8 @@ struct SaveFile {
 impl SaveProfile {
     pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {
         log::debug!("Writing solution {} of level {}", solution, level_name);
-        if let Err(err) = self.write_level_impl(level_name, solution, code) {
-            log::warn!("Error writing level: {:?}", err);
-        }
+        self.write_level_impl(level_name, solution, code)
+            .debug_expect("Error writing level");
     }
 
     pub fn level_code_file(&self, level_name: &str, solution: u8) -> PathBuf {
@@ -123,14 +124,12 @@ impl SaveProfile {
     fn write<T: savefile::WithSchema + savefile::Serialize>(&self, path: &str, data: &T) {
         log::debug!("Writing save file {}", path);
         // Better error message without having to implement a new error type?
-        let result = savefile::save_file(
+        savefile::save_file(
             self.path.join(path).to_str().unwrap(),
             CURRENT_SAVE_VERSION,
             data,
-        );
-        if let Err(err) = result {
-            log::error!("Failed to write save file {}: {:?}", path, err);
-        }
+        )
+        .debug_expect("Failed to write save file");
     }
 
     fn write_level_impl(&self, level_name: &str, solution: u8, code: &str) -> io::Result<()> {
@@ -169,9 +168,5 @@ pub fn load_profile(name: &str) -> Result<SaveProfile, SavefileError> {
 
 /// Deletes only save profile. Leaves code there.
 pub fn reset_profile(name: &str) {
-    let r = fs::remove_file(get_save_profile(name).join(SAVE_FILE));
-    if let Err(err) = &r {
-        log::error!("While deleting save file: {}", err);
-    }
-    debug_assert!(r.is_ok());
+    fs::remove_file(get_save_profile(name).join(SAVE_FILE)).debug_unwrap();
 }
