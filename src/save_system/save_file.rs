@@ -13,6 +13,7 @@ pub const APP_INFO: AppInfo = AppInfo {
 
 #[derive(Debug)]
 pub struct SaveProfile {
+    name:              String,
     path:              PathBuf,
     current_save_file: Mutex<SaveFile>,
 }
@@ -43,6 +44,8 @@ struct SaveFile {
 }
 
 impl SaveProfile {
+    pub fn name(&self) -> &str { &self.name }
+
     pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {
         log::debug!("Writing solution {} of level {}", solution, level_name);
         self.write_level_impl(level_name, solution, code)
@@ -112,12 +115,12 @@ fn write<T: savefile::WithSchema + savefile::Serialize>(path: PathBuf, version: 
 }
 
 impl SaveProfile {
-    fn load(path: PathBuf) -> Result<Self, SavefileError> {
+    fn load(path: PathBuf, name: String) -> Result<Self, SavefileError> {
         log::debug!("Loading save profile from {:?}", path);
-        // TODO: load save file
         let this = Self {
             path,
             current_save_file: Mutex::from(SaveFile::default()),
+            name,
         };
         this.reload()?;
         Ok(this)
@@ -170,7 +173,7 @@ fn get_app_root() -> Result<PathBuf, AppDirsError> { app_root(AppDataType::UserC
 
 /// Will create a folder if it doesn't exist
 pub fn load_profile(name: &str) -> Result<SaveProfile, SavefileError> {
-    SaveProfile::load(get_save_profile(name))
+    SaveProfile::load(get_save_profile(name), name.to_string())
 }
 
 /// Deletes only save profile. Leaves code there.

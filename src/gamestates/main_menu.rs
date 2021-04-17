@@ -48,7 +48,10 @@ impl GameState for MainMenuState {
     fn name(&self) -> &'static str { "MainMenu" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
-        data.print(Pos::new(2, CURSOR_J), &format!("Hello, {}.", "you"));
+        data.print(
+            Pos::new(2, CURSOR_J),
+            &format!("Hello, {}.", self.save_profile.name()),
+        );
         for (i, item) in self.items.inner().iter().enumerate() {
             data.print(
                 Pos::new(START_I + LINES_PER_SECTION * i as i32, CURSOR_J + 2),
