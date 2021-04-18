@@ -66,15 +66,14 @@ impl GameState for LevelSelectionState<'static> {
                 data.print(Pos::new(self.get_i(i as i32), MID_J + CURSOR_J + 2), &text);
             }
             data.instructions(&[
-                "Press LEFT to close section",
+                "Press ESC/LEFT to close section",
                 "Use UP/DOWN to navigate tasks",
                 "Press ENTER to select task",
-                "Press ESC to go to main menu",
             ]);
         } else {
             data.instructions(&[
                 "Use UP/DOWN to navigate sections",
-                "Press RIGHT to open section",
+                "Press ENTER/RIGHT to open section",
                 "Press ESC to go to main menu",
             ]);
         }
@@ -87,17 +86,25 @@ impl GameState for LevelSelectionState<'static> {
                 ">",
             );
         }
-        if data.pressed_key == Some(Key::Escape) {
-            GameStateEvent::Switch(box MainMenuState::new(self.save_profile.clone()))
-        } else {
-            match data.pressed_key.zip(self.level_i) {
-                Some((Key::Return, l_i)) =>
+        match data.pressed_key {
+            Some(Key::Escape) =>
+                if self.level_i.is_some() {
+                    self.level_i.take();
+                    GameStateEvent::None
+                } else {
+                    GameStateEvent::Switch(box MainMenuState::new(self.save_profile.clone()))
+                },
+            Some(Key::Return) =>
+                if let Some(l_i) = self.level_i {
                     GameStateEvent::Switch(box EditorState::<XiEditor>::new(
                         &self.sections.get().levels[l_i],
                         self.save_profile.clone(),
-                    )),
-                _ => GameStateEvent::None,
-            }
+                    ))
+                } else {
+                    self.level_i = Some(0);
+                    GameStateEvent::None
+                },
+            _ => GameStateEvent::None,
         }
     }
 

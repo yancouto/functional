@@ -12,6 +12,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate savefile_derive;
 
+#[allow(unused_imports)]
 #[macro_use]
 extern crate maplit;
 
