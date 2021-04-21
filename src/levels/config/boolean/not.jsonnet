@@ -15,7 +15,9 @@
         Note that you can assume that the received values are always booleans! Input is always well formed.
     |||,
     extra_info: |||
-        You can use constants from previous levels. See below for the full list of allowed constants (TODO).
+        You can use constants from previous levels. See below for the full list of allowed constants.
+
+        Notice that you don't NEED to use the constants. And using them as little as possible means solving the problem using the least reductions.
     |||,
     test_cases: [
         ["f: f TRUE", "FALSE"],

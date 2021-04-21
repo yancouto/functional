@@ -77,6 +77,13 @@ impl GameState for LevelSelectionState<'static> {
                 "Press ESC to go to main menu",
             ]);
         }
+        if self.level_i.is_some() {
+            // Always show cursor if section is selected
+            data.print(
+                Pos::new(self.get_i(self.sections.cursor() as i32), CURSOR_J),
+                ">",
+            );
+        }
         if cursor_on {
             data.print(
                 Pos::new(

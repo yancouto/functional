@@ -88,6 +88,25 @@ impl ConstantProvider {
             .filter(|n| self.current_level.map(|l| n.can_be_used(l)).unwrap_or(true))
             .map(|n| n.term.clone())
     }
+
+    pub fn all_known_constants<'a>(&'a self) -> Vec<&'static str> {
+        ALL_CONSTANTS
+            .iter()
+            .filter_map(|(k, v)| {
+                if self.current_level.map(|l| v.can_be_used(l)).unwrap_or(true) {
+                    Some(k.as_str())
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+}
+
+impl Level {
+    pub fn all_known_constants(&'static self) -> Vec<&'static str> {
+        ConstantProvider::new(&self).all_known_constants()
+    }
 }
 
 #[cfg(test)]

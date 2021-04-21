@@ -14,6 +14,7 @@ pub struct EditorState<Editor: TextEditor> {
     current_solution: u8,
     save_profile:     Rc<SaveProfile>,
     last_save:        Duration,
+    known_constants:  Option<Vec1<&'static str>>,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
@@ -30,6 +31,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             save_profile,
             current_solution: 1,
             last_save: Duration::from_secs(0),
+            known_constants: Vec1::try_from_vec(level.all_known_constants()).ok(),
         };
         state.load_solution(1);
         state
@@ -92,6 +94,14 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         }
 
         self.editor.draw(&mut data);
+
+        if let Some(cts) = &self.known_constants {
+            data.text_box(
+                "Known constants",
+                &cts.join("\n"),
+                Rect::new(35, W / 2 + 2, W / 2 - 2, 27),
+            )
+        }
 
         if data.button("Run", Pos::new(H - 3, 2), black())
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
