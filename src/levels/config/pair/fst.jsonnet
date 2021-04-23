@@ -16,5 +16,5 @@
     ],
     provides_constant: true,
     solutions: ["p: p (a:b: a)", "p: p TRUE"],
-    wrong_solutions: ["p: p FALSE"]
+    wrong_solutions: ["p: p FALSE", "a:b: a"],
 }
