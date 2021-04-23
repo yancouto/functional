@@ -25,5 +25,6 @@
         ["f: (f TRUE) Z Y", "Y"],
     ],
     provides_constant: true,
-    solutions: ["b: x:y: b y x"]
+    solutions: ["b: x:y: b y x", "b: IF b FALSE TRUE"],
+    wrong_solutions: ["f: f"]
 }

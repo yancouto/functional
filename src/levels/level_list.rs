@@ -12,6 +12,8 @@ pub struct JLevel {
     pub test_cases:        Vec<(String, String)>,
     pub solutions:         Vec<String>,
     #[serde(default)]
+    pub wrong_solutions:   Vec<String>,
+    #[serde(default)]
     pub provides_constant: bool,
     #[serde(default = "get_true")]
     pub show_constants:    bool,
@@ -64,6 +66,7 @@ fn load_all() -> Vec1<Section> {
                                     .map(|t| TestCase::from(&t.0, &t.1))
                                     .collect(),
                                 solutions: l.solutions,
+                                wrong_solutions: l.wrong_solutions,
                                 show_constants: l.show_constants,
                             })
                             .collect(),
@@ -113,6 +116,21 @@ mod test {
                     get_result(&l.test(s.chars(), ConstantProvider::all())),
                     LevelResult::Success,
                     "Code was not solution {} on level {}",
+                    s,
+                    l.name
+                )
+            })
+        });
+    }
+
+    #[test]
+    fn test_wrong_solutions() {
+        LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
+            l.wrong_solutions.iter().for_each(|s| {
+                assert_ne!(
+                    get_result(&l.test(s.chars(), ConstantProvider::all())),
+                    LevelResult::Success,
+                    "Code was solution {} on level {}",
                     s,
                     l.name
                 )
