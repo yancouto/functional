@@ -82,6 +82,7 @@ fn load_all() -> Vec1<Section> {
 pub enum SectionName {
     Basic,
     Boolean,
+    Pair,
 }
 
 pub struct Section {
