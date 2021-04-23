@@ -105,7 +105,11 @@ impl ConstantProvider {
 
 impl Level {
     pub fn all_known_constants(&'static self) -> Vec<&'static str> {
-        ConstantProvider::new(&self).all_known_constants()
+        if self.show_constants {
+            ConstantProvider::new(&self).all_known_constants()
+        } else {
+            vec![]
+        }
     }
 }
 

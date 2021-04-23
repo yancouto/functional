@@ -18,14 +18,15 @@ pub struct TestCase {
 
 #[derive(Debug)]
 pub struct Level {
-    pub name:        String,
-    pub description: String,
-    pub section:     SectionName,
+    pub name:           String,
+    pub description:    String,
+    pub section:        SectionName,
     /// index of the level in the section
-    pub idx:         usize,
-    pub extra_info:  Option<String>,
-    pub test_cases:  Vec<TestCase>,
-    pub solutions:   Vec<String>,
+    pub idx:            usize,
+    pub extra_info:     Option<String>,
+    pub test_cases:     Vec<TestCase>,
+    pub solutions:      Vec<String>,
+    pub show_constants: bool,
 }
 
 pub fn parse_or_fail(str: &str) -> Box<Node> {

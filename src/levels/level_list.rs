@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 use super::{Level, TestCase};
 use crate::prelude::*;
+fn get_true() -> bool { true }
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct JLevel {
@@ -12,6 +13,8 @@ pub struct JLevel {
     pub solutions:         Vec<String>,
     #[serde(default)]
     pub provides_constant: bool,
+    #[serde(default = "get_true")]
+    pub show_constants:    bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -61,6 +64,7 @@ fn load_all() -> Vec1<Section> {
                                     .map(|t| TestCase::from(&t.0, &t.1))
                                     .collect(),
                                 solutions: l.solutions,
+                                show_constants: l.show_constants,
                             })
                             .collect(),
                     )
