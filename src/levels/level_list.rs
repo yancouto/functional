@@ -79,7 +79,7 @@ fn load_all() -> Vec1<Section> {
     .unwrap()
 }
 
-#[derive(Debug, strum::Display, PartialEq, Eq, Hash, Clone, Copy, Deserialize)]
+#[derive(Debug, strum::Display, PartialEq, Eq, Hash, Clone, Copy, Deserialize, PartialOrd, Ord)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum SectionName {

@@ -11,7 +11,9 @@ struct ConstantNode {
 
 impl ConstantNode {
     fn can_be_used(&self, level: &'static Level) -> bool {
-        self.section == level.section && self.lvl_discovered.map(|l| l < level.idx).unwrap_or(true)
+        self.section < level.section
+            || (self.section == level.section
+                && self.lvl_discovered.map(|l| l < level.idx).unwrap_or(true))
     }
 }
 
