@@ -85,7 +85,9 @@ fn load_all() -> Vec1<Section> {
 pub enum SectionName {
     Basic,
     Boolean,
-    Pair,
+    #[strum(serialize = "pair and list")]
+    #[serde(rename = "pair and list")]
+    PairAndList,
 }
 
 pub struct Section {

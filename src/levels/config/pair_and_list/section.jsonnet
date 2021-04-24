@@ -1,5 +1,5 @@
 {
-  name: 'pair',
+  name: 'pair and list',
   levels: [
     import 'pair.jsonnet',
     import 'fst.jsonnet',
