@@ -6,26 +6,26 @@ fn get_true() -> bool { true }
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct JLevel {
-    pub name:              String,
-    pub description:       String,
-    pub extra_info:        Option<String>,
-    pub test_cases:        Vec<(String, String)>,
-    pub solutions:         Vec<String>,
+    pub name:                   String,
+    pub description:            String,
+    pub extra_info:             Option<String>,
+    pub test_cases:             Vec<(String, String)>,
+    pub solutions:              Vec<String>,
     #[serde(default)]
-    pub wrong_solutions:   Vec<String>,
+    pub wrong_solutions:        Vec<String>,
     #[serde(default)]
-    pub provides_constant: bool,
+    pub provides_constant:      bool,
     #[serde(default = "get_true")]
-    pub show_constants:    bool,
+    pub show_constants:         bool,
+    #[serde(default)]
+    pub before_level_constants: Vec<(String, String)>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct JSection {
-    pub name:              SectionName,
-    pub levels:            Vec<JLevel>,
-    #[serde(default)]
-    pub section_constants: Vec<(String, String)>,
+    pub name:   SectionName,
+    pub levels: Vec<JLevel>,
 }
 
 #[derive(Debug, Deserialize)]

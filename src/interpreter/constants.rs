@@ -6,14 +6,13 @@ use crate::{
 struct ConstantNode {
     term:           Box<Node>,
     section:        SectionName,
-    lvl_discovered: Option<usize>,
+    lvl_discovered: usize,
+    before_level:   bool,
 }
 
 impl ConstantNode {
     fn can_be_used(&self, level: &'static Level) -> bool {
-        self.section < level.section
-            || (self.section == level.section
-                && self.lvl_discovered.map(|l| l < level.idx).unwrap_or(true))
+        (self.section, self.lvl_discovered, !self.before_level) <= (level.section, level.idx, false)
     }
 }
 
@@ -29,32 +28,33 @@ lazy_static! {
             .into_iter()
             .flat_map(|section| {
                 let section_name = section.name;
-                let section_constants = section.section_constants;
                 section
                     .levels
                     .into_iter()
                     .filter(|l| l.provides_constant)
                     .enumerate()
-                    .map(move |(i, level)| {
-                        (
-                            level.name.to_uppercase(),
-                            ConstantNode {
-                                term:           parse_constant(&level.solutions[0]),
-                                section:        section_name,
-                                lvl_discovered: Some(i),
-                            },
-                        )
+                    .flat_map(move |(i, level)| {
+                        level
+                            .before_level_constants
+                            .into_iter()
+                            .map(|(a, b)| (a, b, true))
+                            .chain(std::iter::once((
+                                level.name.to_ascii_uppercase(),
+                                level.solutions[0].clone(),
+                                false,
+                            )))
+                            .map(move |(name, term, before_level)| {
+                                (
+                                    name,
+                                    ConstantNode {
+                                        term: parse_constant(&term),
+                                        section: section_name,
+                                        lvl_discovered: i,
+                                        before_level,
+                                    },
+                                )
+                            })
                     })
-                    .chain(section_constants.into_iter().map(move |(name, term)| {
-                        (
-                            name,
-                            ConstantNode {
-                                term:           parse_constant(&term),
-                                section:        section_name,
-                                lvl_discovered: None,
-                            },
-                        )
-                    }))
             })
             .collect()
     };
