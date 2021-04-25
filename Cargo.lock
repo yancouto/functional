@@ -259,6 +259,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "build-deps"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64f14468960818ce4f3e3553c32d524446687884f8e7af5d3e252331d8a87e43"
+dependencies = [
+ "glob",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -918,6 +927,7 @@ version = "0.1.0"
 dependencies = [
  "app_dirs",
  "bracket-lib",
+ "build-deps",
  "crossbeam 0.8.0",
  "jsonnet-rs",
  "lazy_static",
@@ -1001,6 +1011,12 @@ dependencies = [
  "log",
  "xml-rs",
 ]
+
+[[package]]
+name = "glob"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "glow"

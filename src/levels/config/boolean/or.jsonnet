@@ -1,3 +1,4 @@
+local lib = import 'lib.libsonnet';
 {
   name: 'or',
   description: |||
@@ -10,10 +11,10 @@
     As always, the input is well formed, both arguments are booleans.
   |||,
   test_cases: [
-    ['f: f TRUE TRUE', 'TRUE'],
-    ['f: f TRUE FALSE', 'TRUE'],
-    ['f: f FALSE TRUE', 'TRUE'],
-    ['f: f FALSE FALSE', 'FALSE'],
+    lib.test_true('f: f TRUE TRUE'),
+    lib.test_true('f: f FALSE TRUE'),
+    lib.test_true('f: f TRUE FALSE'),
+    lib.test_false('f: f FALSE FALSE'),
   ],
   provides_constant: true,
   solutions: ['a:b: x:y: a x (b x y)', 'a:b: NOT (AND (NOT a) (NOT b))'],

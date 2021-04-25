@@ -8,5 +8,6 @@
     import 'any.jsonnet',
     import 'push.jsonnet',
     import 'pop.jsonnet',
+    import 'recursion.jsonnet',
   ],
 }

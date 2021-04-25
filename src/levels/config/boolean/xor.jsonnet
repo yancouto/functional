@@ -1,3 +1,4 @@
+local lib = import 'lib.libsonnet';
 {
   name: 'xor',
   description: |||
@@ -11,10 +12,10 @@
     As always, the input is well formed, both arguments are booleans.
   |||,
   test_cases: [
-    ['f: f TRUE TRUE', 'FALSE'],
-    ['f: f TRUE FALSE', 'TRUE'],
-    ['f: f FALSE TRUE', 'TRUE'],
-    ['f: f FALSE FALSE', 'FALSE'],
+    lib.test_false('f: f TRUE TRUE'),
+    lib.test_true('f: f FALSE TRUE'),
+    lib.test_true('f: f TRUE FALSE'),
+    lib.test_false('f: f FALSE FALSE'),
   ],
   provides_constant: true,
   solutions: ['a:b: x:y: a (b y x) (b x y)'],

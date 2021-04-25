@@ -1,3 +1,4 @@
+local lib = import 'lib.libsonnet';
 {
   name: 'not',
   description: |||
@@ -18,11 +19,12 @@
     You can use constants from previous levels. See below for the full list of allowed constants.
     
     Notice that you don't NEED to use the constants. And using them as little as possible means solving the problem using the least reductions.
+    
+    When we say NOT TRUE reduces to FALSE, we're being somewhat loose with terminology. It reduces to a term that _behaves like_ TRUE, for example it could be "a:b: (x:y: x) a b", which is not technically TRUE, but works like it.
   |||,
   test_cases: [
-    ['f: f TRUE', 'FALSE'],
-    ['f: f FALSE', 'TRUE'],
-    ['f: (f TRUE) Z Y', 'Y'],
+    lib.test_false('f: f TRUE'),
+    lib.test_true('f: f FALSE'),
   ],
   provides_constant: true,
   solutions: ['b: x:y: b y x', 'b: IF b FALSE TRUE'],

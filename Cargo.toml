@@ -12,6 +12,7 @@ crossterm = ["bracket-lib/crossterm"]
 
 [build-dependencies]
 jsonnet-rs = "0.17.0"
+build-deps = "0.1"
 
 [dependencies]
 structopt = { version = "0.3", default-features = false }

@@ -42,7 +42,7 @@ pub struct TestCaseRun {
 }
 
 impl TestCaseRun {
-    fn is_correct(&self) -> bool {
+    pub fn is_correct(&self) -> bool {
         self.result
             .as_ref()
             .map_or(false, |r| *r == self.expected_result)
@@ -54,7 +54,7 @@ impl TestCase {
         Self {
             application:     parse_or_fail(application),
             // fine to use all here since this is not user supplied
-            expected_result: interpret(parse_or_fail(result), true, ConstantProvider::all())
+            expected_result: interpret(parse_or_fail(result), false, ConstantProvider::all())
                 .expect("Failed to interpret result"),
         }
     }
@@ -68,7 +68,7 @@ impl TestCase {
 
     fn test(&self, expression: Box<Node>, provider: ConstantProvider) -> TestCaseRun {
         let test_expression = self.test_expression(expression);
-        let result = interpret(test_expression.clone(), true, provider);
+        let result = interpret(test_expression.clone(), false, provider);
         TestCaseRun {
             test_expression,
             result,

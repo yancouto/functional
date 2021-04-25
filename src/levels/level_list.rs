@@ -114,13 +114,22 @@ mod test {
     fn test_solutions() {
         LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
             l.solutions.iter().for_each(|s| {
-                assert_eq!(
-                    get_result(&l.test(s.chars(), ConstantProvider::all())),
-                    LevelResult::Success,
-                    "Code was not solution {} on level {}",
-                    s,
-                    l.name
-                )
+                let r = l
+                    .test(s.chars(), ConstantProvider::all())
+                    .expect(&format!("Failed to compile solution {}", s));
+
+                r.runs.iter().for_each(|r| {
+                    assert!(
+                        r.is_correct(),
+                        "Code '{}' does not reduce to '{}' on level '{}', instead reduced to {:?}",
+                        r.test_expression,
+                        r.expected_result,
+                        l.name,
+                        r.result.clone().map(|r| format!("{}", r)),
+                    )
+                });
+
+                assert_eq!(get_result(&Ok(r)), LevelResult::Success);
             })
         });
     }
