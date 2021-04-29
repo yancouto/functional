@@ -31,29 +31,31 @@ lazy_static! {
                 section
                     .levels
                     .into_iter()
-                    .filter(|l| l.provides_constant)
                     .enumerate()
                     .flat_map(move |(i, level)| {
-                        level
+                        let mut v: Vec<_> = level
                             .before_level_constants
                             .into_iter()
                             .map(|(a, b)| (a, b, true))
-                            .chain(std::iter::once((
+                            .collect();
+                        if level.provides_constant {
+                            v.push((
                                 level.name.to_ascii_uppercase(),
                                 level.solutions[0].clone(),
                                 false,
-                            )))
-                            .map(move |(name, term, before_level)| {
-                                (
-                                    name,
-                                    ConstantNode {
-                                        term: parse_constant(&term),
-                                        section: section_name,
-                                        lvl_discovered: i,
-                                        before_level,
-                                    },
-                                )
-                            })
+                            ));
+                        }
+                        v.into_iter().map(move |(name, term, before_level)| {
+                            (
+                                name,
+                                ConstantNode {
+                                    term: parse_constant(&term),
+                                    section: section_name,
+                                    lvl_discovered: i,
+                                    before_level,
+                                },
+                            )
+                        })
                     })
             })
             .collect()
@@ -142,7 +144,7 @@ mod test {
     fn test_constants_are_resolved() {
         ALL_CONSTANTS.iter().for_each(|(_, node)| {
             assert_eq!(
-                interpret(node.term.clone(), true, ConstantProvider::none()),
+                interpret(node.term.clone(), false, ConstantProvider::none()),
                 Ok(node.term.clone())
             )
         });

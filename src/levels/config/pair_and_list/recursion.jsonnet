@@ -7,12 +7,12 @@
     This is called the Y-combinator. It is used to create recursion, because notice that:
     Y F = F (Y F) = F (F (Y F)) = F (F (F (F ... (Y F))))
     
-    This is always infite, but just because of that, it doesn't mean that a reduction doesn't exist. If A is an infinte term (doesn't have a reduction) but B isn't, then "(a:b: b) A B" is finite too.
+    This is always infite, but just because of that, it doesn't mean that a reduction doesn't exist. If A is an infinite term (doesn't have a reduction) but B isn't, then "(a:b: b) A B" is finite too.
   |||,
   extra_info: |||
     This level is very hard. It's mind twisting to create this recursive structure, feel free to skip it and go to the next level.
     
-    The most interesting part is actually using this result, not reaching it.
+    The most interesting part is actually using this result, not coming up with it.
   |||,
   test_cases: [
     ['y: y (f: x: x) A', 'A'],

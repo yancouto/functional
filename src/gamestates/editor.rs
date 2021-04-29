@@ -98,7 +98,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         if let Some(cts) = &self.known_constants {
             data.text_box(
                 "Known constants",
-                &cts.join("\n\n"),
+                &cts.join(", "),
                 Rect::new(35, W / 2 + 2, W / 2 - 2, 27),
             )
         }

@@ -6,6 +6,7 @@
 #![feature(iter_advance_by)]
 #![feature(map_first_last)]
 #![feature(trait_alias)]
+#![feature(backtrace)]
 #[macro_use]
 extern crate lazy_static;
 

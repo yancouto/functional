@@ -9,5 +9,6 @@
     import 'push.jsonnet',
     import 'pop.jsonnet',
     import 'recursion.jsonnet',
+    import 'strip_prefix.jsonnet',
   ],
 }

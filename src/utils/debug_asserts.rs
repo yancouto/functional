@@ -1,3 +1,5 @@
+use std::backtrace::Backtrace;
+
 pub trait DebugUnwrap {
     /// Only on debug mode, panics if the value can't be unwraped.
     /// On production builds, only log.
@@ -17,7 +19,10 @@ impl<T> DebugUnwrap for Option<T> {
 
     fn debug_expect(self, text: &str) {
         if cfg!(debug_assertions) {
-            self.unwrap();
+            if self.is_none() {
+                println!("{}", Backtrace::force_capture());
+            }
+            self.expect(text);
         } else {
             if self.is_none() {
                 log::error!("{}", text);
@@ -41,7 +46,10 @@ impl<T, E: std::fmt::Debug> DebugUnwrap for Result<T, E> {
 
     fn debug_expect(self, text: &str) {
         if cfg!(debug_assertions) {
-            self.unwrap();
+            if self.is_err() {
+                println!("{}", Backtrace::force_capture());
+            }
+            self.expect(text);
         } else {
             if let Err(err) = self {
                 log::error!("{}: {:?}", text, err);

@@ -148,4 +148,9 @@ mod test {
             })
         });
     }
+
+    #[test]
+    fn test_out_of_space() {
+        // TODO: test if description of levels fit in screen
+    }
 }
