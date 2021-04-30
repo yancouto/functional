@@ -1,8 +1,11 @@
-use std::ops::{Generator, GeneratorState};
+use std::{
+    ops::{Generator, GeneratorState}, sync::atomic::AtomicU32
+};
 
 use thiserror::Error;
 
 use super::{parser::Node, ConstantProvider};
+use crate::prelude::*;
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum InterpretError {
@@ -95,11 +98,17 @@ macro_rules! yield_from {
     };
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 struct Interpreter {
     fully_resolve:       bool,
     yield_intermediates: bool,
     provider:            ConstantProvider,
+    reductions:          Rc<AtomicU32>,
+}
+
+struct Interpreted {
+    term:       Box<Node>,
+    reductions: u32,
 }
 
 type InterpretResult =
@@ -107,29 +116,34 @@ type InterpretResult =
 
 impl Interpreter {
     fn interpret(self, level: usize, root: Box<Node>, do_apply: bool) -> InterpretResult {
+        let fully_resolve = self.fully_resolve;
+        let yield_intermediates = self.yield_intermediates;
         Box::pin(move || {
             if level > MAX_LEVEL {
                 return Err(InterpretError::TooDeep);
             }
             Ok(match *root {
                 Node::Apply { left, right } => {
-                    let left = yield_from!(self.interpret(level + 1, left, do_apply), |left| {
-                        box Node::Apply {
-                            left,
-                            right: right.clone(),
-                        }
-                    })?;
+                    let left =
+                        yield_from!(self.clone().interpret(level + 1, left, do_apply), |left| {
+                            box Node::Apply {
+                                left,
+                                right: right.clone(),
+                            }
+                        })?;
                     let right = yield_from!(
-                        self.interpret(level + 1, right, self.fully_resolve),
-                        |right| box Node::Apply {
-                            left: left.clone(),
-                            right
+                        self.clone().interpret(level + 1, right, fully_resolve),
+                        |right| {
+                            box Node::Apply {
+                                left: left.clone(),
+                                right,
+                            }
                         }
                     )?;
                     match *left {
                         Node::Function { variable: _, body } if do_apply => {
                             let body = replace_req(body, 0, right);
-                            if self.yield_intermediates {
+                            if yield_intermediates {
                                 yield body.clone();
                             }
                             yield_from!(self.interpret(level + 1, body, true))?
@@ -139,13 +153,13 @@ impl Interpreter {
                 },
                 Node::Variable(v) => box Node::Variable(v),
                 Node::Function { variable, body } => {
-                    let inner = yield_from!(
-                        self.interpret(level + 1, body, self.fully_resolve),
-                        |inner| box Node::Function {
-                            variable,
-                            body: inner
-                        }
-                    )?;
+                    let inner =
+                        yield_from!(self.interpret(level + 1, body, fully_resolve), |inner| {
+                            box Node::Function {
+                                variable,
+                                body: inner,
+                            }
+                        })?;
                     Box::new(Node::Function {
                         variable,
                         body: inner,
@@ -166,10 +180,12 @@ pub fn interpret(
     fully_resolve: bool,
     provider: ConstantProvider,
 ) -> Result<Box<Node>, InterpretError> {
+    let reductions = Rc::new(AtomicU32::new(0));
     let mut gen = Interpreter {
         fully_resolve,
         yield_intermediates: false,
         provider,
+        reductions,
     }
     .interpret(0, root, true);
     loop {
@@ -215,6 +231,7 @@ pub fn interpret_itermediates(
             fully_resolve,
             yield_intermediates: true,
             provider,
+            reductions: Rc::new(AtomicU32::new(0)),
         }
         .interpret(0, root, true),
         finished: false,
