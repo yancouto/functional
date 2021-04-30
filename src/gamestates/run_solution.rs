@@ -50,16 +50,16 @@ impl GameState for RunSolutionState {
                 let result_str = match &run.result {
                     Ok(node) =>
                         if node.term == run.expected_result {
-                            "SUCCESS!"
+                            format!("SUCCESS! ({} reductions)", node.reductions)
                         } else {
-                            "WRONG ANSWER!"
+                            "WRONG ANSWER!".to_owned()
                         },
                     Err(err) => match err {
                         InterpretError::AlgorithmError => "UNKNOWN ERROR, CONTACT DEVELOPERS!",
                         InterpretError::TooDeep => "NO REDUCTION (INFINITE LOOP)",
-                    },
-                }
-                .to_owned();
+                    }
+                    .to_owned(),
+                };
                 data.print(
                     Pos::new(cur_i, ret.pos.j + 2),
                     &format!("Test Case #{}: {}", i, result_str),
