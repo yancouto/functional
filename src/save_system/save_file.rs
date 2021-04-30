@@ -44,6 +44,17 @@ struct SaveFile {
 }
 
 impl SaveProfile {
+    #[cfg(test)]
+    pub fn fake() -> Self {
+        Self {
+            name:              "test".to_string(),
+            path:              PathBuf::new(),
+            current_save_file: Mutex::new(SaveFile {
+                level_info: HashMap::new(),
+            }),
+        }
+    }
+
     pub fn name(&self) -> &str { &self.name }
 
     pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {

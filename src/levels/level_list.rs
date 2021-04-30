@@ -101,8 +101,10 @@ lazy_static! {
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
+
     use super::{super::get_result, LEVELS};
-    use crate::{interpreter::ConstantProvider, save_system::LevelResult};
+    use crate::{interpreter::ConstantProvider, prelude::*, save_system::LevelResult};
 
     #[test]
     fn test_level_load() {
@@ -149,8 +151,64 @@ mod test {
         });
     }
 
+    fn fake_bterm() -> bl::BTerm {
+        bl::BTerm {
+            width_pixels:           W as u32,
+            height_pixels:          H as u32,
+            original_height_pixels: H as u32,
+            original_width_pixels:  W as u32,
+            fps:                    30.0,
+            frame_time_ms:          10.0,
+            active_console:         0,
+            key:                    None,
+            mouse_pos:              (0, 0),
+            left_click:             false,
+            shift:                  false,
+            control:                false,
+            alt:                    false,
+            web_button:             None,
+            quitting:               false,
+            post_scanlines:         false,
+            post_screenburn:        false,
+            screen_burn_color:      bl::RGB::from_u8(0, 1, 1),
+        }
+    }
+
     #[test]
     fn test_out_of_space() {
-        // TODO: test if description of levels fit in screen
+        // Extract this test stuff if we need more
+        use crate::{
+            drawables::BasicTextEditor, gamestates::{
+                base::{with_current_console, EventTickData, GSData, TickData}, editor::EditorState
+            }, save_system::SaveProfile
+        };
+        let fake_profile = Rc::new(SaveProfile::fake());
+        let mut term = fake_bterm();
+        bl::BACKEND_INTERNAL
+            .lock()
+            .consoles
+            .push(bl::DisplayConsole {
+                console:      box bl::VirtualConsole::new(bl::Point::new(W, H)),
+                shader_index: 0,
+                font_index:   0,
+            });
+        LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
+            let mut gs_data = GSData {
+                cur:  box EditorState::<BasicTextEditor>::new(&l, fake_profile.clone()),
+                time: Duration::new(0, 0),
+            };
+            with_current_console(0, |mut c| {
+                let input = bl::INPUT.lock();
+                let data = TickData::new(
+                    &gs_data,
+                    EventTickData::default(),
+                    &mut c,
+                    &mut term,
+                    &input,
+                );
+                // Should not panic
+                gs_data.cur.tick(data);
+            })
+        });
     }
 }

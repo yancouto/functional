@@ -2,13 +2,13 @@ use std::{collections::HashSet, time::Duration};
 
 use crate::prelude::*;
 
-struct GSData {
-    cur:  Box<dyn GameState>,
-    time: Duration,
+pub struct GSData {
+    pub cur:  Box<dyn GameState>,
+    pub time: Duration,
 }
 
 #[derive(Default)]
-struct EventTickData {
+pub struct EventTickData {
     left_click: bool,
 }
 
@@ -30,7 +30,7 @@ pub struct TickData<'a> {
 }
 
 impl<'a> TickData<'a> {
-    fn new(
+    pub fn new(
         data: &GSData,
         event_data: EventTickData,
         console: &'a mut Box<dyn bl::Console>,
@@ -57,7 +57,7 @@ pub struct GameStateManager {
 }
 
 // Will we ever need two consoles?
-fn with_current_console<F, R>(active_console: usize, f: F) -> R
+pub fn with_current_console<F, R>(active_console: usize, f: F) -> R
 where
     F: FnOnce(&mut Box<dyn bl::Console>) -> R,
 {
