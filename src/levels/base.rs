@@ -3,7 +3,7 @@ use thiserror::Error;
 use super::SectionName;
 use crate::{
     interpreter::{
-        interpret, parse, tokenize, ConstantProvider, InterpretError, Node, ParseError, TokenizeError
+        interpret, parse, tokenize, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
     }, save_system::LevelResult
 };
 
@@ -37,7 +37,7 @@ pub fn parse_or_fail(str: &str) -> Box<Node> {
 #[derive(Debug, Clone)]
 pub struct TestCaseRun {
     pub test_expression: Box<Node>,
-    pub result:          Result<Box<Node>, InterpretError>,
+    pub result:          Result<Interpreted, InterpretError>,
     pub expected_result: Box<Node>,
 }
 
@@ -45,7 +45,7 @@ impl TestCaseRun {
     pub fn is_correct(&self) -> bool {
         self.result
             .as_ref()
-            .map_or(false, |r| *r == self.expected_result)
+            .map_or(false, |r| r.term == self.expected_result)
     }
 }
 
@@ -55,7 +55,8 @@ impl TestCase {
             application:     parse_or_fail(application),
             // fine to use all here since this is not user supplied
             expected_result: interpret(parse_or_fail(result), false, ConstantProvider::all())
-                .expect("Failed to interpret result"),
+                .expect("Failed to interpret result")
+                .term,
         }
     }
 

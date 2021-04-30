@@ -127,7 +127,7 @@ mod test {
                         r.test_expression,
                         r.expected_result,
                         l.name,
-                        r.result.clone().map(|r| format!("{}", r)),
+                        r.result.clone().map(|r| format!("{}", r.term)),
                     )
                 });
 

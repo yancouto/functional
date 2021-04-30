@@ -1,5 +1,5 @@
 use std::{
-    ops::{Generator, GeneratorState}, sync::atomic::AtomicU32
+    ops::{Generator, GeneratorState}, sync::atomic::{AtomicU32, Ordering}
 };
 
 use thiserror::Error;
@@ -106,9 +106,10 @@ struct Interpreter {
     reductions:          Rc<AtomicU32>,
 }
 
-struct Interpreted {
-    term:       Box<Node>,
-    reductions: u32,
+#[derive(Debug, Clone)]
+pub struct Interpreted {
+    pub term:       Box<Node>,
+    pub reductions: u32,
 }
 
 type InterpretResult =
@@ -142,6 +143,7 @@ impl Interpreter {
                     )?;
                     match *left {
                         Node::Function { variable: _, body } if do_apply => {
+                            self.reductions.fetch_add(1, Ordering::Relaxed);
                             let body = replace_req(body, 0, right);
                             if yield_intermediates {
                                 yield body.clone();
@@ -179,13 +181,13 @@ pub fn interpret(
     root: Box<Node>,
     fully_resolve: bool,
     provider: ConstantProvider,
-) -> Result<Box<Node>, InterpretError> {
+) -> Result<Interpreted, InterpretError> {
     let reductions = Rc::new(AtomicU32::new(0));
     let mut gen = Interpreter {
         fully_resolve,
         yield_intermediates: false,
         provider,
-        reductions,
+        reductions: reductions.clone(),
     }
     .interpret(0, root, true);
     loop {
@@ -193,7 +195,11 @@ pub fn interpret(
             GeneratorState::Yielded(_) => {
                 debug_assert!(false, "yield_intermediates is set to false")
             },
-            GeneratorState::Complete(ret) => break ret,
+            GeneratorState::Complete(ret) =>
+                break ret.map(|term| Interpreted {
+                    term,
+                    reductions: reductions.load(Ordering::Relaxed),
+                }),
         }
     }
 }
@@ -249,7 +255,7 @@ pub mod test {
     fn provider() -> ConstantProvider { ConstantProvider::all() }
 
     fn interpret_lazy(root: Box<Node>) -> Result<Box<Node>, InterpretError> {
-        interpret(root, false, provider())
+        interpret(root, false, provider()).map(|i| i.term)
     }
 
     pub fn interpret_ok(str: &str) -> Box<Node> { interpret_lazy(parse_ok(str)).unwrap() }
@@ -257,7 +263,9 @@ pub mod test {
     fn interpret_err(str: &str) -> InterpretError { interpret_lazy(parse_ok(str)).unwrap_err() }
 
     pub fn interpret_ok_full(str: &str, fully_resolve: bool) -> Box<Node> {
-        interpret(parse_ok(str), fully_resolve, provider()).unwrap()
+        interpret(parse_ok(str), fully_resolve, provider())
+            .unwrap()
+            .term
     }
 
     fn interpret_eq_full(src: &str, expected: &str, fully_resolve: bool) {
@@ -319,7 +327,7 @@ pub mod test {
         // come from e.g. concatenating terms
         let expr = (((), ((), (1.n(), 0.n()).n()).n()).n(), (0, 'z').n()).n();
         assert_eq!(
-            interpret(expr, false, provider()).unwrap(),
+            interpret(expr, false, provider()).unwrap().term,
             parse_ok("x: z x")
         );
         // No variable conflicts when replacing

@@ -49,7 +49,7 @@ impl GameState for RunSolutionState {
             for (i, run) in runs.runs.iter().enumerate() {
                 let result_str = match &run.result {
                     Ok(node) =>
-                        if *node == run.expected_result {
+                        if node.term == run.expected_result {
                             "SUCCESS!"
                         } else {
                             "WRONG ANSWER!"

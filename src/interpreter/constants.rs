@@ -144,7 +144,7 @@ mod test {
     fn test_constants_are_resolved() {
         ALL_CONSTANTS.iter().for_each(|(_, node)| {
             assert_eq!(
-                interpret(node.term.clone(), false, ConstantProvider::none()),
+                interpret(node.term.clone(), false, ConstantProvider::none()).map(|i| i.term),
                 Ok(node.term.clone())
             )
         });
