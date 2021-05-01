@@ -96,14 +96,32 @@ pub type TestRunResults = Result<TestCaseRuns, LevelTestError>;
 
 pub fn get_result(results: &TestRunResults) -> LevelResult {
     let r = match &results {
-        Err(_) => false,
-        Ok(runs) => runs.runs.iter().all(|run| run.is_correct()),
+        Err(_) => None,
+        Ok(runs) => Some(runs.runs.iter().map(|run| {
+            if run.is_correct() {
+                run.result.as_ref().ok().map(|r| r.reductions)
+            } else {
+                None
+            }
+        })),
     };
-    if r {
-        LevelResult::Success
-    } else {
-        LevelResult::Failure
+
+    struct Reductions {
+        sum:   u32,
+        count: u32,
     }
+    r.and_then(|results| {
+        results.fold(Some(Reductions { sum: 0, count: 0 }), |acc, reds| {
+            acc.zip_with(reds, |acc, reds| Reductions {
+                sum:   acc.sum + reds,
+                count: acc.count + 1,
+            })
+        })
+    })
+    .map(|acc| LevelResult::Success {
+        reductions_x100: acc.sum * 100 / acc.count,
+    })
+    .unwrap_or(LevelResult::Failure)
 }
 
 impl Level {

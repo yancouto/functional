@@ -7,6 +7,8 @@
 #![feature(map_first_last)]
 #![feature(trait_alias)]
 #![feature(backtrace)]
+#![feature(assert_matches)]
+#![feature(option_zip)]
 #[macro_use]
 extern crate lazy_static;
 

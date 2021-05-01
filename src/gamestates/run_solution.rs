@@ -1,8 +1,7 @@
 use super::{base::*, debugger::DebuggerState};
 use crate::{
-    drawables::black, interpreter::{ConstantProvider, InterpretError}, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
+    drawables::black, interpreter::{ConstantProvider, InterpretError}, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::{LevelResult, SaveProfile}
 };
-
 #[derive(Debug)]
 pub struct RunSolutionState {
     level:        &'static Level,
@@ -16,7 +15,6 @@ impl RunSolutionState {
         code: impl Iterator<Item = char>,
         save_profile: Rc<SaveProfile>,
     ) -> Self {
-        // TODO: not use 100 here
         let results = level.test(code, ConstantProvider::new(level));
         save_profile.mark_level_as_tried(&level.name, get_result(&results));
         Self {
@@ -72,6 +70,12 @@ impl GameState for RunSolutionState {
                     return GameStateEvent::Push(box DebuggerState::new(self.level, run.clone()));
                 }
                 cur_i += 3;
+            }
+            if let LevelResult::Success { reductions_x100 } = get_result(&self.results) {
+                data.print(
+                    Pos::new(ret.bottom() - 2, ret.left() + 2),
+                    &format!("Average reductions: {:.2}", reductions_x100 as f32 / 100.0),
+                )
             }
         }
 

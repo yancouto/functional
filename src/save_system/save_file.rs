@@ -20,13 +20,35 @@ pub struct SaveProfile {
 
 #[derive(Savefile, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LevelResult {
-    Success,
+    Success {
+        // This is the average number of reductions multiplied by 100
+        reductions_x100: u32,
+    },
     Failure,
     NotTried,
 }
 
 impl Default for LevelResult {
     fn default() -> Self { Self::NotTried }
+}
+
+impl LevelResult {
+    fn get_best(self, other: LevelResult) -> LevelResult {
+        debug_assert!(other != LevelResult::NotTried);
+        match self {
+            LevelResult::Success { reductions_x100 } => {
+                if let LevelResult::Success { reductions_x100: r } = other {
+                    LevelResult::Success {
+                        reductions_x100: r.min(reductions_x100),
+                    }
+                } else {
+                    self
+                }
+            },
+            LevelResult::Failure => other,
+            LevelResult::NotTried => other,
+        }
+    }
 }
 
 const CURRENT_SAVE_VERSION: u32 = 0;
@@ -87,7 +109,8 @@ impl SaveProfile {
             .entry(level_name.to_string())
             .or_default()
             .result;
-        if *stored_result != LevelResult::Success {
+        let new_result = stored_result.get_best(result);
+        if *stored_result != new_result {
             *stored_result = result;
             self.write(SAVE_FILE, &*save_file);
         }

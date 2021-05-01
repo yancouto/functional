@@ -131,7 +131,7 @@ mod test {
                     )
                 });
 
-                assert_eq!(get_result(&Ok(r)), LevelResult::Success);
+                assert_matches!(get_result(&Ok(r)), LevelResult::Success { .. });
             })
         });
     }
@@ -140,9 +140,9 @@ mod test {
     fn test_wrong_solutions() {
         LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
             l.wrong_solutions.iter().for_each(|s| {
-                assert_ne!(
+                assert_matches!(
                     get_result(&l.test(s.chars(), ConstantProvider::all())),
-                    LevelResult::Success,
+                    LevelResult::Failure,
                     "Code was solution {} on level {}",
                     s,
                     l.name
