@@ -32,4 +32,13 @@ impl<T> VecWithCursor<T> {
     pub fn cursor_decrement(&mut self) {
         self.cursor = (self.cursor + self.vec.len() - 1) % self.vec.len();
     }
+
+    pub fn maybe_set_cursor(&mut self, idx: usize) -> bool {
+        if idx < self.vec.len() {
+            self.cursor = idx;
+            true
+        } else {
+            false
+        }
+    }
 }
