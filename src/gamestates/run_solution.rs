@@ -73,12 +73,16 @@ impl GameState for RunSolutionState {
             }
             if let LevelResult::Success { stats } = get_result(&self.results) {
                 data.print(
-                    Pos::new(ret.bottom() - 2, ret.left() + 2),
+                    Pos::new(ret.bottom() - 3, ret.left() + 2),
                     &format!(
                         "Average reductions: {:.2}",
                         stats.reductions_x100 as f32 / 100.0
                     ),
-                )
+                );
+                data.print(
+                    Pos::new(ret.bottom() - 2, ret.left() + 2),
+                    &format!("Functions used: {}", stats.functions),
+                );
             }
         }
 
