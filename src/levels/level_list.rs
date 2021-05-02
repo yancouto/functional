@@ -88,6 +88,7 @@ pub enum SectionName {
     #[strum(serialize = "pair and list")]
     #[serde(rename = "pair and list")]
     PairAndList,
+    Numerals,
 }
 
 pub struct Section {
