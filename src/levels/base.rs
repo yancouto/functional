@@ -3,7 +3,7 @@ use thiserror::Error;
 use super::SectionName;
 use crate::{
     interpreter::{
-        accumulate_stats, interpret, parse, tokenize, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
+        accumulate_stats, count_functions, interpret, parse, tokenize, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
     }, save_system::LevelResult
 };
 
@@ -106,17 +106,18 @@ pub fn get_result(results: &TestRunResults) -> LevelResult {
         })),
     };
 
-    r.and_then(|results| {
-        let full_len = results.len();
-        let stats: Vec<_> = results.filter_map(|x| x).collect();
-        if full_len != stats.len() {
-            None
-        } else {
-            Some(accumulate_stats(stats))
-        }
-    })
-    .map(|stats| LevelResult::Success { stats })
-    .unwrap_or(LevelResult::Failure)
+    r.zip(results.as_ref().ok())
+        .and_then(|(maybe_stats, runs)| {
+            let full_len = maybe_stats.len();
+            let stats: Vec<_> = maybe_stats.filter_map(|x| x).collect();
+            if full_len != stats.len() {
+                None
+            } else {
+                Some(accumulate_stats(stats, count_functions(&runs.code)))
+            }
+        })
+        .map(|stats| LevelResult::Success { stats })
+        .unwrap_or(LevelResult::Failure)
 }
 
 impl Level {

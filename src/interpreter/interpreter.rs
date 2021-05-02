@@ -106,26 +106,30 @@ struct Interpreter {
     reductions:          Rc<AtomicU32>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Stats {
+    /// Number of reductions it took to get to the correct result
     pub reductions: u32,
 }
 
 #[derive(Savefile, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AccStats {
-    // This is the average number of reductions multiplied by 100
+    /// This is the average number of reductions multiplied by 100
     pub reductions_x100: u32,
+    /// Number of functions in the solution term
+    pub functions:       u16,
 }
 
 impl AccStats {
     pub fn best(self, other: Self) -> Self {
         Self {
             reductions_x100: self.reductions_x100.min(other.reductions_x100),
+            functions:       self.functions.min(other.functions),
         }
     }
 }
 
-pub fn accumulate_stats<V: IntoIterator<Item = Stats>>(v: V) -> AccStats {
+pub fn accumulate_stats<V: IntoIterator<Item = Stats>>(v: V, functions: u16) -> AccStats {
     struct Acc {
         sum_red: u32,
         count:   u32,
@@ -135,13 +139,14 @@ pub fn accumulate_stats<V: IntoIterator<Item = Stats>>(v: V) -> AccStats {
             sum_red: 0,
             count:   0,
         },
-        |acc, reds| Acc {
-            sum_red: acc.sum_red + reds.reductions,
+        |acc, stats| Acc {
+            sum_red: acc.sum_red + stats.reductions,
             count:   acc.count + 1,
         },
     );
     AccStats {
         reductions_x100: acc.sum_red * 100 / acc.count,
+        functions,
     }
 }
 
@@ -213,6 +218,15 @@ impl Interpreter {
                     .unwrap_or_else(|| box Node::Constant(c)),
             })
         })
+    }
+}
+
+pub fn count_functions(root: &Node) -> u16 {
+    match root {
+        Node::Constant(_) => 0,
+        Node::Variable(_) => 0,
+        Node::Function { body, .. } => 1 + count_functions(body),
+        Node::Apply { left, right } => count_functions(left) + count_functions(right),
     }
 }
 
@@ -414,6 +428,22 @@ pub mod test {
         // but the eq checker might fail.
         interpret_eq("(x: w x x) (x: x)", "w (x: x) (x:x)");
         interpret_eq("(x: w x x) (y: z)", "w (a: z) (c:z)");
+    }
+
+    #[test]
+    fn stats() {
+        assert_eq!(
+            interpret(parse_ok("(x: x x) y z"), false, provider())
+                .unwrap()
+                .stats,
+            Stats { reductions: 1 }
+        );
+        assert_eq!(
+            interpret(parse_ok("(x: z: x x x z) (y: y) A"), false, provider())
+                .unwrap()
+                .stats,
+            Stats { reductions: 5 }
+        );
     }
 
     #[test]
