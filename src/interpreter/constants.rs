@@ -63,16 +63,32 @@ lazy_static! {
 }
 
 #[derive(Debug, Clone, Copy)]
+enum Numerals {
+    None,
+    Default,
+}
+
+impl Numerals {
+    fn get_num(self, x: u16) -> Option<Box<Node>> { todo!() }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct ConstantProvider {
     // TODO: probably need multiple sections at some point
     // None currently means use all constants
     current_level: Option<&'static Level>,
+    numerals:      Numerals,
 }
 
 impl ConstantProvider {
     pub fn new(current_level: &'static Level) -> Self {
         Self {
             current_level: Some(current_level),
+            numerals:      if current_level.section >= SectionName::Numerals {
+                Numerals::Default
+            } else {
+                Numerals::None
+            },
         }
     }
 
@@ -83,14 +99,19 @@ impl ConstantProvider {
         // WARNING: Can't use LEVELS here, as it depends on this function
         Self {
             current_level: None,
+            numerals:      Numerals::Default,
         }
     }
 
     pub fn get(&self, name: &str) -> Option<Box<Node>> {
-        ALL_CONSTANTS
-            .get(name)
-            .filter(|n| self.current_level.map(|l| n.can_be_used(l)).unwrap_or(true))
-            .map(|n| n.term.clone())
+        if let Ok(x) = name.parse::<u16>() {
+            self.numerals.get_num(x)
+        } else {
+            ALL_CONSTANTS
+                .get(name)
+                .filter(|n| self.current_level.map(|l| n.can_be_used(l)).unwrap_or(true))
+                .map(|n| n.term.clone())
+        }
     }
 
     pub fn all_known_constants<'a>(&'a self) -> Vec<&'static str> {
