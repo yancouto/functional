@@ -48,7 +48,7 @@ impl GameState for RunSolutionState {
                 let result_str = match &run.result {
                     Ok(node) =>
                         if node.term == run.expected_result {
-                            format!("SUCCESS! ({} reductions)", node.reductions)
+                            format!("SUCCESS! ({} reductions)", node.stats.reductions)
                         } else {
                             "WRONG ANSWER!".to_owned()
                         },
@@ -71,10 +71,13 @@ impl GameState for RunSolutionState {
                 }
                 cur_i += 3;
             }
-            if let LevelResult::Success { reductions_x100 } = get_result(&self.results) {
+            if let LevelResult::Success { stats } = get_result(&self.results) {
                 data.print(
                     Pos::new(ret.bottom() - 2, ret.left() + 2),
-                    &format!("Average reductions: {:.2}", reductions_x100 as f32 / 100.0),
+                    &format!(
+                        "Average reductions: {:.2}",
+                        stats.reductions_x100 as f32 / 100.0
+                    ),
                 )
             }
         }

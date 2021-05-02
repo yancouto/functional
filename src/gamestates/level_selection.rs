@@ -59,9 +59,10 @@ impl GameState for LevelSelectionState<'static> {
                 let info = levels_info.entry(level.name.clone()).or_default();
                 let mut text = Cow::Borrowed(&level.name);
                 match info.result {
-                    LevelResult::Success { reductions_x100: r } => text
-                        .to_mut()
-                        .push_str(&format!(" (completed, {:.2} reductions)", r as f32 / 100.0)),
+                    LevelResult::Success { stats } => text.to_mut().push_str(&format!(
+                        " (completed, {:.2} reductions)",
+                        stats.reductions_x100 as f32 / 100.0
+                    )),
                     LevelResult::Failure => text.to_mut().push_str(" (failed)"),
                     LevelResult::NotTried => {},
                 }

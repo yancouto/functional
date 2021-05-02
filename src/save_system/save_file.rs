@@ -4,7 +4,7 @@ use app_dirs::*;
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use savefile::SavefileError;
 
-use crate::prelude::*;
+use crate::{interpreter::AccStats, prelude::*};
 
 pub const APP_INFO: AppInfo = AppInfo {
     name:   "functional",
@@ -20,10 +20,7 @@ pub struct SaveProfile {
 
 #[derive(Savefile, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LevelResult {
-    Success {
-        // This is the average number of reductions multiplied by 100
-        reductions_x100: u32,
-    },
+    Success { stats: AccStats },
     Failure,
     NotTried,
 }
@@ -34,17 +31,16 @@ impl Default for LevelResult {
 
 impl LevelResult {
     fn get_best(self, other: LevelResult) -> LevelResult {
-        debug_assert!(other != LevelResult::NotTried);
+        debug_assert!(!matches!(other, LevelResult::NotTried));
         match self {
-            LevelResult::Success { reductions_x100 } => {
-                if let LevelResult::Success { reductions_x100: r } = other {
+            LevelResult::Success { stats } =>
+                if let LevelResult::Success { stats: stats2 } = other {
                     LevelResult::Success {
-                        reductions_x100: r.min(reductions_x100),
+                        stats: stats.best(stats2),
                     }
                 } else {
                     self
-                }
-            },
+                },
             LevelResult::Failure => other,
             LevelResult::NotTried => other,
         }

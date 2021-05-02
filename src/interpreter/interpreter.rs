@@ -106,10 +106,49 @@ struct Interpreter {
     reductions:          Rc<AtomicU32>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Stats {
+    pub reductions: u32,
+}
+
+#[derive(Savefile, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AccStats {
+    // This is the average number of reductions multiplied by 100
+    pub reductions_x100: u32,
+}
+
+impl AccStats {
+    pub fn best(self, other: Self) -> Self {
+        Self {
+            reductions_x100: self.reductions_x100.min(other.reductions_x100),
+        }
+    }
+}
+
+pub fn accumulate_stats<V: IntoIterator<Item = Stats>>(v: V) -> AccStats {
+    struct Acc {
+        sum_red: u32,
+        count:   u32,
+    }
+    let acc = v.into_iter().fold(
+        Acc {
+            sum_red: 0,
+            count:   0,
+        },
+        |acc, reds| Acc {
+            sum_red: acc.sum_red + reds.reductions,
+            count:   acc.count + 1,
+        },
+    );
+    AccStats {
+        reductions_x100: acc.sum_red * 100 / acc.count,
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Interpreted {
-    pub term:       Box<Node>,
-    pub reductions: u32,
+    pub term:  Box<Node>,
+    pub stats: Stats,
 }
 
 type InterpretResult =
@@ -198,7 +237,9 @@ pub fn interpret(
             GeneratorState::Complete(ret) =>
                 break ret.map(|term| Interpreted {
                     term,
-                    reductions: reductions.load(Ordering::Relaxed),
+                    stats: Stats {
+                        reductions: reductions.load(Ordering::Relaxed),
+                    },
                 }),
         }
     }

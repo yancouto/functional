@@ -3,7 +3,7 @@ use thiserror::Error;
 use super::SectionName;
 use crate::{
     interpreter::{
-        interpret, parse, tokenize, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
+        accumulate_stats, interpret, parse, tokenize, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
     }, save_system::LevelResult
 };
 
@@ -99,28 +99,23 @@ pub fn get_result(results: &TestRunResults) -> LevelResult {
         Err(_) => None,
         Ok(runs) => Some(runs.runs.iter().map(|run| {
             if run.is_correct() {
-                run.result.as_ref().ok().map(|r| r.reductions)
+                run.result.as_ref().ok().map(|r| r.stats)
             } else {
                 None
             }
         })),
     };
 
-    struct Reductions {
-        sum:   u32,
-        count: u32,
-    }
     r.and_then(|results| {
-        results.fold(Some(Reductions { sum: 0, count: 0 }), |acc, reds| {
-            acc.zip_with(reds, |acc, reds| Reductions {
-                sum:   acc.sum + reds,
-                count: acc.count + 1,
-            })
-        })
+        let full_len = results.len();
+        let stats: Vec<_> = results.filter_map(|x| x).collect();
+        if full_len != stats.len() {
+            None
+        } else {
+            Some(accumulate_stats(stats))
+        }
     })
-    .map(|acc| LevelResult::Success {
-        reductions_x100: acc.sum * 100 / acc.count,
-    })
+    .map(|stats| LevelResult::Success { stats })
     .unwrap_or(LevelResult::Failure)
 }
 
