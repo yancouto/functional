@@ -10,6 +10,11 @@ local lib = import 'lib.libsonnet';
     
     As always, the input is well formed, both arguments are booleans.
   |||,
+  extra_info: |||
+    Notice that, when using constants, you don't "pay" for their inner functions in your stats.
+    
+    So writing (TRUE a b) and ((x:y: x) a b) both have the same effect, but the second one counts two extra functions in your stats.
+  |||,
   test_cases: [
     lib.test_true('f: f TRUE TRUE'),
     lib.test_false('f: f FALSE TRUE'),
