@@ -1,5 +1,5 @@
 local bool = import '../boolean/lib.libsonnet';
-local lib = import 'lib.libsonnet';
+local pl = import '../pair_and_list/lib.libsonnet';
 {
   name: 'strip prefix',
   description: |||
@@ -34,9 +34,9 @@ local lib = import 'lib.libsonnet';
     ['Y', 'f: (x: f (x x)) (x: f (x x))'],
   ],
   test_cases: [
-    ['f: f %s' % [lib.list(['FALSE', 'FALSE', 'TRUE', 'TRUE', 'FALSE'])], lib.list(['TRUE', 'TRUE', 'FALSE'])],
-    ['f: f %s' % [lib.list(['TRUE', 'FALSE'])], lib.list(['TRUE', 'FALSE'])],
-    ['f: f %s' % [lib.list(['FALSE', 'TRUE'])], lib.list(['TRUE'])],
+    ['f: f %s' % [pl.list(['FALSE', 'FALSE', 'TRUE', 'TRUE', 'FALSE'])], pl.list(['TRUE', 'TRUE', 'FALSE'])],
+    ['f: f %s' % [pl.list(['TRUE', 'FALSE'])], pl.list(['TRUE', 'FALSE'])],
+    ['f: f %s' % [pl.list(['FALSE', 'TRUE'])], pl.list(['TRUE'])],
   ],
   solutions: ['Y (f: p: (p TRUE) p (f (POP p)) )'],
 }
