@@ -102,7 +102,7 @@ lazy_static! {
 
 #[cfg(test)]
 mod test {
-    use std::time::Duration;
+    use std::{collections::HashSet, time::Duration};
 
     use super::{super::get_result, LEVELS};
     use crate::{interpreter::ConstantProvider, prelude::*, save_system::LevelResult};
@@ -111,6 +111,20 @@ mod test {
     fn test_level_load() {
         // Can we load the levels without crashing?
         assert!(LEVELS.len() > 0);
+    }
+
+    #[test]
+    fn unique_names() {
+        let names = LEVELS
+            .iter()
+            .flat_map(|s| s.levels.as_vec())
+            .map(|l| l.name.clone())
+            .collect::<HashSet<_>>();
+        assert_eq!(
+            names.len(),
+            LEVELS.iter().flat_map(|s| s.levels.as_vec()).count(),
+            "Some name is duplicated in the levels definition"
+        );
     }
 
     #[test]
