@@ -3,7 +3,7 @@ local lib = import 'lib.libsonnet';
   name: 'suc',
   description: |||
     We can define numerals as follows:
-    Number x is represented by a list of x FALSE's followed by a single identity (x: x).
+    Number x is represented by a list of x FALSE's followed by a single identity (a: a).
     
     For example:
     - 0 = (x: x)
@@ -11,7 +11,7 @@ local lib = import 'lib.libsonnet';
     
     Write function SUC that, given a numeral X, reduces to X+1.
     
-    The input is well formed, that is, it's always a numberal.
+    The input is well formed, that is, it's always a numeral.
   |||,
   extra_info: |||
     Notice that our numerals are all non-negative.
