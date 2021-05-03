@@ -69,7 +69,26 @@ enum Numerals {
 }
 
 impl Numerals {
-    fn get_num(self, x: u16) -> Option<Box<Node>> { todo!() }
+    fn get_default_num(x: u16, str: &mut String) {
+        if x == 0 {
+            str.push_str("x: x");
+        } else {
+            str.push_str("p: p (a:b: b) (");
+            Self::get_default_num(x - 1, str);
+            str.push(')');
+        }
+    }
+
+    fn get_num(self, x: u16) -> Option<Box<Node>> {
+        match self {
+            Numerals::None => None,
+            Numerals::Default => {
+                let mut term = String::with_capacity(x as usize * 16);
+                Self::get_default_num(x, &mut term);
+                Some(parse_constant(&term))
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -115,7 +134,7 @@ impl ConstantProvider {
     }
 
     pub fn all_known_constants<'a>(&'a self) -> Vec<&'static str> {
-        ALL_CONSTANTS
+        let mut ans: Vec<_> = ALL_CONSTANTS
             .iter()
             .filter_map(|(k, v)| {
                 if self.current_level.map(|l| v.can_be_used(l)).unwrap_or(true) {
@@ -124,7 +143,12 @@ impl ConstantProvider {
                     None
                 }
             })
-            .collect()
+            .collect();
+        match self.numerals {
+            Numerals::None => {},
+            Numerals::Default => ans.append(&mut vec!["0", "1", "..."]),
+        }
+        ans
     }
 }
 
@@ -141,7 +165,9 @@ impl Level {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::interpreter::interpret;
+    use crate::interpreter::{
+        interpret, interpreter::test::{interpret_ok, interpret_ok_full}
+    };
     #[test]
     fn test_constants() {
         // Can we load the constants without crashing?
@@ -169,5 +195,16 @@ mod test {
                 Ok(node.term.clone())
             )
         });
+    }
+
+    #[test]
+    fn numerals() {
+        assert!(Numerals::None.get_num(0).is_none());
+        assert!(Numerals::None.get_num(2).is_none());
+        assert_eq!(Numerals::Default.get_num(0), Some(interpret_ok("a: a")));
+        assert_eq!(
+            Numerals::Default.get_num(2),
+            Some(interpret_ok_full("PAIR FALSE (PAIR FALSE (a:a))", true))
+        );
     }
 }
