@@ -1,3 +1,4 @@
+local lib = import 'lib.libsonnet';
 {
   name: 'suc',
   description: |||
@@ -17,7 +18,9 @@
   |||,
   test_cases: [
     ['f: f (x: x)', 'PAIR FALSE (x:x)'],
+    lib.test_num('f: f 2', 3),
+    lib.test_num('f: f 9', 10),
   ],
   provides_constant: true,
-  solutions: ['x: PAIR FALSE x'],
+  solutions: ['x: p: p (a:b:b) x', 'x: PAIR FALSE x'],
 }

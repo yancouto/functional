@@ -34,7 +34,7 @@ fn tokenize_vec<S: IntoIterator<Item = char>>(str: S) -> Result<Vec<Token>, Toke
         cur_word.clear();
     };
     for c in str.into_iter() {
-        if c.is_ascii_alphabetic() {
+        if c.is_ascii_alphanumeric() {
             cur_word.push(c);
         } else {
             flush(&mut cur_word, &mut ans);

@@ -189,12 +189,15 @@ mod test {
 
     #[test]
     fn test_constants_are_resolved() {
+        let interpret_clean =
+            |n: Box<Node>| interpret(n, false, ConstantProvider::none()).map(|i| i.term);
         ALL_CONSTANTS.iter().for_each(|(_, node)| {
-            assert_eq!(
-                interpret(node.term.clone(), false, ConstantProvider::none()).map(|i| i.term),
-                Ok(node.term.clone())
-            )
+            assert_eq!(interpret_clean(node.term.clone()), Ok(node.term.clone()))
         });
+        vec![0u16, 2, 20].into_iter().for_each(|n| {
+            let constant = Numerals::Default.get_num(n).unwrap();
+            assert_eq!(interpret_clean(constant.clone()), Ok(constant));
+        })
     }
 
     #[test]
