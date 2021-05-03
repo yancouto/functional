@@ -23,7 +23,7 @@ jobs:
         components: rustfmt
         override: true
     - name: Install linux dependencies
-      run: sudo apt-get install xorg-dev
+      run: sudo apt-get install libxcb1-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
     - name: Check format
       run: cargo fmt -- --verbose --check
     - name: Build
