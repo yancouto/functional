@@ -12,13 +12,13 @@ local lib = import 'lib.libsonnet';
     
     With that knowledge solve the following problem: you're given a list of booleans. Write a function F that strips all the contiguous FALSE at the beginning of the list and returns the rest of the list.
     
-    It is guaranteed that the list has at least one TRUE and at least one element after it, meaning the answer is a list of size at least two.
+    It is guaranteed that the list has at least one TRUE, meaning the answer will be a non-empty list.
   |||,
   extra_info: |||
     Examples for the problem:
-    - F (FALSE, FALSE, TRUE, TRUE, FALSE) -> (TRUE, TRUE, FALSE)
-    - F (TRUE, FALSE) -> (TRUE, FALSE)
-    - F (FALSE, TRUE, TRUE) -> (TRUE, TRUE)
+    - F [FALSE, FALSE, TRUE, TRUE, FALSE] -> [TRUE, TRUE, FALSE]
+    - F [TRUE, FALSE] -> [TRUE, FALSE]
+    - F [FALSE, TRUE] -> [TRUE]
 
     Let's reason why you can use Y in the way we said.
     
@@ -36,7 +36,7 @@ local lib = import 'lib.libsonnet';
   test_cases: [
     ['f: f %s' % [lib.list(['FALSE', 'FALSE', 'TRUE', 'TRUE', 'FALSE'])], lib.list(['TRUE', 'TRUE', 'FALSE'])],
     ['f: f %s' % [lib.list(['TRUE', 'FALSE'])], lib.list(['TRUE', 'FALSE'])],
-    ['f: f %s' % [lib.list(['FALSE', 'TRUE', 'TRUE'])], lib.list(['TRUE', 'TRUE'])],
+    ['f: f %s' % [lib.list(['FALSE', 'TRUE'])], lib.list(['TRUE'])],
   ],
   solutions: ['Y (f: p: (p TRUE) p (f (POP p)) )'],
 }
