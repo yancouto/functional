@@ -32,6 +32,8 @@ xi-rpc = "0.3"
 crossbeam = "0.8"
 maplit = "1.0.2"
 strum = { version = "0.20", features = ["derive"] }
+clipboard = "0.5"
+derivative = "2"
 
 [dependencies.bracket-lib]
 version = "0.8.1"

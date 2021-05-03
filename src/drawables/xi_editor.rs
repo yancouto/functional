@@ -1,5 +1,7 @@
 use std::{convert::TryFrom, iter::FromIterator, path::PathBuf, time::Duration};
 
+use clipboard::{ClipboardContext, ClipboardProvider};
+use derivative::Derivative;
 use xi_core_lib::rpc::{
     EditCommand, EditNotification, EditRequest, GestureType, LineRange, SelectionGranularity
 };
@@ -16,7 +18,8 @@ impl From<InsLine> for Line {
     fn from(line: InsLine) -> Self { Self { text: line.text } }
 }
 
-#[derive(Debug)]
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct XiEditor {
     title:             String,
     rect:              Rect,
@@ -27,8 +30,9 @@ pub struct XiEditor {
     view_id:           xi_core_lib::ViewId,
     send:              ClientMessageSender,
     recv:              ServerMessageReceiver,
-    // TODO: use actual clipboard
-    copied_text:       String,
+    #[derivative(Debug = "ignore")]
+    clipboard:         Option<ClipboardContext>,
+    backup_clipboard:  String,
 }
 
 const HARDCODED_MAIN_CONSOLE: usize = 0;
@@ -46,6 +50,9 @@ impl TextEditor for XiEditor {
         )
         .unwrap();
 
+        #[cfg(debug_assertions)]
+        ClipboardContext::new().expect("Failed to get clipboard provider");
+
         let this = Self {
             title,
             rect,
@@ -56,7 +63,8 @@ impl TextEditor for XiEditor {
             recv,
             view_id: resp.0,
             selections: vec![],
-            copied_text: String::new(),
+            clipboard: ClipboardContext::new().ok(),
+            backup_clipboard: String::new(),
         };
         this.send_notif(EditNotification::Scroll(LineRange {
             first: 0,
@@ -107,7 +115,7 @@ impl TextEditor for XiEditor {
                     K::Z if ctrl && !shift => Some(EditNotification::Undo),
                     K::Z if ctrl && shift => Some(EditNotification::Redo),
                     K::V if ctrl => Some(EditNotification::Paste {
-                        chars: self.copied_text.clone(),
+                        chars: self.read_clipboard(),
                     }),
                     K::Tab => Some(EditNotification::InsertTab),
                     K::Delete => Some(EditNotification::DeleteForward),
@@ -127,7 +135,7 @@ impl TextEditor for XiEditor {
                             },
                         }));
                         if let Ok(Some(txt)) = ans.map(|v| v.as_str().map(|s| s.to_string())) {
-                            self.copied_text = txt;
+                            self.write_clipboard(txt);
                         }
                     },
                     _ => {},
@@ -241,6 +249,20 @@ impl TextEditor for XiEditor {
 }
 
 impl XiEditor {
+    fn read_clipboard(&mut self) -> String {
+        self.clipboard
+            .as_mut()
+            .and_then(|w| w.get_contents().ok())
+            .unwrap_or_else(|| self.backup_clipboard.clone())
+    }
+
+    fn write_clipboard(&mut self, str: String) {
+        self.backup_clipboard = str.clone();
+        if let Some(w) = self.clipboard.as_mut() {
+            w.set_contents(str).debug_unwrap();
+        }
+    }
+
     fn edit_notif(&self, cmd: EditNotification) -> CoreNotification {
         CoreNotification::Edit(EditCommand {
             view_id: self.view_id,
