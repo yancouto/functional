@@ -32,6 +32,7 @@ pub struct JSection {
 #[serde(deny_unknown_fields)]
 pub struct JLevelConfig {
     pub sections: Vec<JSection>,
+    pub tests:    Vec<(String, String)>,
 }
 
 const RAW_LEVEL_CONFIG: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/level_config.json"));
@@ -105,8 +106,10 @@ lazy_static! {
 mod test {
     use std::{collections::HashSet, time::Duration};
 
-    use super::{super::get_result, LEVELS};
-    use crate::{interpreter::ConstantProvider, prelude::*, save_system::LevelResult};
+    use super::{super::get_result, raw_load_level_config, LEVELS};
+    use crate::{
+        interpreter::{interpreter::test::interpret_ok, ConstantProvider}, prelude::*, save_system::LevelResult
+    };
 
     #[test]
     fn test_level_load() {
@@ -126,6 +129,14 @@ mod test {
             LEVELS.iter().flat_map(|s| s.levels.as_vec()).count(),
             "Some name is duplicated in the levels definition"
         );
+    }
+
+    #[test]
+    fn test_jsonnet_tests() {
+        raw_load_level_config()
+            .tests
+            .into_iter()
+            .for_each(|(a, b)| assert_eq!(interpret_ok(&a), interpret_ok(&b), "{} != {}", &a, &b));
     }
 
     #[test]

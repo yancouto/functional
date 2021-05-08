@@ -6,4 +6,5 @@
     import 'recursion/section.jsonnet',
     import 'numerals/section.jsonnet',
   ],
+  tests: import 'pair_and_list/tests.jsonnet',
 }

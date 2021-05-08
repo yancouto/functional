@@ -1,5 +1,5 @@
 mod constants;
-mod interpreter;
+pub mod interpreter;
 mod node_display;
 mod parser;
 mod tokenizer;

@@ -32,6 +32,7 @@ local pl = import '../pair_and_list/lib.libsonnet';
   |||,
   before_level_constants: [
     ['Y', 'f: (x: f (x x)) (x: f (x x))'],
+    //['O', '(x:y: y (x x y)) (x:y: y (x x y))'],
   ],
   test_cases: [
     ['f: f %s' % [pl.list(['FALSE', 'FALSE', 'TRUE', 'TRUE', 'FALSE'])], pl.list(['TRUE', 'TRUE', 'FALSE'])],
