@@ -1,9 +1,9 @@
 local bool = import '../boolean/lib.libsonnet';
 local pl = import '../pair_and_list/lib.libsonnet';
 {
-  name: 'map',
+  name: 'all',
   description: |||
-    Write a function ALL that takes a list of booleans, and reduces to true if all booleans are TRUE, and FALSE otherwise.
+    Write a function ALL that takes a list of booleans, and reduces to TRUE if all booleans are TRUE, and FALSE otherwise.
     
     If the list is empty, it should reduce to TRUE, as in this case all the 0 booleans are TRUE.
     
@@ -22,5 +22,5 @@ local pl = import '../pair_and_list/lib.libsonnet';
     bool.test_false('f: f %s' % [pl.list(['TRUE', 'TRUE', 'FALSE', 'TRUE'])]),
   ],
   provides_constant: true,
-  solutions: ['Y (f: l: l (h:t:d: AND h (f t)) TRUE)', 'l: ACC l AND TRUE'],
+  solutions: ['Y (f: l: l (h:t:d: h (f t) FALSE) TRUE)', 'l: ACC l AND TRUE'],
 }
