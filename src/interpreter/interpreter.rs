@@ -160,55 +160,55 @@ type InterpretResult =
     Pin<Box<dyn Generator<Yield = Box<Node>, Return = Result<Box<Node>, InterpretError>>>>;
 
 impl Interpreter {
-    fn interpret(self, level: usize, root: Box<Node>, do_apply: bool) -> InterpretResult {
+    fn interpret(self, level: usize, root: Box<Node>) -> InterpretResult {
         let fully_resolve = self.fully_resolve;
         let yield_intermediates = self.yield_intermediates;
         Box::pin(move || {
-            if do_apply == false {
-                return Ok(root);
-            }
             if level > MAX_LEVEL {
                 return Err(InterpretError::TooDeep);
             }
             Ok(match *root {
                 Node::Apply { left, right } => {
-                    let left =
-                        yield_from!(self.clone().interpret(level + 1, left, do_apply), |left| {
-                            box Node::Apply {
-                                left,
-                                right: right.clone(),
-                            }
-                        })?;
-                    let right = yield_from!(
-                        self.clone().interpret(level + 1, right, fully_resolve),
-                        |right| {
+                    let left = yield_from!(self.clone().interpret(level + 1, left), |left| {
+                        box Node::Apply {
+                            left,
+                            right: right.clone(),
+                        }
+                    })?;
+                    let right = if fully_resolve {
+                        yield_from!(self.clone().interpret(level + 1, right), |right| {
                             box Node::Apply {
                                 left: left.clone(),
                                 right,
                             }
-                        }
-                    )?;
+                        })?
+                    } else {
+                        right
+                    };
                     match *left {
-                        Node::Function { variable: _, body } if do_apply => {
+                        Node::Function { variable: _, body } => {
                             self.reductions.fetch_add(1, Ordering::Relaxed);
                             let body = replace_req(body, 0, right);
                             if yield_intermediates {
                                 yield body.clone();
                             }
-                            yield_from!(self.interpret(level + 1, body, true))?
+                            yield_from!(self.interpret(level + 1, body))?
                         },
                         _ => box Node::Apply { left, right },
                     }
                 },
                 Node::Variable(v) => box Node::Variable(v),
                 Node::Function { variable, body } => {
-                    let inner =
-                        yield_from!(self.interpret(level + 1, body, fully_resolve), |inner| {
+                    let inner = if fully_resolve {
+                        yield_from!(self.interpret(level + 1, body), |inner| {
                             box Node::Function {
                                 variable,
                                 body: inner,
                             }
-                        })?;
+                        })?
+                    } else {
+                        body
+                    };
                     Box::new(Node::Function {
                         variable,
                         body: inner,
@@ -216,7 +216,7 @@ impl Interpreter {
                 },
                 Node::Constant(c) =>
                     if let Some(term) = self.provider.get(&c) {
-                        yield_from!(self.interpret(level + 1, term, true))?
+                        yield_from!(self.interpret(level + 1, term))?
                     } else {
                         box Node::Constant(c)
                     },
@@ -246,7 +246,7 @@ pub fn interpret(
         provider,
         reductions: reductions.clone(),
     }
-    .interpret(0, root, true);
+    .interpret(0, root);
     loop {
         match gen.as_mut().resume(()) {
             GeneratorState::Yielded(_) => {
@@ -298,7 +298,7 @@ pub fn interpret_itermediates(
             provider,
             reductions: Rc::new(AtomicU32::new(0)),
         }
-        .interpret(0, root, true),
+        .interpret(0, root),
         finished: false,
     }
 }
