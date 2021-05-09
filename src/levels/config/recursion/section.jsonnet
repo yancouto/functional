@@ -8,6 +8,7 @@
     import 'map.jsonnet',
     import 'none.jsonnet',
     import 'zip.jsonnet',
+    import 'eqblist.jsonnet',
     //import 'concat.jsonnet',
   ],
 }
