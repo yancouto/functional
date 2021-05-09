@@ -3,13 +3,13 @@ use crate::{
     drawables::black, interpreter::{ConstantProvider, InterpretError}, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::{LevelResult, SaveProfile}
 };
 #[derive(Debug)]
-pub struct RunSolutionState {
+pub struct ShowResultsState {
     level:        &'static Level,
     save_profile: Rc<SaveProfile>,
     results:      TestRunResults,
 }
 
-impl RunSolutionState {
+impl ShowResultsState {
     pub fn new(
         level: &'static Level,
         code: impl Iterator<Item = char>,
@@ -28,8 +28,8 @@ impl RunSolutionState {
 
 const DEBUG: &str = "Explain";
 
-impl GameState for RunSolutionState {
-    fn name(&self) -> &'static str { "RunSolution" }
+impl GameState for ShowResultsState {
+    fn name(&self) -> &'static str { "ShowResults" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         let text = if let Err(err) = &self.results {

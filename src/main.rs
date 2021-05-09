@@ -55,6 +55,7 @@ mod prelude {
 
     pub use bl::VirtualKeyCode as Key;
     pub use bracket_lib::prelude as bl;
+    pub use rayon::prelude::*;
     pub use vec1::{vec1, Vec1};
 
     pub use crate::{

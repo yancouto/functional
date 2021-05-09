@@ -1,10 +1,12 @@
+use std::time::Instant;
+
 use thiserror::Error;
 
 use super::SectionName;
 use crate::{
     interpreter::{
         accumulate_stats, count_functions, interpret, parse, tokenize, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
-    }, save_system::LevelResult
+    }, prelude::*, save_system::LevelResult
 };
 
 #[derive(Debug)]
@@ -126,14 +128,21 @@ impl Level {
         code: S,
         provider: ConstantProvider,
     ) -> TestRunResults {
+        let ts = Instant::now();
         let node = parse(tokenize(code)?)?;
-        Ok(TestCaseRuns {
+        let ans = Ok(TestCaseRuns {
             runs: self
                 .test_cases
-                .iter()
+                .par_iter()
                 .map(|t| t.test(node.clone(), provider))
                 .collect(),
             code: node,
-        })
+        });
+        log::info!(
+            "Ran solution for level '{}' in {:?}",
+            self.name,
+            Instant::now() - ts
+        );
+        ans
     }
 }

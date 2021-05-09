@@ -16,7 +16,6 @@ local T = 'TRUE';
   test_cases: [
     bool.test_true('f: EQBLIST %s (f %s %s)' % [pl.list(l) for l in [case[0] + case[1], case[0], case[1]]])
     for case in [
-      [[], []],
       [[], [F]],
       [[T], []],
       [[T, F], [F]],
@@ -24,7 +23,6 @@ local T = 'TRUE';
     ]
   ] + [
     bool.test_true('f: EQBLIST %s (f %s (f %s %s))' % [pl.list(l) for l in [[T, F, F, F, T, T], [T, F], [F, F], [T, T]]]),
-    bool.test_false('f: (f %s %s) FALSE FALSE' % [pl.list(l) for l in [['C'], ['D']]]),
     bool.test_false('f: (f %s %s)' % [pl.list(l) for l in [[], []]]),
     ['f: (f %s %s) FALSE TRUE' % [pl.list(l) for l in [['A'], ['B', 'C']]], 'B'],
   ],
