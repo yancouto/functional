@@ -19,6 +19,8 @@ pub struct JLevel {
     pub show_constants:         bool,
     #[serde(default)]
     pub before_level_constants: Vec<(String, String)>,
+    #[serde(default)]
+    pub extra_info_is_hint:     bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -55,20 +57,26 @@ fn load_all() -> Vec1<Section> {
                         s.levels
                             .into_iter()
                             .enumerate()
-                            .map(|(idx, l)| Level {
-                                idx,
-                                name: l.name,
-                                description: l.description,
-                                extra_info: l.extra_info,
-                                section: section_name,
-                                test_cases: l
-                                    .test_cases
-                                    .into_iter()
-                                    .map(|t| TestCase::from(&t.0, &t.1))
-                                    .collect(),
-                                solutions: l.solutions,
-                                wrong_solutions: l.wrong_solutions,
-                                show_constants: l.show_constants,
+                            .map(|(idx, l)| {
+                                if l.extra_info_is_hint {
+                                    debug_assert!(l.extra_info.is_some());
+                                }
+                                Level {
+                                    idx,
+                                    name: l.name,
+                                    description: l.description,
+                                    extra_info: l.extra_info,
+                                    section: section_name,
+                                    test_cases: l
+                                        .test_cases
+                                        .into_iter()
+                                        .map(|t| TestCase::from(&t.0, &t.1))
+                                        .collect(),
+                                    solutions: l.solutions,
+                                    wrong_solutions: l.wrong_solutions,
+                                    show_constants: l.show_constants,
+                                    extra_info_is_hint: l.extra_info_is_hint,
+                                }
                             })
                             .collect(),
                     )

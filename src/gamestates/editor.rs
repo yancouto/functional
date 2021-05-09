@@ -15,6 +15,7 @@ pub struct EditorState<Editor: TextEditor> {
     save_profile:     Rc<SaveProfile>,
     last_save:        Duration,
     known_constants:  Option<Vec1<&'static str>>,
+    pressed_hint:     bool,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
@@ -32,6 +33,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             current_solution: 1,
             last_save: Duration::from_secs(0),
             known_constants: Vec1::try_from_vec(level.all_known_constants()).ok(),
+            pressed_hint: false,
         };
         state.load_solution(1);
         state
@@ -65,11 +67,19 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             Rect::new(1, 0, W / 2, 30),
         );
         if let Some(info) = &self.level.extra_info {
-            data.text_box(
-                "Extra info",
-                info,
-                Rect::new(1, W / 2 + 1, W - W / 2 - 1, 20),
-            );
+            if self.level.extra_info_is_hint && !self.pressed_hint {
+                self.pressed_hint = data.button("Get hint", Pos::new(2, W / 2 + 1), black());
+            } else {
+                data.text_box(
+                    if self.level.extra_info_is_hint {
+                        "Hint"
+                    } else {
+                        "Extra info"
+                    },
+                    info,
+                    Rect::new(1, W / 2 + 1, W - W / 2 - 1, 20),
+                );
+            }
         }
 
         for idx in 1..4u8 {
