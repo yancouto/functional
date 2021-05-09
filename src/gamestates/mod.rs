@@ -5,5 +5,6 @@ pub mod intro;
 pub mod level_selection;
 pub mod main_menu;
 pub mod profile_selection;
+pub mod running_solution;
 pub mod save_loader;
 pub mod show_results;

@@ -1,6 +1,6 @@
 use super::{base::*, debugger::DebuggerState};
 use crate::{
-    drawables::black, interpreter::{ConstantProvider, InterpretError}, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::{LevelResult, SaveProfile}
+    drawables::black, interpreter::InterpretError, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::{LevelResult, SaveProfile}
 };
 #[derive(Debug)]
 pub struct ShowResultsState {
@@ -12,15 +12,13 @@ pub struct ShowResultsState {
 impl ShowResultsState {
     pub fn new(
         level: &'static Level,
-        code: impl Iterator<Item = char>,
+        results: TestRunResults,
         save_profile: Rc<SaveProfile>,
     ) -> Self {
-        let results = level.test(code, ConstantProvider::new(level));
         save_profile.mark_level_as_tried(&level.name, get_result(&results));
         Self {
             level,
             save_profile,
-            // Do we need to not block here? Probably not.
             results,
         }
     }

@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 use super::{
-    base::{GameState, GameStateEvent, TickData}, level_selection::LevelSelectionState, show_results::ShowResultsState
+    base::{GameState, GameStateEvent, TickData}, level_selection::LevelSelectionState
 };
 use crate::{
-    drawables::{black, dark_gray, TextEditor}, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
+    drawables::{black, dark_gray, TextEditor}, gamestates::running_solution::RunningSolutionState, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
@@ -107,9 +107,9 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
         {
             self.save_current_solution(data.time);
-            return GameStateEvent::Push(box ShowResultsState::new(
+            return GameStateEvent::Push(box RunningSolutionState::new(
                 self.level,
-                self.editor.to_string().chars(),
+                self.editor.to_string(),
                 self.save_profile.clone(),
             ));
         }
