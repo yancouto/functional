@@ -9,6 +9,6 @@
     import 'none.jsonnet',
     import 'zip.jsonnet',
     import 'eqblist.jsonnet',
-    //import 'concat.jsonnet',
+    import 'concat.jsonnet',
   ],
 }

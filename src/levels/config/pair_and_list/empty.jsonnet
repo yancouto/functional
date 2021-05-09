@@ -9,6 +9,7 @@ local lib = import 'lib.libsonnet';
     - POP [A] = POP (A, FALSE) -> FALSE
     - POP [] = POP FALSE -> TRUE
   |||,
+  // TODO: hint
   test_cases: [
     bool_lib.test_false('f: f %s' % [lib.list(['A'])]),
     bool_lib.test_true('f: f %s' % [lib.list([])]),

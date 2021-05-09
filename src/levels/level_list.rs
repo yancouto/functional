@@ -80,7 +80,19 @@ fn load_all() -> Vec1<Section> {
     .unwrap()
 }
 
-#[derive(Debug, strum::Display, PartialEq, Eq, Hash, Clone, Copy, Deserialize, PartialOrd, Ord)]
+#[derive(
+    Debug,
+    strum::Display,
+    strum::EnumIter,
+    PartialEq,
+    Eq,
+    Hash,
+    Clone,
+    Copy,
+    Deserialize,
+    PartialOrd,
+    Ord,
+)]
 #[strum(serialize_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
 pub enum SectionName {
@@ -106,9 +118,12 @@ lazy_static! {
 mod test {
     use std::{collections::HashSet, time::Duration};
 
-    use super::{super::get_result, raw_load_level_config, LEVELS};
+    use rayon::prelude::*;
+    use strum::IntoEnumIterator;
+
+    use super::{super::get_result, *};
     use crate::{
-        interpreter::{interpreter::test::interpret_ok, ConstantProvider}, prelude::*, save_system::LevelResult
+        interpreter::{interpreter::test::interpret_ok, ConstantProvider}, save_system::LevelResult
     };
 
     #[test]
@@ -139,16 +154,19 @@ mod test {
             .for_each(|(a, b)| assert_eq!(interpret_ok(&a), interpret_ok(&b), "{} != {}", &a, &b));
     }
 
-    #[test]
-    fn test_solutions() {
-        LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
-            l.solutions.iter().for_each(|s| {
-                let r = l
-                    .test(s.chars(), ConstantProvider::all())
-                    .expect(&format!("Failed to compile solution {}", s));
+    fn solution_section(section: SectionName) {
+        LEVELS
+            .par_iter()
+            .filter(|s| s.name == section)
+            .flat_map(|s| s.levels.as_vec().par_iter())
+            .for_each(|l| {
+                l.solutions.par_iter().for_each(|s| {
+                    let r = l
+                        .test(s.chars(), ConstantProvider::all())
+                        .expect(&format!("Failed to compile solution {}", s));
 
-                r.runs.iter().for_each(|r| {
-                    assert!(
+                    r.runs.iter().for_each(|r| {
+                        assert!(
                         r.is_correct(),
                         "Code '{}' does not reduce to '{}' on level '{}', instead reduced to {:?}",
                         r.test_expression,
@@ -156,12 +174,39 @@ mod test {
                         l.name,
                         r.result.clone().map(|r| format!("{}", r.term)),
                     )
-                });
+                    });
 
-                assert_matches!(get_result(&Ok(r)), LevelResult::Success { .. });
-            })
-        });
+                    assert_matches!(get_result(&Ok(r)), LevelResult::Success { .. });
+                })
+            });
     }
+
+    fn all_sections(sections: Vec<SectionName>) {
+        assert_eq!(
+            SectionName::iter().collect::<HashSet<_>>(),
+            sections.into_iter().collect::<HashSet<_>>()
+        );
+    }
+
+    // Need to do this because we want proper parallel subtests for each section
+    macro_rules! solution_tests {
+        ($($name:ident),*) => {
+        $(
+            #[test]
+            #[allow(non_snake_case)]
+            fn $name () {
+                solution_section(SectionName::$name);
+            }
+
+        )*
+            #[test]
+            fn test_cover_all_sections() {
+                all_sections(vec![$(SectionName::$name),*])
+            }
+        }
+    }
+
+    solution_tests!(Basic, Boolean, Numerals, PairAndList, Recursion);
 
     #[test]
     fn test_wrong_solutions() {

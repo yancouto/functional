@@ -1,3 +1,4 @@
+local bool = import '../boolean/lib.libsonnet';
 {
   list(lst)::
     if std.length(lst) == 0 then
