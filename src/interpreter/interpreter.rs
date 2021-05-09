@@ -164,6 +164,9 @@ impl Interpreter {
         let fully_resolve = self.fully_resolve;
         let yield_intermediates = self.yield_intermediates;
         Box::pin(move || {
+            if do_apply == false {
+                return Ok(root);
+            }
             if level > MAX_LEVEL {
                 return Err(InterpretError::TooDeep);
             }
@@ -211,11 +214,12 @@ impl Interpreter {
                         body: inner,
                     })
                 },
-                Node::Constant(c) => self
-                    .provider
-                    // No need to interpret constants here... they should be fully reduced
-                    .get(&c)
-                    .unwrap_or_else(|| box Node::Constant(c)),
+                Node::Constant(c) =>
+                    if let Some(term) = self.provider.get(&c) {
+                        yield_from!(self.interpret(level + 1, term, true))?
+                    } else {
+                        box Node::Constant(c)
+                    },
             })
         })
     }
@@ -479,7 +483,7 @@ pub mod test {
         interpret_eq("TRUE A B", "A");
         interpret_eq("FALSE A B", "B");
         interpret_eq_full("(f:a:b: f b a) FALSE", "TRUE", true);
-
         interpret_eq_full("(a:b: NOT (AND (NOT a) (NOT b))) TRUE TRUE", "TRUE", true);
+        interpret_eq("POP (PUSH A FALSE)", "a:b: b");
     }
 }

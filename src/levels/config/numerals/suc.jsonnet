@@ -17,7 +17,7 @@ local lib = import 'lib.libsonnet';
     Notice that our numerals are all non-negative.
   |||,
   test_cases: [
-    ['f: f (x: x)', 'PAIR FALSE (x:x)'],
+    lib.test_num('f: f 0', 1),
     lib.test_num('f: f 2', 3),
     lib.test_num('f: f 9', 10),
   ],
