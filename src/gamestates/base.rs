@@ -66,7 +66,6 @@ where
 
 impl GameStateManager {
     pub fn new(first: Box<dyn GameState>) -> Self {
-        bl::INPUT.lock().activate_event_queue();
         log::info!("Starting on gamestate {}", first.name());
         Self {
             all_gs: Vec1::new(GSData {

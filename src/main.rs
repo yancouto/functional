@@ -88,6 +88,9 @@ fn main() -> bl::BError {
     let opt = Opt::from_args();
     let ctx = bl::BTermBuilder::simple(W, H)?
         .with_title("functional")
+        // We use the event queue
+        .with_advanced_input(true)
+        .with_tile_dimensions(12, 12)
         .build()?;
     let first_state = || gamestates::profile_selection::try_load_default_profile();
     let gs = MainState {
