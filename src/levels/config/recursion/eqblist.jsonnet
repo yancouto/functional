@@ -23,5 +23,5 @@ local pl = import '../pair_and_list/lib.libsonnet';
     bool.test_false('f: f %s %s' % [pl.list(l1), pl.list(l2)]),
   ],
   provides_constant: true,
-  solutions: ['a:b: ACC (MAP (ZIP a b) (p: NOT (p XOR))) AND TRUE'],
+  solutions: ['Y (f: a:b: a (h:t:d: ((b TRUE) h (x:y: h y x)) (f t (b FALSE)) FALSE) (x:y: b y x))', 'a:b: ACC (MAP (ZIP a b) (p: NOT (p XOR))) AND TRUE'],
 }

@@ -107,7 +107,7 @@ impl SaveProfile {
             .result;
         let new_result = stored_result.get_best(result);
         if *stored_result != new_result {
-            *stored_result = result;
+            *stored_result = new_result;
             self.write(SAVE_FILE, &*save_file);
         }
     }

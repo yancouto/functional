@@ -121,10 +121,12 @@ pub struct AccStats {
 }
 
 impl AccStats {
+    /// If exclusively better, keep the current one, otherwise change to the new one.
     pub fn best(self, other: Self) -> Self {
-        Self {
-            reductions_x100: self.reductions_x100.min(other.reductions_x100),
-            functions:       self.functions.min(other.functions),
+        if self.reductions_x100 <= other.reductions_x100 && self.functions <= other.functions {
+            self
+        } else {
+            other
         }
     }
 }
@@ -485,5 +487,18 @@ pub mod test {
         interpret_eq_full("(f:a:b: f b a) FALSE", "TRUE", true);
         interpret_eq_full("(a:b: NOT (AND (NOT a) (NOT b))) TRUE TRUE", "TRUE", true);
         interpret_eq("POP (PUSH A FALSE)", "a:b: b");
+    }
+
+    #[test]
+    fn test_stats_best() {
+        let s = |a, b| AccStats {
+            reductions_x100: a,
+            functions:       b,
+        };
+
+        assert_eq!(s(1, 1).best(s(2, 2)), s(1, 1));
+        assert_eq!(s(2, 2).best(s(1, 1)), s(1, 1));
+        assert_eq!(s(1, 2).best(s(2, 1)), s(2, 1));
+        assert_eq!(s(2, 1).best(s(1, 2)), s(1, 2));
     }
 }
