@@ -21,5 +21,8 @@ local lib = import 'lib.libsonnet';
     lib.test_num('f: f 5 5', 10),
   ],
   provides_constant: true,
-  solutions: ['Y (f: a:b: (ZERO a) b (SUC (f (PRE a) b)))'],
+  solutions: [
+    'a:b: f:x: b f (a f x)',
+    'Y (f: a:b: (ZERO a) b (SUC (f (PRE a) b)))',
+  ],
 }

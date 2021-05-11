@@ -18,7 +18,8 @@ local lib = import 'lib.libsonnet';
   ],
   provides_constant: true,
   solutions: [
-    'Y (f: a:b: (ZERO a) (i:i) ((ZERO (PRE a)) b (ADD b (f (PRE a) b))))',
-    'Y (f: a:b: (ZERO a) (i:i) ((ZERO (PRE a)) b (ADD (ADD b b) (f (PRE (PRE a)) b))))',
+    'a:b: f:x: a (b f) x',
+    'Y (f: a:b: (ZERO a) 0 ((ZERO (PRE a)) b (ADD b (f (PRE a) b))))',
+    'Y (f: a:b: (ZERO a) 0 ((ZERO (PRE a)) b (ADD (ADD b b) (f (PRE (PRE a)) b))))',
   ],
 }
