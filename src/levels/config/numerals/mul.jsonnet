@@ -22,4 +22,7 @@ local lib = import 'lib.libsonnet';
     'Y (f: a:b: (ZERO a) 0 ((ZERO (PRE a)) b (ADD b (f (PRE a) b))))',
     'Y (f: a:b: (ZERO a) 0 ((ZERO (PRE a)) b (ADD (ADD b b) (f (PRE (PRE a)) b))))',
   ],
+  wrong_solutions: [
+    'a:b: a b',
+  ],
 }

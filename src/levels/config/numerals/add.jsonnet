@@ -25,4 +25,7 @@ local lib = import 'lib.libsonnet';
     'a:b: f:x: b f (a f x)',
     'Y (f: a:b: (ZERO a) b (SUC (f (PRE a) b)))',
   ],
+  wrong_solutions: [
+    'a:b: a b',
+  ],
 }

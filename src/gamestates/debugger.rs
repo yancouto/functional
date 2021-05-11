@@ -14,8 +14,7 @@ impl DebuggerState {
         steps.append(
             &mut interpret_itermediates(
                 run.test_expression.clone(),
-                true,
-                // TODO: Remove 100 from here
+                false,
                 ConstantProvider::new(level),
             )
             .take(30)
