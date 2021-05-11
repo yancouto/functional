@@ -7,9 +7,7 @@ local lib = import 'lib.libsonnet';
     The input is well formed, that is, it's always a non-zero numeral.
   |||,
   extra_info: |||
-    Notice that this definition of numeral is quite arbitrary.
-    
-    In fact, you can come up with other numeral definitions, and as long as you can define the same primitives on them (such as SUC and PRE), they're all useful.
+    Any numeral definition that supports SUC, PRE and ZERO operations are equivalent, even though they may be very different.
   |||,
   test_cases: [
     ['f: f (PAIR FALSE (x: x))', 'a:a'],
