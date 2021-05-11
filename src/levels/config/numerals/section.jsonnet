@@ -7,5 +7,6 @@
     import 'add.jsonnet',
     import 'sub.jsonnet',
     import 'mul.jsonnet',
+    import 'num_list.jsonnet',
   ],
 }
