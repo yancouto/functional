@@ -65,16 +65,16 @@ lazy_static! {
 #[derive(Debug, Clone, Copy)]
 enum Numerals {
     None,
-    Default,
+    Church,
 }
 
 impl Numerals {
-    fn get_default_num(x: u16, str: &mut String) {
+    fn get_church_num(x: u16, str: &mut String) {
         if x == 0 {
-            str.push_str("x: x");
+            str.push('x');
         } else {
-            str.push_str("p: p (a:b: b) (");
-            Self::get_default_num(x - 1, str);
+            str.push_str("f (");
+            Self::get_church_num(x - 1, str);
             str.push(')');
         }
     }
@@ -82,9 +82,10 @@ impl Numerals {
     fn get_num(self, x: u16) -> Option<Box<Node>> {
         match self {
             Numerals::None => None,
-            Numerals::Default => {
-                let mut term = String::with_capacity(x as usize * 16);
-                Self::get_default_num(x, &mut term);
+            Numerals::Church => {
+                let mut term = String::with_capacity(x as usize * 4 + 7);
+                term.push_str("f:x: ");
+                Self::get_church_num(x, &mut term);
                 Some(parse_constant(&term))
             },
         }
@@ -104,7 +105,7 @@ impl ConstantProvider {
         Self {
             current_level: Some(current_level),
             numerals:      if current_level.section >= SectionName::Numerals {
-                Numerals::Default
+                Numerals::Church
             } else {
                 Numerals::None
             },
@@ -118,7 +119,7 @@ impl ConstantProvider {
         // WARNING: Can't use LEVELS here, as it depends on this function
         Self {
             current_level: None,
-            numerals:      Numerals::Default,
+            numerals:      Numerals::Church,
         }
     }
 
@@ -146,7 +147,7 @@ impl ConstantProvider {
             .collect();
         match self.numerals {
             Numerals::None => {},
-            Numerals::Default => ans.append(&mut vec!["0", "1", "..."]),
+            Numerals::Church => ans.append(&mut vec!["0", "1", "..."]),
         }
         ans
     }
@@ -195,7 +196,7 @@ mod test {
             assert_eq!(interpret_clean(node.term.clone()), Ok(node.term.clone()))
         });
         vec![0u16, 2, 20].into_iter().for_each(|n| {
-            let constant = Numerals::Default.get_num(n).unwrap();
+            let constant = Numerals::Church.get_num(n).unwrap();
             assert_eq!(interpret_clean(constant.clone()), Ok(constant));
         })
     }
@@ -204,10 +205,10 @@ mod test {
     fn numerals() {
         assert!(Numerals::None.get_num(0).is_none());
         assert!(Numerals::None.get_num(2).is_none());
-        assert_eq!(Numerals::Default.get_num(0), Some(interpret_ok("a: a")));
+        assert_eq!(Numerals::Church.get_num(0), Some(interpret_ok("f:x: x")));
         assert_eq!(
-            Numerals::Default.get_num(2),
-            Some(interpret_ok_full("PAIR FALSE (PAIR FALSE (a:a))", true))
+            Numerals::Church.get_num(2),
+            Some(interpret_ok_full("f:x: f (f x)", true))
         );
     }
 }

@@ -159,7 +159,9 @@ mod test {
         raw_load_level_config()
             .tests
             .into_iter()
-            .for_each(|(a, b)| assert_eq!(interpret_ok(&a), interpret_ok(&b), "{} != {}", &a, &b));
+            .for_each(|(a, b)| {
+                assert_eq!(interpret_ok(&a), interpret_ok(&b), "'{}' != '{}'", &a, &b)
+            });
     }
 
     fn solution_section(section: SectionName) {
