@@ -1,7 +1,7 @@
 local bool = import '../boolean/lib.libsonnet';
 local lib = import 'lib.libsonnet';
 {
-  name: 'num_list',
+  name: 'increasing list',
   description: |||
     Write a function F that takes one number N and reduces to the list of numbers up to it.
     
