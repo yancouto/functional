@@ -66,9 +66,8 @@ mod prelude {
 use prelude::*;
 
 fn main() -> bl::BError {
-    let mut log_file = app_dirs::app_root(app_dirs::AppDataType::UserCache, &save_system::APP_INFO)
-        .expect("Failed to get app root");
-    log_file.push("debug.log");
+    let log_file = save_system::PROJECT_DIR.cache_dir().join("debug.log");
+    println!("Writing debug logs to {:?}", log_file);
     CombinedLogger::init(vec![
         TermLogger::new(
             LevelFilter::Debug,
@@ -83,7 +82,6 @@ fn main() -> bl::BError {
         ),
     ])
     .expect("Failed to set up logger.");
-    log::info!("Writing debug logs to {:?}", log_file);
 
     let opt = Opt::from_args();
     let ctx = bl::BTermBuilder::simple(W, H)?

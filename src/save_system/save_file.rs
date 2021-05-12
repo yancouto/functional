@@ -1,15 +1,20 @@
 use std::{collections::HashMap, fs, io, path::PathBuf};
 
-use app_dirs::*;
+use directories::*;
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use savefile::SavefileError;
 
 use crate::{interpreter::AccStats, prelude::*};
 
-pub const APP_INFO: AppInfo = AppInfo {
-    name:   "functional",
-    author: "yancouto",
-};
+lazy_static! {
+    pub static ref PROJECT_DIR: ProjectDirs = {
+        let dirs =
+            ProjectDirs::from("", "yancouto", "functional").expect("failed to create root dirs");
+        std::fs::create_dir_all(dirs.cache_dir()).expect("Failed to create cache dirs");
+        std::fs::create_dir_all(dirs.data_dir()).expect("Failed to create cache dirs");
+        dirs
+    };
+}
 
 #[derive(Debug)]
 pub struct SaveProfile {
@@ -190,18 +195,9 @@ impl Drop for SaveProfile {
     }
 }
 
-fn get_save_profile(name: &str) -> PathBuf {
-    app_dir(
-        AppDataType::UserConfig,
-        &APP_INFO,
-        &format!("savegames/{}", name),
-    )
-    .expect("Failed to load save file")
-}
+fn get_save_profile(name: &str) -> PathBuf { PROJECT_DIR.data_dir().join("savegames").join(name) }
 
-fn get_common_file() -> Result<PathBuf, AppDirsError> {
-    app_root(AppDataType::UserConfig, &APP_INFO).map(|p| p.join("common.data"))
-}
+fn get_common_file() -> PathBuf { PROJECT_DIR.data_dir().join("common.data") }
 
 /// Will create a folder if it doesn't exist
 pub fn load_profile(name: &str) -> Result<SaveProfile, SavefileError> {
@@ -220,11 +216,9 @@ pub struct CommonConfig {
 }
 
 pub fn load_common() -> CommonConfig {
-    get_common_file()
-        .map(|p| read(p, CURRENT_COMMON_VERSION).debug_unwrap_or_default())
-        .debug_unwrap_or_default()
+    read(get_common_file(), CURRENT_COMMON_VERSION).debug_unwrap_or_default()
 }
 
 pub fn write_common(common: CommonConfig) {
-    write(get_common_file().unwrap(), CURRENT_COMMON_VERSION, &common);
+    write(get_common_file(), CURRENT_COMMON_VERSION, &common);
 }

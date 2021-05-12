@@ -19,7 +19,7 @@ structopt = { version = "0.3", default-features = false }
 lazy_static = "1"
 serde_json = "1"
 serde = { version = "1", features = ["derive"] }
-app_dirs = "1"
+directories = "3"
 log = "0.4"
 simplelog = "0.10.0"
 vec1 = "1"
