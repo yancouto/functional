@@ -34,27 +34,21 @@ use simplelog::*;
 use structopt::StructOpt;
 
 #[cfg(feature = "steam")]
-struct SteamSingleClient(steamworks::SingleClient);
+type MainThreadSteamClient = steamworks::SingleClient;
 
 #[cfg(not(feature = "steam"))]
-struct SteamSingleClient;
-
-impl SteamSingleClient {
-    fn on_tick(&self) {
-        #[cfg(feature = "steam")]
-        self.0.run_callbacks();
-    }
-}
+type MainThreadSteamClient = ();
 
 struct MainState {
     manager: gamestates::base::GameStateManager,
-    client:  Option<SteamSingleClient>,
+    client:  Option<MainThreadSteamClient>,
 }
 
 impl bl::GameState for MainState {
     fn tick(&mut self, ctx: &mut bl::BTerm) {
+        #[cfg(feature = "steam")]
         if let Some(c) = &self.client {
-            c.on_tick();
+            c.run_callbacks();
         }
         self.manager.tick(ctx);
     }
@@ -69,6 +63,7 @@ struct Opt {
     /// Run game connected to steam
     #[structopt(long)]
     steam:      bool,
+    /// Run game connected to steam when developing it locally
     #[structopt(long)]
     steam_dev:  bool,
 }
@@ -125,7 +120,7 @@ fn main() -> bl::BError {
             }
             let ans = steamworks::Client::init().expect("Failed to initialise Steam.");
             log::info!("Successfully connected to Steam!");
-            Some(SteamSingleClient(ans.1))
+            Some(ans.1)
         }
         #[cfg(not(feature = "steam"))]
         panic!("Please build game with feature steam enabled!");
