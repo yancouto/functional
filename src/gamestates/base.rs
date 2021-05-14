@@ -26,6 +26,8 @@ pub struct TickData<'a> {
     pub ctrl:         bool,
     /// Current keys pressed
     pub keys_pressed: &'a HashSet<bl::VirtualKeyCode>,
+    /// Steam client
+    pub steam_client: Option<Rc<SteamClient>>,
     ctx:              &'a mut bl::BTerm,
 }
 
@@ -36,6 +38,7 @@ impl<'a> TickData<'a> {
         console: &'a mut Box<dyn bl::Console>,
         ctx: &'a mut bl::BTerm,
         input: &'a bl::Input,
+        steam_client: Option<Rc<SteamClient>>,
     ) -> Self {
         TickData {
             time: data.time,
@@ -45,6 +48,7 @@ impl<'a> TickData<'a> {
             left_click: event_data.left_click,
             ctrl: ctx.control,
             keys_pressed: input.key_pressed_set(),
+            steam_client,
             ctx,
         }
     }
@@ -52,8 +56,15 @@ impl<'a> TickData<'a> {
     pub fn quit(&mut self) { self.ctx.quit(); }
 }
 
+#[cfg(feature = "steam")]
+type SteamClient = steamworks::Client;
+
+#[cfg(not(feature = "steam"))]
+type SteamClient = ();
+
 pub struct GameStateManager {
-    all_gs: Vec1<GSData>,
+    all_gs:       Vec1<GSData>,
+    steam_client: Option<Rc<SteamClient>>,
 }
 
 // Will we ever need two consoles?
@@ -65,13 +76,14 @@ where
 }
 
 impl GameStateManager {
-    pub fn new(first: Box<dyn GameState>) -> Self {
+    pub fn new(first: Box<dyn GameState>, client: Option<SteamClient>) -> Self {
         log::info!("Starting on gamestate {}", first.name());
         Self {
-            all_gs: Vec1::new(GSData {
+            all_gs:       Vec1::new(GSData {
                 cur:  first,
                 time: Duration::default(),
             }),
+            steam_client: client.map(Rc::new),
         }
     }
 
@@ -104,7 +116,14 @@ impl GameStateManager {
         let event = with_current_console(ctx.active_console, |console| {
             let input = bl::INPUT.lock();
             console.cls();
-            let tick_data = TickData::new(self.all_gs.last(), event_data, console, ctx, &input);
+            let tick_data = TickData::new(
+                self.all_gs.last(),
+                event_data,
+                console,
+                ctx,
+                &input,
+                self.steam_client.clone(),
+            );
             self.all_gs.last_mut().cur.tick(tick_data)
         });
         match event {

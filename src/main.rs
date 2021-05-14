@@ -86,6 +86,7 @@ mod prelude {
 
 use prelude::*;
 
+#[cfg(feature = "steam")]
 const APP_ID: u32 = 1636730;
 
 fn main() -> bl::BError {
@@ -107,7 +108,7 @@ fn main() -> bl::BError {
     .expect("Failed to set up logger.");
 
     let opt = Opt::from_args();
-    let client = if opt.steam || opt.steam_dev {
+    let clients = if opt.steam || opt.steam_dev {
         #[cfg(feature = "steam")]
         {
             if opt.steam_dev {
@@ -120,12 +121,12 @@ fn main() -> bl::BError {
             }
             let ans = steamworks::Client::init().expect("Failed to initialise Steam.");
             log::info!("Successfully connected to Steam!");
-            Some(ans.1)
+            (Some(ans.0), Some(ans.1))
         }
         #[cfg(not(feature = "steam"))]
         panic!("Please build game with feature steam enabled!");
     } else {
-        None
+        (None, None)
     };
 
     let ctx = bl::BTermBuilder::simple(W, H)?
@@ -142,8 +143,9 @@ fn main() -> bl::BError {
             } else {
                 box gamestates::intro::IntroState::new(first_state)
             },
+            clients.0,
         ),
-        client,
+        client:  clients.1,
     };
     bl::main_loop(ctx, gs)
 }
