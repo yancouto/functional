@@ -8,3 +8,4 @@ package-lock.json
 /sdk/
 /steam_api64.dll
 /steam_api64.lib
+/steam_appid.txt

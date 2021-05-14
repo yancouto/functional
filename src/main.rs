@@ -28,6 +28,8 @@ mod save_system;
 mod text_editor;
 mod utils;
 
+use std::path::Path;
+
 use simplelog::*;
 use structopt::StructOpt;
 
@@ -67,6 +69,8 @@ struct Opt {
     /// Run game connected to steam
     #[structopt(long)]
     steam:      bool,
+    #[structopt(long)]
+    steam_dev:  bool,
 }
 
 // Things useful for everyone
@@ -87,6 +91,8 @@ mod prelude {
 
 use prelude::*;
 
+const APP_ID: u32 = 1636730;
+
 fn main() -> bl::BError {
     let log_file = save_system::PROJECT_DIR.cache_dir().join("debug.log");
     println!("Writing debug logs to {:?}", log_file);
@@ -106,14 +112,19 @@ fn main() -> bl::BError {
     .expect("Failed to set up logger.");
 
     let opt = Opt::from_args();
-    let client = if opt.steam {
+    let client = if opt.steam || opt.steam_dev {
         #[cfg(feature = "steam")]
         {
-            if steamworks::restart_app_if_necessary(steamworks::AppId(1636730)) {
-                log::error!("Rerunning game in Steam!");
+            if opt.steam_dev {
+                std::fs::write(Path::new("steam_appid.txt"), APP_ID.to_string())
+                    .expect("Failed to write dev steam file.");
+            }
+            if steamworks::restart_app_if_necessary(steamworks::AppId(APP_ID)) {
+                log::error!("Failed to connect to Steam, trying to relaunch.");
                 return Ok(());
             }
             let ans = steamworks::Client::init().expect("Failed to initialise Steam.");
+            log::info!("Successfully connected to Steam!");
             Some(SteamSingleClient(ans.1))
         }
         #[cfg(not(feature = "steam"))]
