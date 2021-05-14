@@ -287,6 +287,7 @@ mod test {
                     &mut c,
                     &mut term,
                     &input,
+                    None,
                 );
                 // Should not panic
                 gs_data.cur.tick(data);
