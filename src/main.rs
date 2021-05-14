@@ -43,8 +43,11 @@ impl bl::GameState for MainState {
 #[structopt(name = "functional")]
 struct Opt {
     /// Skip intro screen
-    #[structopt(long, short)]
+    #[structopt(long)]
     skip_intro: bool,
+    /// Run game connected to steam
+    #[structopt(long)]
+    steam:      bool,
 }
 
 // Things useful for everyone
@@ -84,6 +87,19 @@ fn main() -> bl::BError {
     .expect("Failed to set up logger.");
 
     let opt = Opt::from_args();
+    if opt.steam {
+        #[cfg(feature = "steam")]
+        {
+            if steamworks::restart_app_if_necessary(steamworks::AppId(1636730)) {
+                log::error!("Rerunning game in Steam!");
+                return Ok(());
+            }
+            let _ans = steamworks::Client::init().expect("Failed to initialise Steam.");
+        }
+        #[cfg(not(feature = "steam"))]
+        panic!("Please build game with feature steam enabled!");
+    }
+
     let ctx = bl::BTermBuilder::simple(W, H)?
         .with_title("functional")
         // We use the event queue

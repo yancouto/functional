@@ -9,6 +9,7 @@ default-run = "functional"
 default = ["bracket-lib/opengl"]
 curses = ["bracket-lib/curses"]
 crossterm = ["bracket-lib/crossterm"]
+steam = ["steamworks"]
 
 [build-dependencies]
 jsonnet-rs = "0.17.0"
@@ -35,6 +36,7 @@ strum = { version = "0.20", features = ["derive"] }
 clipboard = "0.5"
 derivative = "2"
 rayon = "1"
+steamworks = { version = "0.7", optional = true }
 
 [dependencies.bracket-lib]
 version = "0.8.1"

@@ -4,3 +4,7 @@
 # We're just using package.json for a very simple reason. Let's not add this too.
 package-lock.json
 /target
+# Steam sdk
+/sdk/
+/steam_api64.dll
+/steam_api64.lib

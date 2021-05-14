@@ -10,8 +10,8 @@ lazy_static! {
     pub static ref PROJECT_DIR: ProjectDirs = {
         let dirs =
             ProjectDirs::from("", "yancouto", "functional").expect("failed to create root dirs");
-        std::fs::create_dir_all(dirs.cache_dir()).expect("Failed to create cache dirs");
-        std::fs::create_dir_all(dirs.data_dir()).expect("Failed to create cache dirs");
+        std::fs::create_dir_all(dirs.cache_dir()).expect("Failed to create cache dir");
+        std::fs::create_dir_all(dirs.data_dir()).expect("Failed to create data dir");
         dirs
     };
 }
