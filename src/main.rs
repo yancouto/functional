@@ -31,12 +31,31 @@ mod utils;
 use simplelog::*;
 use structopt::StructOpt;
 
+#[cfg(feature = "steam")]
+struct SteamSingleClient(steamworks::SingleClient);
+
+#[cfg(not(feature = "steam"))]
+struct SteamSingleClient;
+
+impl SteamSingleClient {
+    fn on_tick(&self) {
+        #[cfg(feature = "steam")]
+        self.0.run_callbacks();
+    }
+}
+
 struct MainState {
     manager: gamestates::base::GameStateManager,
+    client:  Option<SteamSingleClient>,
 }
 
 impl bl::GameState for MainState {
-    fn tick(&mut self, ctx: &mut bl::BTerm) { self.manager.tick(ctx); }
+    fn tick(&mut self, ctx: &mut bl::BTerm) {
+        if let Some(c) = &self.client {
+            c.on_tick();
+        }
+        self.manager.tick(ctx);
+    }
 }
 
 #[derive(Debug, StructOpt)]
@@ -87,18 +106,21 @@ fn main() -> bl::BError {
     .expect("Failed to set up logger.");
 
     let opt = Opt::from_args();
-    if opt.steam {
+    let client = if opt.steam {
         #[cfg(feature = "steam")]
         {
             if steamworks::restart_app_if_necessary(steamworks::AppId(1636730)) {
                 log::error!("Rerunning game in Steam!");
                 return Ok(());
             }
-            let _ans = steamworks::Client::init().expect("Failed to initialise Steam.");
+            let ans = steamworks::Client::init().expect("Failed to initialise Steam.");
+            Some(SteamSingleClient(ans.1))
         }
         #[cfg(not(feature = "steam"))]
         panic!("Please build game with feature steam enabled!");
-    }
+    } else {
+        None
+    };
 
     let ctx = bl::BTermBuilder::simple(W, H)?
         .with_title("functional")
@@ -115,6 +137,7 @@ fn main() -> bl::BError {
                 box gamestates::intro::IntroState::new(first_state)
             },
         ),
+        client,
     };
     bl::main_loop(ctx, gs)
 }

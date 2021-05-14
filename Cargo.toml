@@ -6,7 +6,7 @@ edition = "2018"
 default-run = "functional"
 
 [features]
-default = ["bracket-lib/opengl"]
+default = ["bracket-lib/opengl", "steam"]
 curses = ["bracket-lib/curses"]
 crossterm = ["bracket-lib/crossterm"]
 steam = ["steamworks"]
