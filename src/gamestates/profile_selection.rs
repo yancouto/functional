@@ -10,7 +10,11 @@ pub struct ProfileSelectionState {
 impl ProfileSelectionState {
     pub fn new() -> Self {
         Self {
-            editor: BasicTextEditor::new("Enter profile name:".to_string(), Rect::centered(20, 1)),
+            editor: BasicTextEditor::new(
+                "Enter profile name:".to_string(),
+                Rect::centered(20, 1),
+                String::new(),
+            ),
         }
     }
 }

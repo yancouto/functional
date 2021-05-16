@@ -12,8 +12,38 @@ pub struct BasicTextEditor {
     cursor_blink_rate: Duration,
 }
 
+impl BasicTextEditor {
+    fn load_text(&mut self, text: String) {
+        let size = &self.rect.size;
+        self.text = Vec1::try_from(
+            text.split('\n')
+                .map(|line| {
+                    let mut line: Vec<char> = line.chars().collect();
+                    line.truncate(size.w as usize);
+                    line
+                })
+                .collect::<Vec<_>>(),
+        )
+        .unwrap_or(vec1![vec![]]);
+        self.text.truncate(size.h as usize).debug_unwrap();
+
+        for line in &mut self.text {
+            while let Some(c) = line.last() {
+                if c.is_ascii_whitespace() {
+                    line.pop().debug_unwrap();
+                } else {
+                    break;
+                }
+            }
+        }
+        while self.text.len() > 1 && self.text.last().is_empty() {
+            self.text.pop().debug_unwrap();
+        }
+    }
+}
+
 impl TextEditor for BasicTextEditor {
-    fn new(title: String, rect: Rect) -> Self {
+    fn new(title: String, rect: Rect, initial_text: String) -> Self {
         Self {
             title,
             rect,
@@ -99,32 +129,7 @@ impl TextEditor for BasicTextEditor {
 
     fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
         let file_data = std::fs::read(path)?;
-        let text = String::from_utf8_lossy(&file_data);
-        let size = &self.rect.size;
-        self.text = Vec1::try_from(
-            text.split('\n')
-                .map(|line| {
-                    let mut line: Vec<char> = line.chars().collect();
-                    line.truncate(size.w as usize);
-                    line
-                })
-                .collect::<Vec<_>>(),
-        )
-        .unwrap_or(vec1![vec![]]);
-        self.text.truncate(size.h as usize).debug_unwrap();
-
-        for line in &mut self.text {
-            while let Some(c) = line.last() {
-                if c.is_ascii_whitespace() {
-                    line.pop().debug_unwrap();
-                } else {
-                    break;
-                }
-            }
-        }
-        while self.text.len() > 1 && self.text.last().is_empty() {
-            self.text.pop().debug_unwrap();
-        }
+        self.load_text(String::from_utf8_lossy(&file_data).to_string());
         Ok(())
     }
 

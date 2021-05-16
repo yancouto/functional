@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::base::{GameState, GameStateEvent, TickData};
 use crate::{
-    drawables::{black, dark_gray, TextEditor}, gamestates::running_solution::RunningSolutionState, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
+    drawables::{black, dark_gray, TextEditor}, gamestates::{playground::PlaygroundState, running_solution::RunningSolutionState}, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
@@ -26,6 +26,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
                     pos:  Pos { i: 36, j: 1 },
                     size: Size { w: W / 2, h: 25 },
                 },
+                String::new(),
             ),
             save_profile,
             current_solution: 1,
@@ -55,7 +56,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
     }
 }
 
-impl<Editor: TextEditor> GameState for EditorState<Editor> {
+impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
     fn name(&self) -> &'static str { "Editor" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
@@ -114,7 +115,10 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             )
         }
 
-        if data.button("Run", Pos::new(H - 3, 2), black())
+        const RUN: &str = "Run";
+        const OPEN: &str = "Open on playground";
+
+        if data.button(RUN, Pos::new(H - 3, 2), black())
             || (data.ctrl && matches!(data.pressed_key, Some(Key::Return)))
         {
             self.save_current_solution(data.time);
@@ -122,6 +126,10 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
                 self.level,
                 self.editor.to_string(),
                 self.save_profile.clone(),
+            ));
+        } else if data.button(OPEN, Pos::new(H - 3, 2 + RUN.len() as i32 + 3), black()) {
+            return GameStateEvent::Push(box PlaygroundState::<Editor>::new(
+                self.editor.to_string(),
             ));
         }
 

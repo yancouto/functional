@@ -38,7 +38,7 @@ pub struct XiEditor {
 const HARDCODED_MAIN_CONSOLE: usize = 0;
 
 impl TextEditor for XiEditor {
-    fn new(title: String, rect: Rect) -> Self {
+    fn new(title: String, rect: Rect, initial_text: String) -> Self {
         let (send, recv) = start_xi_thread();
         send.send_notification(CoreNotification::ClientStarted {
             config_dir:        None,
@@ -66,6 +66,11 @@ impl TextEditor for XiEditor {
             clipboard: ClipboardContext::new().ok(),
             backup_clipboard: String::new(),
         };
+        if !initial_text.is_empty() {
+            this.send_notif(EditNotification::Paste {
+                chars: initial_text,
+            });
+        }
         this.send_notif(EditNotification::Scroll(LineRange {
             first: 0,
             last:  rect.size.h as i64,

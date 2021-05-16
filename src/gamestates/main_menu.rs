@@ -30,7 +30,8 @@ impl MenuItem {
                 GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),
             MenuItem::Settings => todo!(),
             MenuItem::ChangeProfile => GameStateEvent::Switch(box ProfileSelectionState::new()),
-            MenuItem::Playground => GameStateEvent::Push(box PlaygroundState::<XiEditor>::new()),
+            MenuItem::Playground =>
+                GameStateEvent::Push(box PlaygroundState::<XiEditor>::new(String::new())),
             MenuItem::Quit => {
                 data.quit();
                 GameStateEvent::None

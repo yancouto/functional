@@ -21,11 +21,12 @@ const EDITOR_W: i32 = 40;
 const MAX_STEPS: usize = H as usize - 5;
 
 impl<Editor: TextEditor> PlaygroundState<Editor> {
-    pub fn new() -> Self {
+    pub fn new(initial_text: String) -> Self {
         Self {
             editor:   Editor::new(
                 "Playground".to_string(),
                 Rect::new(2, 1, EDITOR_W - 2, H - 6),
+                initial_text,
             ),
             data:     None,
             provider: ConstantProvider::all(),
@@ -56,7 +57,7 @@ impl<Editor: TextEditor> PlaygroundState<Editor> {
                             Err(e) => format!("Failed to interpret: {}", e),
                         };
                         if !steps_txt.is_empty() {
-                            txt.push_str(&format!("\n\nStep by step reduction:\n{}", steps_txt));
+                            txt.push_str(&format!("\n\nStep by step reduction:\n\n{}", steps_txt));
                         }
                         txt
                     },
@@ -67,7 +68,7 @@ impl<Editor: TextEditor> PlaygroundState<Editor> {
                 },
             }
         } else {
-            "Evaluate some term to see results here...".to_string()
+            "Evaluate some term to see results here...\n\nAll code loaded on playground is lost when it's closed.".to_string()
         };
         data.text_box(
             "Run details",
