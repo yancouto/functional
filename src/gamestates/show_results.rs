@@ -54,7 +54,7 @@ impl GameState for ShowResultsState {
             "Parsed expression successfully.".to_owned()
         };
         let ret = Rect::new((H - BOX_H) / 2, (W - BOX_W - LDB_W - 6) / 2, BOX_W, BOX_H);
-        data.text_box("Solution results", &text, ret.clone());
+        data.text_box("Solution results", &text, ret.clone(), true);
 
         let mut instructions = Vec::with_capacity(2);
         instructions.push("Press ESC to go back");

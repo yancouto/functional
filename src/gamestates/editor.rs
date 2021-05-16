@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use super::{
-    base::{GameState, GameStateEvent, TickData}, level_selection::LevelSelectionState
-};
+use super::base::{GameState, GameStateEvent, TickData};
 use crate::{
     drawables::{black, dark_gray, TextEditor}, gamestates::running_solution::RunningSolutionState, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
 };
@@ -65,6 +63,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             &self.level.name,
             &self.level.description,
             Rect::new(1, 0, W / 2, 30),
+            true,
         );
         if let Some(info) = &self.level.extra_info {
             if self.level.extra_info_is_hint && !self.pressed_hint {
@@ -78,6 +77,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
                     },
                     info,
                     Rect::new(1, W / 2 + 1, W - W / 2 - 1, 20),
+                    true,
                 );
             }
         }
@@ -110,11 +110,12 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
                 "Known constants",
                 &cts.join(", "),
                 Rect::new(35, W / 2 + 2, W / 2 - 2, 27),
+                true,
             )
         }
 
         if data.button("Run", Pos::new(H - 3, 2), black())
-            || (data.ctrl && matches!(data.pressed_key, Some(bl::VirtualKeyCode::Return)))
+            || (data.ctrl && matches!(data.pressed_key, Some(Key::Return)))
         {
             self.save_current_solution(data.time);
             return GameStateEvent::Push(box RunningSolutionState::new(
@@ -129,11 +130,11 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             "Press ESC to go back",
         ]);
 
-        if matches!(data.pressed_key, Some(bl::VirtualKeyCode::F10)) {
+        if matches!(data.pressed_key, Some(Key::F10)) {
             self.save_current_solution(data.time);
         }
 
-        if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
+        if matches!(data.pressed_key, Some(Key::Escape)) {
             self.save_current_solution(data.time);
             GameStateEvent::Pop(1)
         } else {

@@ -24,11 +24,10 @@ impl TickData<'_> {
         self.title_box_color(title, rect, white(), black());
     }
 
-    pub fn text_box(&mut self, title: &str, text: &str, rect: Rect) {
+    pub fn text_box(&mut self, title: &str, text: &str, rect: Rect, fail_on_out_of_space: bool) {
         self.title_box(title, rect);
         let Rect { pos, size } = rect;
         let mut tb = bl::TextBuilder::empty();
-        // TODO: support \n's
         tb.ln();
         for line in text.trim().split('\n') {
             tb.line_wrap(line.trim()).ln();
@@ -36,7 +35,10 @@ impl TickData<'_> {
         tb.reset();
 
         let mut block = bl::TextBlock::new(pos.j + 1, pos.i + 1, size.w - 3, size.h - 3);
-        block.print(&tb).debug_unwrap();
+        let r = block.print(&tb);
+        if fail_on_out_of_space {
+            r.debug_unwrap();
+        }
         block.render(&mut self.console);
     }
 
@@ -70,7 +72,7 @@ impl TickData<'_> {
         rect: Rect,
         buttons: &[&str],
     ) -> Option<usize> {
-        self.text_box(title, text, rect);
+        self.text_box(title, text, rect, true);
         let mut ans = None;
         for (i, txt) in buttons.iter().enumerate() {
             if self.button(

@@ -1,12 +1,15 @@
 use super::{
     base::*, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState
 };
-use crate::{prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor};
+use crate::{
+    drawables::XiEditor, gamestates::playground::PlaygroundState, prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor
+};
 
 enum MenuItem {
     Play,
     Settings,
     ChangeProfile,
+    Playground,
     Quit,
 }
 
@@ -16,6 +19,7 @@ impl MenuItem {
             MenuItem::Play => "play",
             MenuItem::Settings => "settings (TODO!)",
             MenuItem::ChangeProfile => "change profile",
+            MenuItem::Playground => "playground",
             MenuItem::Quit => "quit game",
         }
     }
@@ -26,6 +30,7 @@ impl MenuItem {
                 GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),
             MenuItem::Settings => todo!(),
             MenuItem::ChangeProfile => GameStateEvent::Switch(box ProfileSelectionState::new()),
+            MenuItem::Playground => GameStateEvent::Push(box PlaygroundState::<XiEditor>::new()),
             MenuItem::Quit => {
                 data.quit();
                 GameStateEvent::None
@@ -46,6 +51,7 @@ impl MainMenuState {
                 MenuItem::Play,
                 MenuItem::Settings,
                 MenuItem::ChangeProfile,
+                MenuItem::Playground,
                 MenuItem::Quit
             ]
             .into(),
@@ -66,7 +72,10 @@ impl GameState for MainMenuState {
             Pos::new(2, CURSOR_J),
             &format!("Hello, {}.", self.save_profile.name()),
         );
-        data.instructions(&["Press ENTER to choose option"]);
+        data.instructions(&[
+            "Use UP/DOWN to navigate options",
+            "Press ENTER to choose option",
+        ]);
         for (i, item) in self.items.inner().iter().enumerate() {
             data.print(
                 Pos::new(START_I + LINES_PER_SECTION * i as i32, CURSOR_J + 2),

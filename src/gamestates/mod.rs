@@ -4,6 +4,7 @@ pub mod editor;
 pub mod intro;
 pub mod level_selection;
 pub mod main_menu;
+pub mod playground;
 pub mod profile_selection;
 pub mod running_solution;
 pub mod save_loader;

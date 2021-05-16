@@ -1,6 +1,4 @@
-use std::{
-    borrow::Cow, sync::atomic::{AtomicIsize, AtomicUsize, Ordering}
-};
+use std::borrow::Cow;
 
 use super::{base::*, editor::EditorState, main_menu::MainMenuState};
 use crate::{
