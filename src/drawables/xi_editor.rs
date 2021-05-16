@@ -68,7 +68,7 @@ impl TextEditor for XiEditor {
         };
         if !initial_text.is_empty() {
             this.send_notif(EditNotification::Paste {
-                chars: initial_text,
+                chars: textwrap::fill(&initial_text, rect.size.w as usize),
             });
         }
         this.send_notif(EditNotification::Scroll(LineRange {

@@ -37,6 +37,7 @@ clipboard = "0.5"
 derivative = "2"
 rayon = "1"
 steamworks = { version = "0.7", optional = true }
+textwrap = { version = "0.13", default-features = false }
 
 [dependencies.bracket-lib]
 version = "0.8.1"

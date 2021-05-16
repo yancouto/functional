@@ -49,8 +49,8 @@ impl<Editor: TextEditor> PlaygroundState<Editor> {
                                 let reds = i.stats.reductions;
                                 let mut txt =
                                     format!("Interpreted successfully. Reductions: {}", reds);
-                                if reds as usize > MAX_STEPS {
-                                    txt.push_str(&format!("\nFinal result: {}", i.term));
+                                if reds as usize > 10 {
+                                    txt.push_str(&format!("\n\nFinal result: {}", i.term));
                                 }
                                 txt
                             },
