@@ -21,15 +21,15 @@ const EDITOR_W: i32 = 40;
 const MAX_STEPS: usize = H as usize - 5;
 
 impl<Editor: TextEditor> PlaygroundState<Editor> {
-    pub fn new(initial_text: String) -> Self {
+    pub fn new(initial_text: String, provider: ConstantProvider) -> Self {
         Self {
-            editor:   Editor::new(
+            editor: Editor::new(
                 "Playground".to_string(),
                 Rect::new(2, 1, EDITOR_W - 2, H - 6),
                 initial_text,
             ),
-            data:     None,
-            provider: ConstantProvider::all(),
+            data: None,
+            provider,
         }
     }
 

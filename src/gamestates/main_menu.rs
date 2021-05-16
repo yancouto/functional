@@ -2,7 +2,7 @@ use super::{
     base::*, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState
 };
 use crate::{
-    drawables::XiEditor, gamestates::playground::PlaygroundState, prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor
+    drawables::XiEditor, gamestates::playground::PlaygroundState, interpreter::ConstantProvider, prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor
 };
 
 enum MenuItem {
@@ -30,8 +30,10 @@ impl MenuItem {
                 GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),
             MenuItem::Settings => todo!(),
             MenuItem::ChangeProfile => GameStateEvent::Switch(box ProfileSelectionState::new()),
-            MenuItem::Playground =>
-                GameStateEvent::Push(box PlaygroundState::<XiEditor>::new(String::new())),
+            MenuItem::Playground => GameStateEvent::Push(box PlaygroundState::<XiEditor>::new(
+                String::new(),
+                ConstantProvider::all(),
+            )),
             MenuItem::Quit => {
                 data.quit();
                 GameStateEvent::None

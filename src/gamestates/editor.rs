@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use super::base::{GameState, GameStateEvent, TickData};
 use crate::{
-    drawables::{black, dark_gray, TextEditor}, gamestates::{playground::PlaygroundState, running_solution::RunningSolutionState}, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
+    drawables::{black, dark_gray, TextEditor}, gamestates::{playground::PlaygroundState, running_solution::RunningSolutionState}, interpreter::ConstantProvider, levels::Level, math::{Rect, Size}, prelude::*, save_system::SaveProfile
 };
 
 #[derive(Debug)]
@@ -133,6 +133,7 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
         } else if data.button(OPEN, Pos::new(H - 3, 2 + RUN.len() as i32 + 3), black()) {
             return GameStateEvent::Push(box PlaygroundState::<Editor>::new(
                 self.editor.to_string(),
+                ConstantProvider::new(self.level),
             ));
         }
 
