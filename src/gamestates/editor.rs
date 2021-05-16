@@ -83,10 +83,13 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
             }
         }
 
+        const SOLUTION: &str = "Solution: ";
+
         for idx in 1..4u8 {
+            data.print(Pos::new(32, 0), SOLUTION);
             if data.button(
                 &idx.to_string(),
-                Pos::new(31, (idx as i32 - 1) * 3),
+                Pos::new(31, (idx as i32 - 1) * 3 + SOLUTION.len() as i32),
                 if idx == self.current_solution {
                     dark_gray()
                 } else {
