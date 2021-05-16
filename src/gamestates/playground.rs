@@ -17,6 +17,7 @@ pub struct PlaygroundState<Editor: TextEditor> {
     provider: ConstantProvider,
 }
 
+const EDITOR_W: i32 = 40;
 const MAX_STEPS: usize = H as usize - 5;
 
 impl<Editor: TextEditor> PlaygroundState<Editor> {
@@ -24,7 +25,7 @@ impl<Editor: TextEditor> PlaygroundState<Editor> {
         Self {
             editor:   Editor::new(
                 "Playground".to_string(),
-                Rect::new(2, 1, (W / 2) - 2, H - 6),
+                Rect::new(2, 1, EDITOR_W - 2, H - 6),
             ),
             data:     None,
             provider: ConstantProvider::all(),
@@ -68,7 +69,12 @@ impl<Editor: TextEditor> PlaygroundState<Editor> {
         } else {
             "Evaluate some term to see results here...".to_string()
         };
-        data.text_box("Run details", &txt, Rect::new(0, W / 2, W / 2, H), false);
+        data.text_box(
+            "Run details",
+            &txt,
+            Rect::new(0, EDITOR_W, W - EDITOR_W, H),
+            false,
+        );
     }
 
     fn eval(&mut self) {

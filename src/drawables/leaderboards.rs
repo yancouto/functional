@@ -52,7 +52,7 @@ impl Leaderboards {
         match &self.state {
             State::Loading => data.print(
                 Pos::new(self.location.pos.i + 2, self.location.left() + 2),
-                "Loading data...",
+                "Coming soon...",
             ),
             State::Loaded { data_points } => self.draw_ld(data, data_points),
         }
