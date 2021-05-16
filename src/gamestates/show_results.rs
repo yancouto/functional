@@ -1,13 +1,18 @@
 use super::{base::*, debugger::DebuggerState};
 use crate::{
-    drawables::black, interpreter::InterpretError, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::{LevelResult, SaveProfile}
+    drawables::{black, Leaderboards}, interpreter::InterpretError, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::{LevelResult, SaveProfile}
 };
 #[derive(Debug)]
 pub struct ShowResultsState {
     level:        &'static Level,
     save_profile: Rc<SaveProfile>,
     results:      TestRunResults,
+    leaderboards: Leaderboards,
 }
+
+const BOX_W: i32 = 60;
+const LDB_W: i32 = 30;
+const BOX_H: i32 = 30;
 
 impl ShowResultsState {
     pub fn new(
@@ -16,10 +21,23 @@ impl ShowResultsState {
         save_profile: Rc<SaveProfile>,
     ) -> Self {
         save_profile.mark_level_as_tried(&level.name, get_result(&results));
+        let stats = match get_result(&results) {
+            LevelResult::Success { stats } => Some(stats),
+            _ => None,
+        };
         Self {
             level,
             save_profile,
             results,
+            leaderboards: Leaderboards::new(
+                Rect::new(
+                    (H - BOX_H) / 2,
+                    (W - BOX_W - LDB_W - 6) / 2 + BOX_W + 6,
+                    LDB_W,
+                    BOX_H,
+                ),
+                stats,
+            ),
         }
     }
 }
@@ -35,7 +53,7 @@ impl GameState for ShowResultsState {
         } else {
             "Parsed expression successfully.".to_owned()
         };
-        let ret = Rect::centered(60, 30);
+        let ret = Rect::new((H - BOX_H) / 2, (W - BOX_W - LDB_W - 6) / 2, BOX_W, BOX_H);
         data.text_box("Solution results", &text, ret.clone());
 
         let mut instructions = Vec::with_capacity(2);
@@ -86,6 +104,7 @@ impl GameState for ShowResultsState {
                 );
             }
         }
+        self.leaderboards.draw(&mut data);
 
         if success {
             instructions.push("Press ENTER to go to level selection")

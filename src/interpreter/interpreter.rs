@@ -112,7 +112,7 @@ pub struct Stats {
     pub reductions: u32,
 }
 
-#[derive(Savefile, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Savefile, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct AccStats {
     /// This is the average number of reductions multiplied by 100
     pub reductions_x100: u32,
