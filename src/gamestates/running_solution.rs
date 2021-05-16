@@ -44,7 +44,7 @@ impl GameState for RunningSolutionState {
                 self.save_profile.clone(),
             ))
         } else if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
-            GameStateEvent::Pop
+            GameStateEvent::Pop(1)
         } else {
             // Let's draw here in the reasonably common case where the solution runs very fast, in that case let's not print
             // it for one frame cause it looks a bit weird

@@ -135,7 +135,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
 
         if matches!(data.pressed_key, Some(bl::VirtualKeyCode::Escape)) {
             self.save_current_solution(data.time);
-            GameStateEvent::Switch(box LevelSelectionState::new(self.save_profile.clone()))
+            GameStateEvent::Pop(1)
         } else {
             GameStateEvent::None
         }

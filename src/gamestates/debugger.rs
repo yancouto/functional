@@ -41,7 +41,7 @@ impl GameState for DebuggerState {
         data.instructions(&["Press ESC to go back"]);
 
         if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
-            GameStateEvent::Pop
+            GameStateEvent::Pop(1)
         } else {
             GameStateEvent::None
         }

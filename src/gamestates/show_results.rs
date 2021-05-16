@@ -38,7 +38,9 @@ impl GameState for ShowResultsState {
         let ret = Rect::centered(60, 30);
         data.text_box("Solution results", &text, ret.clone());
 
-        data.instructions(&["Press ESC to go back"]);
+        let mut instructions = Vec::with_capacity(2);
+        instructions.push("Press ESC to go back");
+        let mut success = false;
 
         if let Ok(runs) = &self.results {
             let mut cur_i = ret.pos.i + 5;
@@ -70,6 +72,7 @@ impl GameState for ShowResultsState {
                 cur_i += 3;
             }
             if let LevelResult::Success { stats } = get_result(&self.results) {
+                success = true;
                 data.print(
                     Pos::new(ret.bottom() - 3, ret.left() + 2),
                     &format!(
@@ -84,8 +87,16 @@ impl GameState for ShowResultsState {
             }
         }
 
+        if success {
+            instructions.push("Press ENTER to go to level selection")
+        }
+
+        data.instructions(&instructions);
+
         if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
-            GameStateEvent::Pop
+            GameStateEvent::Pop(1)
+        } else if success && data.pressed_key == Some(bl::VirtualKeyCode::Return) {
+            GameStateEvent::Pop(2)
         } else {
             GameStateEvent::None
         }

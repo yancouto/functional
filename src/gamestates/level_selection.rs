@@ -7,9 +7,6 @@ use crate::{
     drawables::XiEditor, levels::{Section, LEVELS}, prelude::*, save_system::{LevelResult, SaveProfile}, utils::vec_with_cursor::VecWithCursor
 };
 
-static PREVIOUSLY_SELECTED_SECTION: AtomicIsize = AtomicIsize::new(-1);
-static PREVIOUSLY_SELECTED_LEVEL: AtomicUsize = AtomicUsize::new(0);
-
 pub struct LevelSelectionState<'a> {
     /// Index of selected section
     sections:     VecWithCursor<&'a Section>,
@@ -20,29 +17,13 @@ pub struct LevelSelectionState<'a> {
 
 impl LevelSelectionState<'static> {
     pub fn new(save_profile: Rc<SaveProfile>) -> Self {
-        let mut l = LevelSelectionState {
+        LevelSelectionState {
             sections: Vec1::try_from_vec(LEVELS.iter().map(|x| x).collect())
                 .unwrap()
                 .into(),
             level_i: None,
             save_profile,
-        };
-        let section = PREVIOUSLY_SELECTED_SECTION.swap(-1, Ordering::Relaxed);
-        if section >= 0 {
-            let success_set = l.sections.maybe_set_cursor(section as usize);
-            debug_assert!(success_set);
-            l.level_i = Some(
-                PREVIOUSLY_SELECTED_LEVEL
-                    .load(Ordering::Relaxed)
-                    .clamp(0, l.sections.get().levels.len() - 1),
-            );
         }
-        for section in l.sections.inner() {
-            if section.name.to_string().len() as i32 + CURSOR_J + 2 > MID_J {
-                panic!("Too long name");
-            }
-        }
-        l
     }
 }
 
@@ -118,15 +99,11 @@ impl GameState for LevelSelectionState<'static> {
                     self.level_i.take();
                     GameStateEvent::None
                 } else {
-                    PREVIOUSLY_SELECTED_SECTION.store(-1, Ordering::Relaxed);
                     GameStateEvent::Switch(box MainMenuState::new(self.save_profile.clone()))
                 },
             Some(Key::Return) =>
                 if let Some(l_i) = self.level_i {
-                    PREVIOUSLY_SELECTED_SECTION
-                        .store(self.sections.cursor() as isize, Ordering::Relaxed);
-                    PREVIOUSLY_SELECTED_LEVEL.store(l_i, Ordering::Relaxed);
-                    GameStateEvent::Switch(box EditorState::<XiEditor>::new(
+                    GameStateEvent::Push(box EditorState::<XiEditor>::new(
                         &self.sections.get().levels[l_i],
                         self.save_profile.clone(),
                     ))
@@ -165,6 +142,20 @@ impl GameState for LevelSelectionState<'static> {
                 _ => {},
             },
             _ => {},
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn section_names_too_long() {
+        for section in LEVELS.iter() {
+            assert!(
+                section.name.to_string().len() as i32 + CURSOR_J + 2 <= MID_J,
+                "Too long name"
+            );
         }
     }
 }

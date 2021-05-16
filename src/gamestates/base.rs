@@ -153,9 +153,17 @@ impl GameStateManager {
                 };
                 self.all_gs.push(new);
             },
-            GameStateEvent::Pop => match self.all_gs.pop() {
-                Err(_) => log::error!("Trying to pop only gamestate, ignoring."),
-                Ok(gs) => log::info!("Popped gamestate {}", gs.cur.name()),
+            GameStateEvent::Pop(n) => {
+                debug_assert_ne!(n, 0, "Can't pop 0 gamestates, use None.");
+                for _ in 0..n.into() {
+                    match self.all_gs.pop() {
+                        Err(_) => {
+                            log::error!("Trying to pop only gamestate, ignoring.");
+                            debug_assert!(false);
+                        },
+                        Ok(gs) => log::info!("Popped gamestate {}", gs.cur.name()),
+                    }
+                }
             },
         }
     }
@@ -169,9 +177,9 @@ pub enum GameStateEvent {
     /// Push a new gamestate on top of this one. Only the top gamestate will be
     /// called tick and on_event.
     Push(Box<dyn GameState>),
-    /// Remove this gamestate and go back to previous. Ignored if this is the
-    /// only gamestate.
-    Pop,
+    /// Remove this many gamestates and go back to previous. Ignored if there are not
+    /// enough gamestates to pop.
+    Pop(u8),
 }
 
 pub trait GameState {
