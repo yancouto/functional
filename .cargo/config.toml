@@ -1,2 +1,5 @@
+[unstable]
+configurable-env = true
+
 [env]
 STEAM_SDK_LOCATION = {value = "sdk", relative = true}
