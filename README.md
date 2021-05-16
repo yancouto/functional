@@ -7,9 +7,9 @@ Status: Alpha
 
 ## Steam integration
 
-Use the "steam" feature if you want to test Steam integration. If using it, you must have the SDK downloaded and the `STEAM_SDK_LOCATION` env var pointing to it (on Windows, make it an absolute path).
+Use the "steam" feature if you want to test Steam integration. If using it, you must have the SDK downloaded and the `STEAM_SDK_LOCATION` env var pointing to it (on Windows, make it an absolute path) (if using `-Z configurable-env`, it defaults to the `sdk` directory in the root).
 
-You must also have the libraries (like steam_api.dll) on the create root.
+You must also have the libraries (like `steam_api.dll`) on the create root.
 
 ### Windows
 
