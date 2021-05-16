@@ -29,8 +29,10 @@ impl GameState for DebuggerState {
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         data.console
-            .print_centered(3, "Step by step test case reduction");
-        let mut j = 6;
+            .print_centered(2, &format!("Expected result: {}", self.run.expected_result));
+        data.console
+            .print_centered(5, "Step by step test case reduction");
+        let mut j = 8;
         for code in &self.steps {
             data.console.print_centered(j, &format!("{}", code));
             j += 3;

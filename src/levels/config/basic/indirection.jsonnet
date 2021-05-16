@@ -8,7 +8,7 @@
     - SWAP_ARGS (a:b: a a) x y -> y y
   |||,
   test_cases: [
-    ['f: f (a:b: a b) X Y', 'Y X'],
+    ['f: f (a:b: a b) C D', 'D C'],
     ['f: f (a:b: a a) A B', 'B B'],
     ['f: f (a:b: a b) A (x: x)', 'A'],
   ],

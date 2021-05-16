@@ -12,8 +12,8 @@
   test_cases: [
     ['f: f TRUE A B', 'A'],
     ['f: f FALSE A B', 'B'],
-    ['f: f FALSE X Y', 'Y'],
-    ['f: f TRUE  X Y', 'X'],
+    ['f: f FALSE C D', 'D'],
+    ['f: f TRUE  C D', 'C'],
   ],
   before_level_constants: [
     ['TRUE', 'a:b: a'],
@@ -21,5 +21,5 @@
   ],
   show_constants: false,
   provides_constant: true,
-  solutions: ['b:x:y: b x y'],
+  solutions: ['x: x', 'b:x:y: b x y'],
 }

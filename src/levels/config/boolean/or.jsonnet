@@ -5,8 +5,8 @@ local lib = import 'lib.libsonnet';
     Write function OR, that is, a function that is given two booleans, and only reduces to FALSE if both values are FALSE.
     
     Examples:
-    - AND FALSE FALSE -> FALSE
-    - AND FALSE TRUE  -> TRUE
+    - OR FALSE FALSE -> FALSE
+    - OR FALSE TRUE  -> TRUE
     
     As always, the input is well formed, both arguments are booleans.
   |||,

@@ -172,7 +172,7 @@ mod test {
             .for_each(|l| {
                 l.solutions.par_iter().for_each(|s| {
                     let r = l
-                        .test(s.chars(), ConstantProvider::all())
+                        .test(s.chars(), ConstantProvider::new(l))
                         .expect(&format!("Failed to compile solution {}", s));
 
                     r.runs.iter().for_each(|r| {
