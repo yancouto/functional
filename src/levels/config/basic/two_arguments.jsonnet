@@ -7,9 +7,9 @@
     - (x: y: x) a b -> (y: a) b -> a
     - (x: y: x y) a b -> (y: a y) b -> a b
     
-    Write a function with two arguments that swaps the order of their terms, that is, it applies the first argument to the second.
+    Write a function F with two arguments that swaps the order of their terms, that is, it applies the second argument to the first.
     
-    Example:
+    Examples, assuming F is the term you wrote on the editor below:
     - F a b -> b a
     - F a (x: x) -> (x: x) a -> a
   |||,

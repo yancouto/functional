@@ -15,6 +15,10 @@
     We say that the function (x: A) is applied to the term B.
     
     Write an identity function, that is, a function that when applied to any term, reduces to that same term.
+    
+    Examples, assuming ID is the term you wrote on the editor below:
+    - ID a -> a
+    - ID (x: a b) -> (x: a b)
   |||,
   extra_info: |||
     We say that (x: A) B reduces to A[x=B].

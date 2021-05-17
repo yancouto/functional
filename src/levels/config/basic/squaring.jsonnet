@@ -8,6 +8,11 @@
     Examples:
     - SQR (x: x) y -> (x: x) ((x: x) y) -> (x: x) y -> y
     - SQR (x: x x) (y: y) -> ... -> (y: y)
+    
+    Remember that terms are left associative, that is:
+    - f f x = (f f) x
+    
+    Which is not what we want in this problem, but instead "f (f x)", which needs explicit parenthesization.
   |||,
   extra_info: |||
     The main objective of each level is to just write a term that solves the problem.
