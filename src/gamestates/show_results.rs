@@ -73,6 +73,7 @@ impl GameState for ShowResultsState {
                     Err(err) => match err {
                         InterpretError::AlgorithmError => "UNKNOWN ERROR, CONTACT DEVELOPERS!",
                         InterpretError::TooDeep => "NO REDUCTION (INFINITE LOOP)",
+                        InterpretError::TooLarge => "NO REDUCTION (GREW TOO BIG)",
                     }
                     .to_owned(),
                 };

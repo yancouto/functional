@@ -13,6 +13,8 @@ pub enum InterpretError {
     AlgorithmError,
     #[error("The interpretation has gone too deep, expression probably has no reduction.")]
     TooDeep,
+    #[error("The interpreted term has become too large, expression probably has no reduction.")]
+    TooLarge,
 }
 
 trait AlgorithmAssert<T> {
@@ -33,53 +35,60 @@ impl<T> AlgorithmAssert<T> for Option<T> {
 }
 
 const MAX_LEVEL: usize = 100;
+const MAX_SIZE: u32 = 2000;
 
 use std::pin::Pin;
 
-fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(root: &mut Node, cur_depth: usize, f: F) {
+// Returns size of the expression
+fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(
+    root: &mut Node,
+    cur_depth: usize,
+    f: F,
+) -> u32 {
     match root {
-        Node::Constant(_) => {},
+        Node::Constant(_) => 1,
         Node::Variable(v) =>
         // unbound variables in the root expression, not necessarily in the whole expression
         // for example, on (x:y: x), x is considered unbound in the subterm (y: x).
+        {
             if v.depth >= cur_depth {
                 f(&mut v.depth);
-            },
-        Node::Function { variable: _, body } => {
-            for_each_unbound_req(body, cur_depth + 1, f);
-        },
-        Node::Apply { left, right } => {
-            for_each_unbound_req(left, cur_depth, f);
-            for_each_unbound_req(right, cur_depth, f);
-        },
+            }
+            1
+        }
+        Node::Function { variable: _, body } => for_each_unbound_req(body, cur_depth + 1, f) + 1,
+        Node::Apply { left, right } =>
+            for_each_unbound_req(left, cur_depth, f) + for_each_unbound_req(right, cur_depth, f),
     }
 }
 
-fn replace_req(root: Box<Node>, cur_depth: usize, value: Box<Node>) -> Box<Node> {
-    box match *root {
+/// Returns size of expression and the expression.
+fn replace_req(root: Box<Node>, cur_depth: usize, value: &Node) -> (u32, Box<Node>) {
+    match *root {
         Node::Variable(mut v) =>
             if v.depth == cur_depth {
-                let mut value = value.clone();
+                let mut value = box value.clone();
                 // We need to increase the depth for unbound vars so they keep being unbound
-                for_each_unbound_req(value.as_mut(), 0, |depth| *depth += cur_depth);
-                *value
+                let size = for_each_unbound_req(value.as_mut(), 0, |depth| *depth += cur_depth);
+                (size, value)
             } else {
                 if v.depth > cur_depth {
                     // for variables that are "unbound" in the root note (may be bound before)
                     // we need to decrease depth by one
                     v.depth -= 1;
                 }
-                Node::Variable(v)
+                (1, box Node::Variable(v))
             },
-        Node::Function { variable, body } => Node::Function {
-            variable,
-            body: replace_req(body, cur_depth + 1, value),
+        Node::Function { variable, body } => {
+            let (size, body) = replace_req(body, cur_depth + 1, value);
+            (size + 1, box Node::Function { variable, body })
         },
-        Node::Apply { left, right } => Node::Apply {
-            left:  replace_req(left, cur_depth, value.clone()),
-            right: replace_req(right, cur_depth, value.clone()),
+        Node::Apply { left, right } => {
+            let (sizel, left) = replace_req(left, cur_depth, value);
+            let (sizer, right) = replace_req(right, cur_depth, value);
+            (sizel + sizer, box Node::Apply { left, right })
         },
-        node @ Node::Constant(_) => node,
+        node @ Node::Constant(_) => (1, box node),
     }
 }
 
@@ -190,7 +199,10 @@ impl Interpreter {
                     match *left {
                         Node::Function { variable: _, body } => {
                             self.reductions.fetch_add(1, Ordering::Relaxed);
-                            let body = replace_req(body, 0, right);
+                            let (size, body) = replace_req(body, 0, &right);
+                            if size > MAX_SIZE {
+                                return Err(InterpretError::TooLarge);
+                            }
                             if yield_intermediates {
                                 yield body.clone();
                             }
@@ -500,5 +512,14 @@ pub mod test {
         assert_eq!(s(2, 2).best(s(1, 1)), s(1, 1));
         assert_eq!(s(1, 2).best(s(2, 1)), s(2, 1));
         assert_eq!(s(2, 1).best(s(1, 2)), s(1, 2));
+    }
+
+    #[test]
+    fn exponentially_large() {
+        // This grows exponentially large in a linear number of steps
+        assert_eq!(
+            interpret(parse_ok("Y (f: x: f (x x)) A"), false, provider()).unwrap_err(),
+            InterpretError::TooLarge
+        );
     }
 }

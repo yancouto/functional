@@ -6,11 +6,11 @@ local lib = import 'lib.libsonnet';
     Write function EMPTY, that given a list L, reduces to TRUE if it's empty, and FALSE if it's not.
     
     For example:
-    - POP [A] = POP (A, FALSE) -> FALSE
-    - POP [] = POP FALSE -> TRUE
+    - EMPTY [A] = EMPTY (A, FALSE) -> FALSE
+    - EMPTY [] = EMPTY FALSE -> TRUE
   |||,
   extra_info: |||
-    If you have a list L, then "L A B" will resolve to B if L is empty, otherwise, it will resolve to "A f r B", where h is the first element of the list and r is the rest of the list.
+    If you have a list L, then "L A B" will resolve to B if L is empty, otherwise, it will resolve to "A h t B", where h is the first element of the list and t is the rest of the list.
     
     You can set A as a three argument function that receives the first element, the rest, and a dummy argument (which will always be B).
     
