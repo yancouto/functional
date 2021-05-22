@@ -15,6 +15,13 @@
     
     As always, input is well formed, so the first argument is always a boolean.
   |||,
+  extra_info: |||
+    You can use constants from levels you have previously completed. See below for a full list of allowed constants. For TRUE and FALSE you don't need to solve any level.
+    
+    In a single section, you can solve levels in any order, and the order you chose will affect the constants you can use to solve each of them.
+    
+    Levels are not ordered by difficulty! Choose wisely.
+  |||,
   test_cases: [
     ['f: f TRUE A B', 'A'],
     ['f: f FALSE A B', 'B'],
@@ -25,7 +32,6 @@
     ['TRUE', 'a:b: a'],
     ['FALSE', 'a:b: b'],
   ],
-  show_constants: false,
   provides_constant: true,
   solutions: ['x: x', 'b:x:y: b x y'],
 }

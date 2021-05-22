@@ -10,9 +10,11 @@ enum DiscoveryMethod {
         section: SectionName,
         lvl_idx: usize,
     },
-    // Otherwise you must have completed a given level
+    // Otherwise you must have completed a given level, and can't use
+    // constants from future sections
     LevelCompleted {
-        name: String,
+        name:    String,
+        section: SectionName,
     },
 }
 
@@ -26,8 +28,9 @@ impl ConstantNode {
         match &self.method {
             DiscoveryMethod::BeforeLevel { section, lvl_idx } =>
                 (*section, *lvl_idx) <= (data.level.section, data.level.idx),
-            DiscoveryMethod::LevelCompleted { name } =>
-                *name != data.level.name
+            DiscoveryMethod::LevelCompleted { name, section } =>
+                *section <= data.level.section
+                    && *name != data.level.name
                     && data
                         .profile
                         .get_levels_info()
@@ -75,7 +78,10 @@ fn raw_load_constants() -> HashMap<String, ConstantNode> {
                             level.name.to_ascii_uppercase(),
                             ConstantNode {
                                 term:   parse_constant(&level.solutions[0]),
-                                method: DiscoveryMethod::LevelCompleted { name: level.name },
+                                method: DiscoveryMethod::LevelCompleted {
+                                    name:    level.name,
+                                    section: section_name,
+                                },
                             },
                         ));
                     }

@@ -11,6 +11,9 @@
     For example:
     - PAIR A B -> (A, B) = f: f A B
   |||,
+  extra_info: |||
+    Remember you can solve levels from the same section in any order, and use constants from levels you've previously solved.
+  |||,
   test_cases: [
     ['p: p A B', 'f: f A B'],
     ['p: (p A B) (a:b: a)', 'A'],

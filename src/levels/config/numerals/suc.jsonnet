@@ -17,6 +17,8 @@ local lib = import 'lib.libsonnet';
   |||,
   extra_info: |||
     Notice that our numerals are all non-negative.
+    
+    Remember you can solve levels from the same section in any order, and use constants from levels you've previously solved.
   |||,
   test_cases: [
     ['f: f 0 (x: A) B', 'A'],

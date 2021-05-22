@@ -9,7 +9,7 @@
     
     This is always infite, but just because of that, it doesn't mean that a reduction doesn't exist. If A is an infinite term (doesn't have a reduction) but B isn't, then "(a:b: b) A B" is finite too.
 
-    This level is very hard. It's mind twisting to create this recursive structure, feel free to skip it and go to the next level.
+    This level is very hard. It's mind twisting to create this recursive structure, feel free to skip it and go to the next level. Different from other constants, it is NOT necessary to complete this level to use the constant "Y" on following levels.
     
     The most interesting part is actually using this result, not coming up with it.
   |||,

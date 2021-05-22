@@ -12,11 +12,9 @@ local lib = import 'lib.libsonnet';
     Note that you can assume that the used values are always booleans! Input is always well formed.
   |||,
   extra_info: |||
-    You can use constants from previous levels. See below for the full list of allowed constants.
-    
     Notice that you don't NEED to use the constants. And using them as little as possible means solving the problem using the least reductions.
     
-    When we say NOT TRUE reduces to FALSE, we're being somewhat loose with terminology. It reduces to a term that _behaves like_ TRUE, for example it could be "a:b: (x:y: x) a b", which is not technically TRUE, but works like it.
+    When we say NOT TRUE reduces to FALSE, we're being somewhat loose with terminology. It reduces to a term that _behaves like_ TRUE, for example it could be "a:b: (x:y: x) a b", which is not technically TRUE, but behaves like it.
   |||,
   test_cases: [
     lib.test_false('f: f TRUE'),
