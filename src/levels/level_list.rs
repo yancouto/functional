@@ -131,7 +131,7 @@ mod test {
 
     use super::{super::get_result, *};
     use crate::{
-        interpreter::{interpreter::test::interpret_ok, ConstantProvider}, save_system::LevelResult
+        interpreter::{interpreter::test::interpret_ok, ConstantProvider}, save_system::{LevelResult, SaveProfile}
     };
 
     #[test]
@@ -165,15 +165,27 @@ mod test {
     }
 
     fn solution_section(section: SectionName) {
+        let mut all_levels_so_far = Vec::with_capacity(LEVELS.len());
         LEVELS
-            .par_iter()
-            .filter(|s| s.name == section)
-            .flat_map(|s| s.levels.as_vec().par_iter())
+            .iter()
+            .filter(|s| s.name <= section)
+            .flat_map(|s| s.levels.as_vec().iter())
             .for_each(|l| {
+                all_levels_so_far.push(l.name.as_str());
+                if l.section < section {
+                    return;
+                }
                 l.solutions.par_iter().for_each(|s| {
                     let r = l
-                        .test(s.chars(), ConstantProvider::all())
-                        .expect(&format!("Failed to compile solution {}", s));
+                        .test(
+                            s.chars(),
+                            ConstantProvider::new(
+                                l,
+                                // Let's assume we have solved all levels so far.
+                                Rc::new(SaveProfile::fake(all_levels_so_far.clone())),
+                            ),
+                        )
+                        .expect(&format!("On '{}' failed to compile solution {}", l.name, s));
 
                     r.runs.iter().for_each(|r| {
                         assert!(

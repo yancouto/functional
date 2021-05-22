@@ -25,7 +25,7 @@ local lib = import 'lib.libsonnet';
   solutions: [
     'n: f:x: n (g:h: h (g f)) (u: x) (u: u)',
     'n: f:x: n (p: p (h:t: h (PAIR FALSE x) (PAIR FALSE (f t)))) (PAIR TRUE x) FALSE',
-    'n: (n (a:f: f A a) FALSE) (h:t:d: f:x: Y (g: l: l (h:t:d: f (g t)) x) t ) FALSE',
+    'n: (n (a:f: f z a) FALSE) (h:t:d: f:x: Y (g: l: l (h:t:d: f (g t)) x) t ) FALSE',
   ],
   wrong_solutions: [
     'n: f:x: n f (i: i) x',

@@ -3,6 +3,7 @@ pub mod interpreter;
 mod node_display;
 mod parser;
 mod tokenizer;
+pub mod traversers;
 
 pub use constants::*;
 pub use interpreter::*;

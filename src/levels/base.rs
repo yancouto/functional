@@ -1,11 +1,11 @@
-use std::time::Instant;
+use std::{collections::HashSet, time::Instant};
 
 use thiserror::Error;
 
 use super::SectionName;
 use crate::{
     interpreter::{
-        accumulate_stats, count_functions, interpret, parse, tokenize, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
+        accumulate_stats, count_functions, interpret, parse, tokenize, traversers::all_constants, ConstantProvider, InterpretError, Interpreted, Node, ParseError, TokenizeError
     }, prelude::*, save_system::LevelResult
 };
 
@@ -87,6 +87,8 @@ pub enum LevelTestError {
     TokenizeError(#[from] TokenizeError),
     #[error("While parsing tokens: {0}")]
     ParseError(#[from] ParseError),
+    #[error("Constant {0} is not known")]
+    UnknownConstant(String),
 }
 
 #[derive(Debug)]
@@ -123,6 +125,15 @@ pub fn get_result(results: &TestRunResults) -> LevelResult {
         .unwrap_or(LevelResult::Failure)
 }
 
+fn check_constants(node: &Node, provider: ConstantProvider) -> Result<(), LevelTestError> {
+    for constant in all_constants(&node) {
+        if provider.get(&constant).is_none() {
+            return Err(LevelTestError::UnknownConstant(constant.to_string()));
+        }
+    }
+    Ok(())
+}
+
 impl Level {
     pub fn test<S: IntoIterator<Item = char>>(
         &self,
@@ -131,6 +142,9 @@ impl Level {
     ) -> TestRunResults {
         let ts = Instant::now();
         let node = parse(tokenize(code)?)?;
+        check_constants(&node, provider)?;
+        // From here, we use all constants as the test cases may have unknown constants and that's fine
+        let provider = ConstantProvider::all();
         let ans = Ok(TestCaseRuns {
             runs: self
                 .test_cases
