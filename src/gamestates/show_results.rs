@@ -86,7 +86,11 @@ impl GameState for ShowResultsState {
                     Pos::new(cur_i - 1, ret.pos.j + ret.size.w - DEBUG.len() as i32 - 4),
                     black(),
                 ) {
-                    return GameStateEvent::Push(box DebuggerState::new(self.level, run.clone()));
+                    return GameStateEvent::Push(box DebuggerState::new(
+                        self.level,
+                        self.save_profile.clone(),
+                        run.clone(),
+                    ));
                 }
                 cur_i += 3;
             }

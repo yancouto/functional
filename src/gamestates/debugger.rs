@@ -1,6 +1,6 @@
 use super::base::*;
 use crate::{
-    interpreter::{interpret_itermediates, ConstantProvider, Node}, levels::{Level, TestCaseRun}, prelude::*
+    interpreter::{interpret_itermediates, ConstantProvider, Node}, levels::{Level, TestCaseRun}, prelude::*, save_system::SaveProfile
 };
 #[derive(Debug)]
 pub struct DebuggerState {
@@ -9,13 +9,13 @@ pub struct DebuggerState {
 }
 
 impl DebuggerState {
-    pub fn new(level: &'static Level, run: TestCaseRun) -> Self {
+    pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>, run: TestCaseRun) -> Self {
         let mut steps = vec1![run.test_expression.clone()];
         steps.append(
             &mut interpret_itermediates(
                 run.test_expression.clone(),
                 false,
-                ConstantProvider::new(level),
+                ConstantProvider::new(level, save_profile),
             )
             .take(30)
             .collect(),

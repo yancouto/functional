@@ -17,9 +17,10 @@ pub struct RunningSolutionState {
 impl RunningSolutionState {
     pub fn new(level: &'static Level, code: String, save_profile: Rc<SaveProfile>) -> Self {
         let (sender, receiver) = channel::bounded(0);
+        let provider = ConstantProvider::new(level, save_profile.clone());
         let handle = std::thread::spawn(move || {
             sender
-                .send(level.test(code.chars(), ConstantProvider::new(level)))
+                .send(level.test(code.chars(), provider))
                 .debug_unwrap()
         });
         Self {

@@ -72,7 +72,8 @@ struct Opt {
 mod prelude {
     pub const W: i32 = 130;
     pub const H: i32 = 80;
-    pub use std::rc::Rc;
+    // Ugly, TODO: remove
+    pub type Rc<T> = std::sync::Arc<T>;
 
     pub use bl::VirtualKeyCode as Key;
     pub use bracket_lib::prelude as bl;

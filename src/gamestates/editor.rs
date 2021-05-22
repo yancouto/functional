@@ -28,10 +28,10 @@ impl<Editor: TextEditor> EditorState<Editor> {
                 },
                 String::new(),
             ),
-            save_profile,
+            save_profile: save_profile.clone(),
             current_solution: 1,
             last_save: Duration::from_secs(0),
-            known_constants: Vec1::try_from_vec(level.all_known_constants()).ok(),
+            known_constants: Vec1::try_from_vec(level.all_known_constants(save_profile)).ok(),
             pressed_hint: false,
         };
         state.load_solution(1);
@@ -133,7 +133,7 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
         } else if data.button(OPEN, Pos::new(H - 3, 2 + RUN.len() as i32 + 3), black()) {
             return GameStateEvent::Push(box PlaygroundState::<Editor>::new(
                 self.editor.to_string(),
-                ConstantProvider::new(self.level),
+                ConstantProvider::new(self.level, self.save_profile.clone()),
             ));
         }
 

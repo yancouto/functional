@@ -96,9 +96,9 @@ impl Numerals {
 #[derive(Debug, Clone)]
 struct CompletionData {
     // Level this constant data is for
-    level: &'static Level,
+    level:   &'static Level,
     // Save profile with list of completed levels
-    //profile: Rc<SaveProfile>,
+    profile: Rc<SaveProfile>,
 }
 
 #[derive(Debug, Clone)]
@@ -109,10 +109,11 @@ pub struct ConstantProvider {
 }
 
 impl ConstantProvider {
-    pub fn new(current_level: &'static Level) -> Self {
+    pub fn new(current_level: &'static Level, profile: Rc<SaveProfile>) -> Self {
         Self {
             completion_data: Some(CompletionData {
                 level: current_level,
+                profile,
             }),
             numerals:        if current_level.section >= SectionName::Numerals {
                 Numerals::Church
@@ -121,9 +122,6 @@ impl ConstantProvider {
             },
         }
     }
-
-    #[allow(dead_code)]
-    pub fn none() -> Self { Self::new(LEVELS.first().levels.first()) }
 
     pub fn all() -> Self {
         // WARNING: Can't use LEVELS here, as it depends on this function
@@ -174,9 +172,9 @@ impl ConstantProvider {
 }
 
 impl Level {
-    pub fn all_known_constants(&'static self) -> Vec<&'static str> {
+    pub fn all_known_constants(&'static self, save_profile: Rc<SaveProfile>) -> Vec<&'static str> {
         if self.show_constants {
-            ConstantProvider::new(&self).all_known_constants()
+            ConstantProvider::new(&self, save_profile).all_known_constants()
         } else {
             vec![]
         }
@@ -197,24 +195,22 @@ mod test {
 
     #[test]
     fn test_provider() {
-        let p0 = ConstantProvider::new(&LEVELS[1].levels[0]);
+        let fake_profile = Rc::new(SaveProfile::fake());
+        let p0 = ConstantProvider::new(&LEVELS[1].levels[0], fake_profile.clone());
         assert!(p0.get("TRUE").is_some());
         assert!(p0.get("IF").is_none());
-        let p1 = ConstantProvider::new(&LEVELS[1].levels[1]);
+        let p1 = ConstantProvider::new(&LEVELS[1].levels[1], fake_profile.clone());
         assert!(p1.get("TRUE").is_some());
         assert!(p1.get("IF").is_some());
         assert!(p1.get("NOT").is_none());
-        let p2 = ConstantProvider::new(&LEVELS[1].levels[2]);
+        let p2 = ConstantProvider::new(&LEVELS[1].levels[2], fake_profile.clone());
         assert!(p2.get("NOT").is_some());
     }
 
     #[test]
-    fn test_constants_are_resolved() {
+    fn test_numbers_are_resolved() {
         let interpret_clean =
-            |n: Box<Node>| interpret(n, false, ConstantProvider::none()).map(|i| i.term);
-        ALL_CONSTANTS.iter().for_each(|(_, node)| {
-            assert_eq!(interpret_clean(node.term.clone()), Ok(node.term.clone()))
-        });
+            |n: Box<Node>| interpret(n, false, ConstantProvider::all()).map(|i| i.term);
         vec![0u16, 2, 20].into_iter().for_each(|n| {
             let constant = Numerals::Church.get_num(n).unwrap();
             assert_eq!(interpret_clean(constant.clone()), Ok(constant));
