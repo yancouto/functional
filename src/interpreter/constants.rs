@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName, LEVELS}, save_system::SaveProfile
+    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName, LEVELS}, prelude::*, save_system::SaveProfile
 };
 struct ConstantNode {
     term:           Box<Node>,
@@ -93,7 +93,7 @@ impl Numerals {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 struct CompletionData {
     // Level this constant data is for
     level: &'static Level,
@@ -101,7 +101,7 @@ struct CompletionData {
     //profile: Rc<SaveProfile>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ConstantProvider {
     // None currently means use all constants
     completion_data: Option<CompletionData>,

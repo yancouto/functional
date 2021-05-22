@@ -82,10 +82,14 @@ impl<Editor: TextEditor> PlaygroundState<Editor> {
         self.data = Some(tokenize(self.editor.to_string().chars()).map(|tokens| {
             parse(tokens).map(|term| DebugData {
                 steps:       std::iter::once(term.clone())
-                    .chain(interpret_itermediates(term.clone(), false, self.provider))
+                    .chain(interpret_itermediates(
+                        term.clone(),
+                        false,
+                        self.provider.clone(),
+                    ))
                     .take(MAX_STEPS)
                     .collect(),
-                interpreted: interpret(term, false, self.provider),
+                interpreted: interpret(term, false, self.provider.clone()),
             })
         }));
     }

@@ -135,7 +135,7 @@ impl Level {
             runs: self
                 .test_cases
                 .par_iter()
-                .map(|t| t.test(node.clone(), provider))
+                .map(|t| t.test(node.clone(), provider.clone()))
                 .collect(),
             code: node,
         });
