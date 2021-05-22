@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName, LEVELS}
+    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName, LEVELS}, save_system::SaveProfile
 };
 struct ConstantNode {
     term:           Box<Node>,
@@ -11,8 +11,9 @@ struct ConstantNode {
 }
 
 impl ConstantNode {
-    fn can_be_used(&self, level: &'static Level) -> bool {
-        (self.section, self.lvl_discovered, !self.before_level) <= (level.section, level.idx, false)
+    fn can_be_used(&self, data: &CompletionData) -> bool {
+        (self.section, self.lvl_discovered, !self.before_level)
+            <= (data.level.section, data.level.idx, false)
     }
 }
 
@@ -93,18 +94,27 @@ impl Numerals {
 }
 
 #[derive(Debug, Clone, Copy)]
+struct CompletionData {
+    // Level this constant data is for
+    level: &'static Level,
+    // Save profile with list of completed levels
+    //profile: Rc<SaveProfile>,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct ConstantProvider {
-    // TODO: probably need multiple sections at some point
     // None currently means use all constants
-    current_level: Option<&'static Level>,
-    numerals:      Numerals,
+    completion_data: Option<CompletionData>,
+    numerals:        Numerals,
 }
 
 impl ConstantProvider {
     pub fn new(current_level: &'static Level) -> Self {
         Self {
-            current_level: Some(current_level),
-            numerals:      if current_level.section >= SectionName::Numerals {
+            completion_data: Some(CompletionData {
+                level: current_level,
+            }),
+            numerals:        if current_level.section >= SectionName::Numerals {
                 Numerals::Church
             } else {
                 Numerals::None
@@ -118,8 +128,8 @@ impl ConstantProvider {
     pub fn all() -> Self {
         // WARNING: Can't use LEVELS here, as it depends on this function
         Self {
-            current_level: None,
-            numerals:      Numerals::Church,
+            completion_data: None,
+            numerals:        Numerals::Church,
         }
     }
 
@@ -129,7 +139,12 @@ impl ConstantProvider {
         } else {
             ALL_CONSTANTS
                 .get(name)
-                .filter(|n| self.current_level.map(|l| n.can_be_used(l)).unwrap_or(true))
+                .filter(|n| {
+                    self.completion_data
+                        .as_ref()
+                        .map(|l| n.can_be_used(l))
+                        .unwrap_or(true)
+                })
                 .map(|n| n.term.clone())
         }
     }
@@ -138,7 +153,12 @@ impl ConstantProvider {
         let mut ans: Vec<_> = ALL_CONSTANTS
             .iter()
             .filter_map(|(k, v)| {
-                if self.current_level.map(|l| v.can_be_used(l)).unwrap_or(true) {
+                if self
+                    .completion_data
+                    .as_ref()
+                    .map(|l| v.can_be_used(l))
+                    .unwrap_or(true)
+                {
                     Some(k.as_str())
                 } else {
                     None
