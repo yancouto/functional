@@ -264,7 +264,7 @@ mod test {
                 base::{with_current_console, EventTickData, GSData, TickData}, editor::EditorState
             }, save_system::SaveProfile
         };
-        let fake_profile = Rc::new(SaveProfile::fake());
+        let fake_profile = Rc::new(SaveProfile::fake(vec![]));
         let mut term = fake_bterm();
         bl::BACKEND_INTERNAL
             .lock()

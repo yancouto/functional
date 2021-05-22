@@ -50,6 +50,8 @@ impl LevelResult {
             LevelResult::NotTried => other,
         }
     }
+
+    pub fn is_success(&self) -> bool { matches!(self, &LevelResult::Success { .. }) }
 }
 
 const CURRENT_SAVE_VERSION: u32 = 0;
@@ -57,8 +59,7 @@ const SAVE_FILE: &str = "save.data";
 
 #[derive(Savefile, Debug, Default, Clone)]
 pub struct LevelInfo {
-    pub result:     LevelResult,
-    pub best_score: Option<f32>,
+    pub result: LevelResult,
 }
 
 #[derive(Savefile, Debug, Default)]
@@ -68,12 +69,27 @@ struct SaveFile {
 
 impl SaveProfile {
     #[cfg(test)]
-    pub fn fake() -> Self {
+    pub fn fake(completed_levels: Vec<&str>) -> Self {
         Self {
             name:              "test".to_string(),
             path:              PathBuf::new(),
             current_save_file: Mutex::new(SaveFile {
-                level_info: HashMap::new(),
+                level_info: completed_levels
+                    .into_iter()
+                    .map(|l| {
+                        (
+                            l.to_string(),
+                            LevelInfo {
+                                result: LevelResult::Success {
+                                    stats: AccStats {
+                                        reductions_x100: 100,
+                                        functions:       100,
+                                    },
+                                },
+                            },
+                        )
+                    })
+                    .collect(),
             }),
         }
     }

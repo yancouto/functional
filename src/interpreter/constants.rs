@@ -1,19 +1,40 @@
 use std::collections::HashMap;
 
 use crate::{
-    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName, LEVELS}, prelude::*, save_system::SaveProfile
+    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName}, prelude::*, save_system::{LevelResult, SaveProfile}
 };
+
+enum DiscoveryMethod {
+    // BeforeLevel constants don't care about completed levels
+    BeforeLevel {
+        section: SectionName,
+        lvl_idx: usize,
+    },
+    // Otherwise you must have completed a given level
+    LevelCompleted {
+        name: String,
+    },
+}
+
 struct ConstantNode {
-    term:           Box<Node>,
-    section:        SectionName,
-    lvl_discovered: usize,
-    before_level:   bool,
+    term:   Box<Node>,
+    method: DiscoveryMethod,
 }
 
 impl ConstantNode {
     fn can_be_used(&self, data: &CompletionData) -> bool {
-        (self.section, self.lvl_discovered, !self.before_level)
-            <= (data.level.section, data.level.idx, false)
+        match &self.method {
+            DiscoveryMethod::BeforeLevel { section, lvl_idx } =>
+                (*section, *lvl_idx) <= (data.level.section, data.level.idx),
+            DiscoveryMethod::LevelCompleted { name } =>
+                *name != data.level.name
+                    && data
+                        .profile
+                        .get_levels_info()
+                        .get(name)
+                        .map(|l| l.result.is_success())
+                        .unwrap_or(false),
+        }
     }
 }
 
@@ -22,45 +43,50 @@ fn parse_constant(term: &str) -> Box<Node> {
         .expect("Failed to parse constant")
 }
 
-lazy_static! {
-    static ref ALL_CONSTANTS: HashMap<String, ConstantNode> = {
-        raw_load_level_config()
-            .sections
-            .into_iter()
-            .flat_map(|section| {
-                let section_name = section.name;
-                section
-                    .levels
-                    .into_iter()
-                    .enumerate()
-                    .flat_map(move |(i, level)| {
-                        let mut v: Vec<_> = level
-                            .before_level_constants
-                            .into_iter()
-                            .map(|(a, b)| (a, b, true))
-                            .collect();
-                        if level.provides_constant {
-                            v.push((
-                                level.name.to_ascii_uppercase(),
-                                level.solutions[0].clone(),
-                                false,
-                            ));
-                        }
-                        v.into_iter().map(move |(name, term, before_level)| {
+fn raw_load_constants() -> HashMap<String, ConstantNode> {
+    raw_load_level_config()
+        .sections
+        .into_iter()
+        .flat_map(|section| {
+            let section_name = section.name;
+            section
+                .levels
+                .into_iter()
+                .enumerate()
+                .flat_map(move |(i, level)| {
+                    let mut v: Vec<_> = level
+                        .before_level_constants
+                        .into_iter()
+                        .map(|(name, term)| {
                             (
                                 name,
                                 ConstantNode {
-                                    term: parse_constant(&term),
-                                    section: section_name,
-                                    lvl_discovered: i,
-                                    before_level,
+                                    term:   parse_constant(&term),
+                                    method: DiscoveryMethod::BeforeLevel {
+                                        section: section_name,
+                                        lvl_idx: i,
+                                    },
                                 },
                             )
                         })
-                    })
-            })
-            .collect()
-    };
+                        .collect();
+                    if level.provides_constant {
+                        v.push((
+                            level.name.to_ascii_uppercase(),
+                            ConstantNode {
+                                term:   parse_constant(&level.solutions[0]),
+                                method: DiscoveryMethod::LevelCompleted { name: level.name },
+                            },
+                        ));
+                    }
+                    v
+                })
+        })
+        .collect()
+}
+
+lazy_static! {
+    static ref ALL_CONSTANTS: HashMap<String, ConstantNode> = raw_load_constants();
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -184,8 +210,10 @@ impl Level {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::interpreter::{
-        interpret, interpreter::test::{interpret_ok, interpret_ok_full}
+    use crate::{
+        interpreter::{
+            interpret, interpreter::test::{interpret_ok, interpret_ok_full}
+        }, levels::LEVELS
     };
     #[test]
     fn test_constants() {
@@ -195,16 +223,20 @@ mod test {
 
     #[test]
     fn test_provider() {
-        let fake_profile = Rc::new(SaveProfile::fake());
-        let p0 = ConstantProvider::new(&LEVELS[1].levels[0], fake_profile.clone());
+        let p0 = ConstantProvider::new(&LEVELS[1].levels[0], Rc::new(SaveProfile::fake(vec![])));
         assert!(p0.get("TRUE").is_some());
         assert!(p0.get("IF").is_none());
-        let p1 = ConstantProvider::new(&LEVELS[1].levels[1], fake_profile.clone());
+        let p1 =
+            ConstantProvider::new(&LEVELS[1].levels[1], Rc::new(SaveProfile::fake(vec!["if"])));
         assert!(p1.get("TRUE").is_some());
         assert!(p1.get("IF").is_some());
         assert!(p1.get("NOT").is_none());
-        let p2 = ConstantProvider::new(&LEVELS[1].levels[2], fake_profile.clone());
+        let p2 = ConstantProvider::new(
+            &LEVELS[1].levels[2],
+            Rc::new(SaveProfile::fake(vec!["not"])),
+        );
         assert!(p2.get("NOT").is_some());
+        assert!(p2.get("IF").is_none());
     }
 
     #[test]
