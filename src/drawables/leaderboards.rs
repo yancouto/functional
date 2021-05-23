@@ -39,6 +39,7 @@ enum LeaderboardLoadError {
     FailedToUpload,
     #[error("Channel got disconnected")]
     ChannelDisconnected,
+    #[cfg(feature = "steam")]
     #[error("Error calling Steam: {0}")]
     SteamError(#[from] steamworks::SteamError),
     #[error("Failed joining thread: {0:?}")]
