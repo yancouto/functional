@@ -334,9 +334,9 @@ impl Leaderboards {
             self.location,
             true,
         );
+        #[cfg(feature = "steam")]
         match &self.status {
             LoadStatus::Uninitialized => {
-                #[cfg(feature = "steam")]
                 if let Some(client) = &data.steam_client {
                     let (level, client, f_sender) =
                         (self.level, client.clone(), self.friends.get_sender());

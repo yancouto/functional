@@ -83,34 +83,34 @@ impl FriendLeaderboard {
             self.rect,
             true,
         );
+        #[cfg(feature = "steam")]
         match &self.state {
             State::Waiting => match self.recv.try_recv() {
-                #[cfg(not(feature = "steam"))]
-                Ok(Ok(entries)) => debug_assert!(false),
-                #[cfg(feature = "steam")]
-                Ok(Ok(entries)) => {
-                    let client = data.steam_client.as_ref().unwrap();
-                    let my_id = client.user().steam_id();
-                    self.state = State::Success(
-                        entries
-                            .into_iter()
-                            .filter_map(|e| {
-                                debug_assert!(e.details.len() == 1);
-                                e.details.first().map(|functions| Entry {
-                                    friend: if e.user == my_id {
-                                        "You".to_string()
-                                    } else {
-                                        client.friends().get_friend(e.user).name()
-                                    },
-                                    stats:  AccStats {
-                                        reductions_x100: e.score as u32,
-                                        functions:       *functions as u16,
-                                    },
+                Ok(Ok(entries)) =>
+                    if let Some(client) = &data.steam_client {
+                        let my_id = client.user().steam_id();
+                        self.state = State::Success(
+                            entries
+                                .into_iter()
+                                .filter_map(|e| {
+                                    debug_assert!(e.details.len() == 1);
+                                    e.details.first().map(|functions| Entry {
+                                        friend: if e.user == my_id {
+                                            "You".to_string()
+                                        } else {
+                                            client.friends().get_friend(e.user).name()
+                                        },
+                                        stats:  AccStats {
+                                            reductions_x100: e.score as u32,
+                                            functions:       *functions as u16,
+                                        },
+                                    })
                                 })
-                            })
-                            .collect(),
-                    );
-                },
+                                .collect(),
+                        );
+                    } else {
+                        debug_assert!(false);
+                    },
                 Ok(Err(e)) => {
                     self.state = State::Failed(e);
                 },
