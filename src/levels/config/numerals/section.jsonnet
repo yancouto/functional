@@ -8,5 +8,6 @@
     import 'sub.jsonnet',
     import 'mul.jsonnet',
     import 'increasing_list.jsonnet',
+    import 'is_odd.jsonnet',
   ],
 }
