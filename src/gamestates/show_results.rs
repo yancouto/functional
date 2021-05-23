@@ -36,6 +36,7 @@ impl ShowResultsState {
                     LDB_W,
                     BOX_H,
                 ),
+                level,
                 stats,
             ),
         }
