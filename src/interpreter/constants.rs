@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName}, prelude::*, save_system::{LevelResult, SaveProfile}
+    interpreter::{parse, tokenize, Node}, levels::{raw_load_level_config, Level, SectionName}, prelude::*, save_system::SaveProfile
 };
 
 enum DiscoveryMethod {

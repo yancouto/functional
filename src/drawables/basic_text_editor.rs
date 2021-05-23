@@ -43,7 +43,7 @@ impl BasicTextEditor {
 }
 
 impl TextEditor for BasicTextEditor {
-    fn new(title: String, rect: Rect, initial_text: String) -> Self {
+    fn new(title: String, rect: Rect, _initial_text: String) -> Self {
         Self {
             title,
             rect,
