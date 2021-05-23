@@ -85,6 +85,9 @@ impl FriendLeaderboard {
         );
         match &self.state {
             State::Waiting => match self.recv.try_recv() {
+                #[cfg(not(feature = "steam"))]
+                Ok(Ok(entries)) => debug_assert!(false),
+                #[cfg(feature = "steam")]
                 Ok(Ok(entries)) => {
                     let client = data.steam_client.as_ref().unwrap();
                     let my_id = client.user().steam_id();
