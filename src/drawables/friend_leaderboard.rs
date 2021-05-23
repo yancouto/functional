@@ -86,13 +86,19 @@ impl FriendLeaderboard {
         match &self.state {
             State::Waiting => match self.recv.try_recv() {
                 Ok(Ok(entries)) => {
+                    let client = data.steam_client.as_ref().unwrap();
+                    let my_id = client.user().steam_id();
                     self.state = State::Success(
                         entries
                             .into_iter()
                             .filter_map(|e| {
                                 debug_assert!(e.details.len() == 1);
                                 e.details.first().map(|functions| Entry {
-                                    friend: format!("{:?}", e.user),
+                                    friend: if e.user == my_id {
+                                        "You".to_string()
+                                    } else {
+                                        client.friends().get_friend(e.user).name()
+                                    },
                                     stats:  AccStats {
                                         reductions_x100: e.score as u32,
                                         functions:       *functions as u16,
