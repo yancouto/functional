@@ -10,11 +10,11 @@ local lib = import 'lib.libsonnet';
     The input is well formed, that is, it's always two numerals.
   |||,
   test_cases: [
-    lib.test_num('f: f 7 3', 4),
-    lib.test_num('f: f 3 7', 0),
     bool_lib.test_true('f: ZERO (f 0 0)'),
     lib.test_num('f: f 2 0', 2),
     lib.test_num('f: f 0 2', 0),
+    lib.test_num('f: f 7 3', 4),
+    lib.test_num('f: f 3 7', 0),
     lib.test_num('f: f 7 (f 4 2)', 5),
     lib.test_num('f: ADD 2 (f 1 2)', 2),
   ],

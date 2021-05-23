@@ -243,11 +243,13 @@ impl Leaderboards {
         for i in 0..size_h {
             data.char(pos(i, -1), '│');
             if i < size_h - 1 && (i % 2) == 0 {
-                let val = format!(
-                    "{:.2}",
-                    (y_axis.min as f32 + y_axis.step as f32 * i as f32) / 100.0
-                );
-                data.print(pos(i, -2 - val.len() as i32), &val);
+                let val = (y_axis.min as f32 + y_axis.step as f32 * i as f32) / 100.0;
+                let val = if val < 1000.0 {
+                    format!("{:.2}", val)
+                } else {
+                    format!("{:.1}", val)
+                };
+                data.print(pos(i, -1 - val.len() as i32), &val);
             }
         }
         let mut last = -1;
@@ -333,7 +335,9 @@ impl Leaderboards {
                     }),
                     Err(channel::TryRecvError::Disconnected) => self.consume_handle(|r| {
                         debug_assert!(r.is_err());
-                        LoadStatus::Failed(r.err().unwrap_or(LeaderboardLoadError::UnknownError))
+                        let err = r.err().unwrap_or(LeaderboardLoadError::UnknownError);
+                        log::warn!("Error while loading leaderboards: {}", err);
+                        LoadStatus::Failed(err)
                     }),
                     // Not done yet
                     Err(channel::TryRecvError::Empty) => {},
