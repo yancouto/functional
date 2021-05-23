@@ -11,7 +11,7 @@ pub struct ShowResultsState {
 }
 
 const BOX_W: i32 = 60;
-const LDB_W: i32 = 30;
+const LDB_W: i32 = 40;
 const BOX_H: i32 = 30;
 
 impl ShowResultsState {
@@ -25,19 +25,21 @@ impl ShowResultsState {
             LevelResult::Success { stats } => Some(stats),
             _ => None,
         };
+        let ldr = Rect::new(
+            (H - 2 * BOX_H - 1) / 2,
+            (W - BOX_W - LDB_W - 6) / 2 + BOX_W + 6,
+            LDB_W,
+            BOX_H,
+        );
         Self {
             level,
             save_profile,
             results,
             leaderboards: Leaderboards::new(
-                Rect::new(
-                    (H - BOX_H) / 2,
-                    (W - BOX_W - LDB_W - 6) / 2 + BOX_W + 6,
-                    LDB_W,
-                    BOX_H,
-                ),
+                ldr,
                 level,
                 stats,
+                Rect::new(ldr.pos.i + BOX_H + 1, ldr.pos.j, ldr.size.w, ldr.size.h),
             ),
         }
     }

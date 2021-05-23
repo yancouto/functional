@@ -1,12 +1,12 @@
 use std::{
-    any::Any, collections::{BTreeMap, HashMap}, thread::JoinHandle
+    collections::{BTreeMap, HashMap}, thread::JoinHandle
 };
 
 use crossbeam::channel::{self, Receiver};
 use thiserror::Error;
 
 use crate::{
-    gamestates::base::{SteamClient, TickData}, interpreter::AccStats, levels::Level, prelude::*
+    drawables::{FriendLeaderboard, FriendResult}, gamestates::base::{SteamClient, TickData}, interpreter::AccStats, levels::Level, prelude::*
 };
 
 type LdData = HashMap<AccStats, u32>;
@@ -29,10 +29,11 @@ pub struct Leaderboards {
     player_data: Option<AccStats>,
     status:      LoadStatus,
     level:       &'static Level,
+    friends:     FriendLeaderboard,
 }
 
-#[derive(Error, Debug)]
-enum LeaderboardLoadError {
+#[derive(Error, Debug, Clone)]
+pub enum LeaderboardLoadError {
     #[error("Steam call did not find leaderboard")]
     FailedToFindLeaderboard,
     #[error("Failed to upload user score")]
@@ -42,8 +43,8 @@ enum LeaderboardLoadError {
     #[cfg(feature = "steam")]
     #[error("Error calling Steam: {0}")]
     SteamError(#[from] steamworks::SteamError),
-    #[error("Failed joining thread: {0:?}")]
-    ThreadJoinError(Box<dyn Any + Send + 'static>),
+    #[error("Failed joining thread: {0}")]
+    ThreadJoinError(String),
     #[error("Unknown error")]
     UnknownError,
 }
@@ -115,6 +116,7 @@ fn get_leaderboard_data(
     level: &'static Level,
     upload_score: Option<AccStats>,
     client: Rc<SteamClient>,
+    friend_sender: channel::Sender<FriendResult>,
 ) -> Result<(), LeaderboardLoadError> {
     log::info!("Finding or creating leaderboard");
     let (send, recv) = channel::bounded(1);
@@ -148,6 +150,19 @@ fn get_leaderboard_data(
         };
         log::info!("Uploaded score: {:?}", result);
     }
+    // Get friend stats
+    client.user_stats().download_leaderboard_entries(
+        &lb,
+        steamworks::LeaderboardDataRequest::Friends,
+        1,
+        1000,
+        1,
+        move |result| {
+            friend_sender
+                .send(result.map_err(LeaderboardLoadError::from))
+                .debug_unwrap()
+        },
+    );
     let (send, recv) = channel::bounded(1);
     client.user_stats().download_leaderboard_entries(
         &lb,
@@ -180,12 +195,19 @@ fn get_leaderboard_data(
 }
 
 impl Leaderboards {
-    pub fn new(location: Rect, level: &'static Level, player_data: Option<AccStats>) -> Self {
+    pub fn new(
+        location: Rect,
+        level: &'static Level,
+        player_data: Option<AccStats>,
+        friend_rect: Rect,
+    ) -> Self {
+        let friends = FriendLeaderboard::new(friend_rect);
         Self {
             location,
             player_data,
             level,
             status: LoadStatus::Uninitialized,
+            friends,
         }
     }
 
@@ -291,7 +313,7 @@ impl Leaderboards {
             try {
                 handle
                     .join()
-                    .map_err(|e| LeaderboardLoadError::ThreadJoinError(e))??
+                    .map_err(|e| LeaderboardLoadError::ThreadJoinError(format!("{:?}", e)))??
             }
         } else {
             Ok(())
@@ -301,7 +323,7 @@ impl Leaderboards {
 
     pub fn draw(&mut self, data: &mut TickData) {
         data.text_box(
-            "Leaderboards",
+            "Global leaderboards",
             &match &self.status {
                 LoadStatus::Uninitialized =>
                     "Use Steam version of the game for leaderboards".to_string(),
@@ -316,14 +338,15 @@ impl Leaderboards {
             LoadStatus::Uninitialized => {
                 #[cfg(feature = "steam")]
                 if let Some(client) = &data.steam_client {
-                    let (level, client) = (self.level, client.clone());
+                    let (level, client, f_sender) =
+                        (self.level, client.clone(), self.friends.get_sender());
                     // TODO: Not always upload player data, only when it's not worse
                     let stats = self.player_data.clone();
                     let (send, recv) = channel::bounded(1);
                     self.status = LoadStatus::Loading(
                         recv,
                         std::thread::spawn(move || {
-                            get_leaderboard_data(send, level, stats, client)
+                            get_leaderboard_data(send, level, stats, client, f_sender)
                         }),
                     );
                 }
@@ -334,12 +357,16 @@ impl Leaderboards {
                         r.debug_unwrap();
                         LoadStatus::Loaded(data)
                     }),
-                    Err(channel::TryRecvError::Disconnected) => self.consume_handle(|r| {
-                        debug_assert!(r.is_err());
-                        let err = r.err().unwrap_or(LeaderboardLoadError::UnknownError);
-                        log::warn!("Error while loading leaderboards: {}", err);
-                        LoadStatus::Failed(err)
-                    }),
+                    Err(channel::TryRecvError::Disconnected) => {
+                        let f_sender = self.friends.get_sender();
+                        self.consume_handle(|r| {
+                            debug_assert!(r.is_err());
+                            let err = r.err().unwrap_or(LeaderboardLoadError::UnknownError);
+                            f_sender.send(Err(err.clone())).debug_unwrap();
+                            log::warn!("Error while loading leaderboards: {}", err);
+                            LoadStatus::Failed(err)
+                        });
+                    },
                     // Not done yet
                     Err(channel::TryRecvError::Empty) => {},
                 }
@@ -349,6 +376,7 @@ impl Leaderboards {
             },
             LoadStatus::Failed(_) => {},
         }
+        self.friends.draw(data);
     }
 }
 
