@@ -1,7 +1,6 @@
 #![feature(div_duration)]
 #![feature(box_syntax)]
 #![feature(try_blocks)]
-#![feature(try_trait)]
 #![feature(generators, generator_trait)]
 #![feature(iter_advance_by)]
 #![feature(map_first_last)]
