@@ -57,10 +57,10 @@ impl<'a> TickData<'a> {
 }
 
 #[cfg(feature = "steam")]
-type SteamClient = steamworks::Client;
+pub type SteamClient = steamworks::Client;
 
 #[cfg(not(feature = "steam"))]
-type SteamClient = ();
+pub type SteamClient = ();
 
 pub struct GameStateManager {
     all_gs:       Vec1<GSData>,

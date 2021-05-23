@@ -1,25 +1,25 @@
-use std::collections::{BTreeMap, HashMap};
+use std::{
+    any::Any, collections::{BTreeMap, HashMap}, thread::JoinHandle
+};
 
-use crossbeam::channel;
+use crossbeam::channel::{self, Receiver};
 use thiserror::Error;
 
-use crate::{gamestates::base::TickData, interpreter::AccStats, levels::Level, prelude::*};
+use crate::{
+    gamestates::base::{SteamClient, TickData}, interpreter::AccStats, levels::Level, prelude::*
+};
+
+type LdData = HashMap<AccStats, u32>;
 
 #[derive(Debug)]
-enum State {
-    Initial,
-    WaitingForLeaderboard {
-        receiver:
-            channel::Receiver<Result<Option<steamworks::Leaderboard>, steamworks::SteamError>>,
-    },
-    DownloadingEntries {
-        receiver:
-            channel::Receiver<Result<Vec<steamworks::LeaderboardEntry>, steamworks::SteamError>>,
-    },
+enum LoadStatus {
+    Uninitialized,
+    Loading(
+        Receiver<LdData>,
+        JoinHandle<Result<(), LeaderboardLoadError>>,
+    ),
+    Loaded(LdData),
     Failed(LeaderboardLoadError),
-    Loaded {
-        data_points: HashMap<AccStats, u32>,
-    },
 }
 
 #[derive(Debug)]
@@ -27,24 +27,24 @@ pub struct Leaderboards {
     // whole rect, including borders of box
     location:    Rect,
     player_data: Option<AccStats>,
-    state:       State,
+    status:      LoadStatus,
     level:       &'static Level,
-}
-
-#[derive(Debug, strum::Display)]
-enum Op {
-    FindLeaderboard,
-    LoadEntries,
 }
 
 #[derive(Error, Debug)]
 enum LeaderboardLoadError {
     #[error("Steam call did not find leaderboard")]
     FailedToFindLeaderboard,
-    #[error("Channel got disconnected on {0}")]
-    ChannelDisconnected(Op),
-    #[error("Error calling Steam on {0}: {1}")]
-    SteamError(Op, steamworks::SteamError),
+    #[error("Failed to upload user score")]
+    FailedToUpload,
+    #[error("Channel got disconnected")]
+    ChannelDisconnected,
+    #[error("Error calling Steam: {0}")]
+    SteamError(#[from] steamworks::SteamError),
+    #[error("Failed joining thread: {0:?}")]
+    ThreadJoinError(Box<dyn Any + Send + 'static>),
+    #[error("Unknown error")]
+    UnknownError,
 }
 
 struct Axis {
@@ -108,17 +108,87 @@ fn get_common(data: &Vec<Vec<u32>>) -> u32 {
     }
 }
 
+#[cfg(feature = "steam")]
+fn get_leaderboard_data(
+    sender: channel::Sender<LdData>,
+    level: &'static Level,
+    upload_score: Option<AccStats>,
+    client: Rc<SteamClient>,
+) -> Result<(), LeaderboardLoadError> {
+    log::info!("Finding or creating leaderboard");
+    let (send, recv) = channel::bounded(1);
+    client.user_stats().find_or_create_leaderboard(
+        &format!("level_{}", level.name),
+        steamworks::LeaderboardSortMethod::Ascending,
+        steamworks::LeaderboardDisplayType::Numeric,
+        move |result| send.send(result).debug_unwrap(),
+    );
+    let lb = match recv.recv() {
+        Ok(Ok(Some(lb))) => lb,
+        Ok(Ok(None)) => Err(LeaderboardLoadError::FailedToFindLeaderboard)?,
+        Ok(Err(e)) => Err(e)?,
+        Err(_) => Err(LeaderboardLoadError::ChannelDisconnected)?,
+    };
+    log::info!("Found leaderboard {:?}", lb);
+    if let Some(score) = upload_score {
+        let (send, recv) = channel::bounded(1);
+        client.user_stats().upload_leaderboard_score(
+            &lb,
+            steamworks::UploadScoreMethod::ForceUpdate,
+            score.reductions_x100 as i32,
+            &[score.functions as i32],
+            move |r| send.send(r).debug_unwrap(),
+        );
+        let result = match recv.recv() {
+            Ok(Ok(Some(r))) => r,
+            Ok(Ok(None)) => Err(LeaderboardLoadError::FailedToUpload)?,
+            Ok(Err(e)) => Err(e)?,
+            Err(_) => Err(LeaderboardLoadError::ChannelDisconnected)?,
+        };
+        log::info!("Uploaded score: {:?}", result);
+    }
+    let (send, recv) = channel::bounded(1);
+    client.user_stats().download_leaderboard_entries(
+        &lb,
+        steamworks::LeaderboardDataRequest::Global,
+        1,
+        1000,
+        1,
+        move |result| send.send(result).debug_unwrap(),
+    );
+    let entries = match recv.recv() {
+        Err(_) => Err(LeaderboardLoadError::ChannelDisconnected)?,
+        Ok(result) => result?,
+    };
+    log::info!("Got {} entries", entries.len());
+    let mut map = HashMap::new();
+    entries
+        .into_iter()
+        .filter_map(|e| {
+            debug_assert!(e.details.len() == 1);
+            e.details.first().map(|functions| AccStats {
+                reductions_x100: e.score as u32,
+                functions:       *functions as u16,
+            })
+        })
+        .for_each(|s| {
+            *map.entry(s).or_insert(0) += 1;
+        });
+    sender.send(map).debug_unwrap();
+    Ok(())
+}
+
 impl Leaderboards {
     pub fn new(location: Rect, level: &'static Level, player_data: Option<AccStats>) -> Self {
         Self {
             location,
             player_data,
             level,
-            state: State::Initial,
+            status: LoadStatus::Uninitialized,
         }
     }
 
-    fn draw_ld(&self, data: &mut TickData, data_points: &HashMap<AccStats, u32>) {
+    fn draw_ld(&self, data: &mut TickData, data_points: &LdData) {
         let off_i = 7;
         let off_j = 7;
         let size_w = self.location.size.w - 2 - off_i - 1;
@@ -137,7 +207,12 @@ impl Leaderboards {
             }
         }
         let (pi, pj) = if let Some(a) = &self.player_data {
-            (y_axis.data[a] as i32, x_axis.data[a] as i32)
+            y_axis
+                .data
+                .get(a)
+                .zip(x_axis.data.get(a))
+                .map(|(a, b)| (*a as i32, *b as i32))
+                .unwrap_or((-1, -1))
         } else {
             // invalid numbers
             (-1, -1)
@@ -192,6 +267,11 @@ impl Leaderboards {
         data.char(pos(-1, size_w), '→');
         data.char(pos(size_h, -1), '↑');
         data.print(pos(size_h, -6), "reds");
+        data.print(pos(-4, -7), "· >= 1");
+        data.print(pos(-5, -7), "x = you");
+        if common != u32::MAX {
+            data.print(pos(-6, -7), &format!("• >= {}", common));
+        }
         data.console.print_centered_at(
             pos(0, size_w / 2).j,
             self.location.bottom() - 1,
@@ -199,81 +279,70 @@ impl Leaderboards {
         );
     }
 
-    pub fn draw(&mut self, data: &mut TickData) {
-        if let Some(client) = &data.steam_client {
-            match &self.state {
-                State::Initial => {
-                    let (send, recv) = channel::bounded(1);
-                    client.user_stats().find_or_create_leaderboard(
-                        &format!("level_{}", self.level.name),
-                        steamworks::LeaderboardSortMethod::Ascending,
-                        steamworks::LeaderboardDisplayType::Numeric,
-                        move |result| send.send(result).debug_unwrap(),
-                    );
-                    self.state = State::WaitingForLeaderboard { receiver: recv };
-                },
-                State::WaitingForLeaderboard { receiver } => match receiver.try_recv() {
-                    Ok(result) => match result {
-                        Ok(Some(l)) => {
-                            log::info!("Found leaderboard {:?}", l);
-                            let (send, recv) = channel::bounded(1);
-                            client.user_stats().download_leaderboard_entries(
-                                &l,
-                                steamworks::LeaderboardDataRequest::Global,
-                                1,
-                                1000,
-                                1,
-                                move |result| send.send(result).debug_unwrap(),
-                            );
-                            self.state = State::DownloadingEntries { receiver: recv };
-                        },
-                        Ok(None) => {
-                            self.state =
-                                State::Failed(LeaderboardLoadError::FailedToFindLeaderboard);
-                        },
-                        Err(e) => {
-                            self.state = State::Failed(LeaderboardLoadError::SteamError(
-                                Op::FindLeaderboard,
-                                e,
-                            ));
-                        },
-                    },
-                    Err(channel::TryRecvError::Empty) => {},
-                    Err(channel::TryRecvError::Disconnected) => {
-                        self.state = State::Failed(LeaderboardLoadError::ChannelDisconnected(
-                            Op::FindLeaderboard,
-                        ));
-                    },
-                },
-                State::DownloadingEntries { receiver } => match receiver.try_recv() {
-                    Ok(result) => {
-                        log::info!("Loaded entries: {:?}", result);
-                    },
-                    Err(channel::TryRecvError::Empty) => {},
-                    Err(channel::TryRecvError::Disconnected) => {
-                        self.state = State::Failed(LeaderboardLoadError::ChannelDisconnected(
-                            Op::LoadEntries,
-                        ));
-                    },
-                },
-                State::Loaded { .. } | State::Failed(..) => {},
+    fn consume_handle<F: FnOnce(Result<(), LeaderboardLoadError>) -> LoadStatus>(
+        &mut self,
+        status_fn: F,
+    ) {
+        let status = std::mem::replace(&mut self.status, LoadStatus::Uninitialized);
+        let val = if let LoadStatus::Loading(_, handle) = status {
+            try {
+                handle
+                    .join()
+                    .map_err(|e| LeaderboardLoadError::ThreadJoinError(e))??
             }
         } else {
-            self.state = State::Initial;
-        }
+            Ok(())
+        };
+        self.status = status_fn(val);
+    }
+
+    pub fn draw(&mut self, data: &mut TickData) {
         data.text_box(
             "Leaderboards",
-            &match &self.state {
-                State::Initial => "Use Steam version of the game for leaderboards".to_string(),
-                State::Loaded { .. } => "".to_string(),
-                State::Failed(e) => format!("Failed to get leaderboards. ({})", e),
-                _ => "Loading...".to_string(),
+            &match &self.status {
+                LoadStatus::Uninitialized =>
+                    "Use Steam version of the game for leaderboards".to_string(),
+                LoadStatus::Loaded(_) => "".to_string(),
+                LoadStatus::Failed(e) => format!("Failed to get leaderboards. ({})", e),
+                LoadStatus::Loading(..) => "Loading...".to_string(),
             },
             self.location,
             true,
         );
-        if let State::Loaded { data_points } = &self.state {
-            self.draw_ld(data, data_points);
+        match &self.status {
+            LoadStatus::Uninitialized => {
+                #[cfg(feature = "steam")]
+                if let Some(client) = &data.steam_client {
+                    let (level, client) = (self.level, client.clone());
+                    // TODO: Not always upload player data, only when it's not worse
+                    let stats = self.player_data.clone();
+                    let (send, recv) = channel::bounded(1);
+                    self.status = LoadStatus::Loading(
+                        recv,
+                        std::thread::spawn(move || {
+                            get_leaderboard_data(send, level, stats, client)
+                        }),
+                    );
+                }
+            },
+            LoadStatus::Loading(recv, _) => {
+                match recv.try_recv() {
+                    Ok(data) => self.consume_handle(|r| {
+                        r.debug_unwrap();
+                        LoadStatus::Loaded(data)
+                    }),
+                    Err(channel::TryRecvError::Disconnected) => self.consume_handle(|r| {
+                        debug_assert!(r.is_err());
+                        LoadStatus::Failed(r.err().unwrap_or(LeaderboardLoadError::UnknownError))
+                    }),
+                    // Not done yet
+                    Err(channel::TryRecvError::Empty) => {},
+                }
+            },
+            LoadStatus::Loaded(data_points) => {
+                self.draw_ld(data, data_points);
+            },
+            LoadStatus::Failed(_) => {},
         }
     }
 }
