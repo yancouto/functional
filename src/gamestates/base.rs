@@ -78,13 +78,15 @@ where
 impl GameStateManager {
     pub fn new(first: Box<dyn GameState>, client: Option<SteamClient>) -> Self {
         log::info!("Starting on gamestate {}", first.name());
-        Self {
+        let this = Self {
             all_gs:       Vec1::new(GSData {
                 cur:  first,
                 time: Duration::default(),
             }),
             steam_client: client.map(Rc::new),
-        }
+        };
+        this.entered_gamestate();
+        this
     }
 
     fn process_events(&mut self, ctx: &mut bl::BTerm) -> EventTickData {
@@ -107,6 +109,20 @@ impl GameStateManager {
             }
         }
         data
+    }
+
+    fn entered_gamestate(&self) {
+        #[cfg(feature = "steam")]
+        if let Some(client) = &self.steam_client {
+            let ret = client
+                .friends()
+                .set_rich_presence("steam_display", Some("#StatusFull"));
+            let ret2 = client.friends().set_rich_presence(
+                "text",
+                Some(&format!("On {}", self.all_gs.last().cur.name())),
+            );
+            debug_assert!(ret && ret2);
+        }
     }
 
     pub fn tick(&mut self, ctx: &mut bl::BTerm) {
@@ -144,6 +160,7 @@ impl GameStateManager {
                 } else {
                     self.all_gs.push(new);
                 }
+                self.entered_gamestate();
             },
             GameStateEvent::Push(new) => {
                 log::info!("Pushing gamestate {} to stack", new.name());
@@ -152,6 +169,7 @@ impl GameStateManager {
                     time: Duration::default(),
                 };
                 self.all_gs.push(new);
+                self.entered_gamestate();
             },
             GameStateEvent::Pop(n) => {
                 debug_assert_ne!(n, 0, "Can't pop 0 gamestates, use None.");
@@ -164,6 +182,7 @@ impl GameStateManager {
                         Ok(gs) => log::info!("Popped gamestate {}", gs.cur.name()),
                     }
                 }
+                self.entered_gamestate();
             },
         }
     }

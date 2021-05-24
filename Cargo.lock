@@ -124,9 +124,9 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.57.0"
+version = "0.58.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd4865004a46a0aafb2a0a5eb19d3c9fc46ee5f063a6cfc605c69ac9ecf5263d"
+checksum = "0f8523b410d7187a43085e7e064416ea32ded16bd0a4e6fc025e21616d01258f"
 dependencies = [
  "bitflags",
  "cexpr",
@@ -2453,9 +2453,9 @@ dependencies = [
 
 [[package]]
 name = "shlex"
-version = "0.1.1"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fdf1b9db47230893d76faad238fd6097fd6d6a9245cd7a4d90dbd639536bbd2"
+checksum = "42a568c8f2cd051a4d283bd6eb0343ac214c1b0f1ac19f93e1175b2dee38c73d"
 
 [[package]]
 name = "signal-hook"
@@ -2534,12 +2534,10 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 [[package]]
 name = "steamworks"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "856c564f912a58990d6405a079070732661a39dd80aa8a8bf511261cb02f5f9f"
+source = "git+https://github.com/yancouto/steamworks-rs#97084720ceef03b3de22908fc7fc21ede10b90af"
 dependencies = [
  "bitflags",
  "lazy_static",
- "libc",
  "steamworks-sys",
  "thiserror",
 ]
@@ -2547,11 +2545,9 @@ dependencies = [
 [[package]]
 name = "steamworks-sys"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63d2db200ee3d85eea4acdda94bd06b8d416997c976eb86d35c2836bbd421c4a"
+source = "git+https://github.com/yancouto/steamworks-rs#97084720ceef03b3de22908fc7fc21ede10b90af"
 dependencies = [
  "bindgen",
- "libc",
 ]
 
 [[package]]

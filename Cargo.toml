@@ -36,8 +36,9 @@ strum = { version = "0.20", features = ["derive"] }
 clipboard = "0.5"
 derivative = "2"
 rayon = "1"
-steamworks = { version = "0.7", optional = true }
 textwrap = { version = "0.13", default-features = false }
+# I have some unmerged additions to this crate
+steamworks = { git = "https://github.com/yancouto/steamworks-rs", optional = true }
 
 [dependencies.bracket-lib]
 version = "0.8.1"
