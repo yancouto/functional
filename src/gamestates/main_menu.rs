@@ -1,5 +1,5 @@
 use super::{
-    base::*, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState
+    base::*, level_creator::LevelCreatorLevelListState, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState
 };
 use crate::{
     drawables::XiEditor, gamestates::playground::PlaygroundState, interpreter::ConstantProvider, prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor
@@ -8,6 +8,7 @@ use crate::{
 enum MenuItem {
     Play,
     Settings,
+    LevelCreator,
     ChangeProfile,
     Playground,
     Quit,
@@ -21,6 +22,7 @@ impl MenuItem {
             MenuItem::ChangeProfile => "change profile",
             MenuItem::Playground => "playground",
             MenuItem::Quit => "quit game",
+            MenuItem::LevelCreator => "level creator",
         }
     }
 
@@ -28,12 +30,13 @@ impl MenuItem {
         match self {
             MenuItem::Play =>
                 GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),
-            MenuItem::Settings => todo!(),
+            MenuItem::Settings => GameStateEvent::None,
             MenuItem::ChangeProfile => GameStateEvent::Switch(box ProfileSelectionState::new()),
             MenuItem::Playground => GameStateEvent::Push(box PlaygroundState::<XiEditor>::new(
                 String::new(),
                 ConstantProvider::all(),
             )),
+            MenuItem::LevelCreator => GameStateEvent::Push(box LevelCreatorLevelListState::new()),
             MenuItem::Quit => {
                 data.quit();
                 GameStateEvent::None
@@ -52,9 +55,10 @@ impl MainMenuState {
         Self {
             items: vec1![
                 MenuItem::Play,
+                MenuItem::Playground,
+                MenuItem::LevelCreator,
                 MenuItem::Settings,
                 MenuItem::ChangeProfile,
-                MenuItem::Playground,
                 MenuItem::Quit
             ]
             .into(),

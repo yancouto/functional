@@ -1,5 +1,6 @@
 use vec1::Vec1;
 
+#[derive(Debug)]
 pub struct VecWithCursor<T> {
     vec:    Vec1<T>,
     cursor: usize,

@@ -14,6 +14,12 @@ pub trait DebugUnwrapOrDefault<T: Default> {
     fn debug_unwrap_or_default(self) -> T;
 }
 
+pub trait DebugUnwrapOr<T> {
+    /// On debug mode, panic if the value can't be unwraped.
+    /// On production builds, returns the given value.
+    fn debug_unwrap_or(self, default: T) -> T;
+}
+
 impl<T> DebugUnwrap for Option<T> {
     fn debug_unwrap(self) { self.debug_expect("Optional has unexpected None value!"); }
 
@@ -37,6 +43,26 @@ impl<T: Default, E: std::fmt::Debug> DebugUnwrapOrDefault<T> for Result<T, E> {
             self.unwrap()
         } else {
             self.unwrap_or_default()
+        }
+    }
+}
+
+impl<T> DebugUnwrapOr<T> for Option<T> {
+    fn debug_unwrap_or(self, default: T) -> T {
+        if cfg!(debug_assertions) {
+            self.unwrap()
+        } else {
+            self.unwrap_or(default)
+        }
+    }
+}
+
+impl<T, E: std::fmt::Debug> DebugUnwrapOr<T> for Result<T, E> {
+    fn debug_unwrap_or(self, default: T) -> T {
+        if cfg!(debug_assertions) {
+            self.unwrap()
+        } else {
+            self.unwrap_or(default)
         }
     }
 }
