@@ -10,3 +10,4 @@ pub mod profile_selection;
 pub mod running_solution;
 pub mod save_loader;
 pub mod show_results;
+pub mod string_reader;
