@@ -4,7 +4,7 @@ use crossbeam::channel::Receiver;
 
 use super::super::base::*;
 use crate::{
-    drawables::black, gamestates::string_reader::StringReaderState, prelude::*, save_system::PROJECT_DIR, utils::vec_with_cursor::VecWithCursor
+    drawables::black, gamestates::{level_creator, string_reader::StringReaderState}, prelude::*, save_system::PROJECT_DIR, utils::vec_with_cursor::VecWithCursor
 };
 
 #[derive(Debug)]
@@ -45,6 +45,24 @@ impl LevelCreatorLevelListState {
             .debug_unwrap();
         self.levels = Vec1::try_from_vec(new_vec).ok().map(|v| v.into());
     }
+
+    fn go_to_level(&mut self, name: &str) -> GameStateEvent {
+        let dir = self.root.join(name);
+        GameStateEvent::Push(box level_creator::EditorState::new(dir))
+    }
+
+    fn create_level(&mut self, title: String) -> GameStateEvent {
+        if !self
+            .levels
+            .as_ref()
+            .map(|v| v.inner().iter().any(|s| *s == title))
+            .unwrap_or(false)
+        {
+            let dir = self.root.join(&title);
+            std::fs::create_dir_all(&dir).expect("Failed to create directory for level");
+        }
+        self.go_to_level(&title)
+    }
 }
 
 const CURSOR_J: i32 = 2;
@@ -82,12 +100,17 @@ impl GameState for LevelCreatorLevelListState {
             self.title_recv = Some(recv);
             return GameStateEvent::Push(box state);
         }
-        // Receiver should be ready after one tick, so we can steam the option
+        // Receiver should be ready after one tick, so we can steal the option
         if let Some(title) = self.title_recv.take().and_then(|r| r.try_recv().ok()) {
-            log::info!("Create new level with title {:?}", title);
-        }
-        if data.pressed_key == Some(Key::Return) {
-            todo!("Go to level editor screen")
+            title
+                .map(|t| self.create_level(t))
+                .unwrap_or(GameStateEvent::None)
+        } else if data.pressed_key == Some(Key::Return) {
+            self.levels
+                .as_ref()
+                .map(|v| v.get().clone())
+                .map(|name| self.go_to_level(&name))
+                .unwrap_or(GameStateEvent::None)
         } else if data.pressed_key == Some(Key::Escape) {
             GameStateEvent::Pop(1)
         } else {
