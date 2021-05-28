@@ -168,6 +168,8 @@ impl TextEditor for BasicTextEditor {
             );
         }
     }
+
+    fn rect(&self) -> &Rect { &self.rect }
 }
 
 impl BasicTextEditor {

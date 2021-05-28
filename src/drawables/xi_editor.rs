@@ -251,6 +251,8 @@ impl TextEditor for XiEditor {
             );
         }
     }
+
+    fn rect(&self) -> &Rect { &self.rect }
 }
 
 impl XiEditor {

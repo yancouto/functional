@@ -4,7 +4,7 @@ use crossbeam::channel::Receiver;
 
 use super::super::base::*;
 use crate::{
-    drawables::black, gamestates::{level_creator, string_reader::StringReaderState}, prelude::*, save_system::PROJECT_DIR, utils::vec_with_cursor::VecWithCursor
+    drawables::{black, XiEditor}, gamestates::{level_creator, string_reader::StringReaderState}, prelude::*, save_system::PROJECT_DIR, utils::vec_with_cursor::VecWithCursor
 };
 
 #[derive(Debug)]
@@ -48,7 +48,7 @@ impl LevelCreatorLevelListState {
 
     fn go_to_level(&mut self, name: &str) -> GameStateEvent {
         let dir = self.root.join(name);
-        GameStateEvent::Push(box level_creator::EditorState::new(dir))
+        GameStateEvent::Push(box level_creator::EditorState::<XiEditor>::new(dir))
     }
 
     fn create_level(&mut self, title: String) -> GameStateEvent {
