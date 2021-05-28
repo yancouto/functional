@@ -89,6 +89,31 @@ use prelude::*;
 #[cfg(feature = "steam")]
 const APP_ID: u32 = 1636730;
 
+const ICON_DATA: &[u8] = include_bytes!("inlined_assets/icon.bmp");
+
+fn maybe_load_icon() {
+    let result = bl::BACKEND
+        .lock()
+        .context_wrapper
+        .as_ref()
+        .map(|wrapped_ctx| {
+            bmp::from_reader(&mut ICON_DATA.clone()).map(|img| {
+                let mut data =
+                    Vec::with_capacity((img.get_height() * img.get_width() * 4) as usize);
+                for (x, y) in img.coordinates() {
+                    let bmp::Pixel { r, g, b } = img.get_pixel(x, y);
+                    data.append(&mut vec![r, g, b, 255]);
+                }
+                winit::window::Icon::from_rgba(data, img.get_width(), img.get_height())
+                    .map(|icon| wrapped_ctx.wc.window().set_window_icon(Some(icon)))
+            })
+        });
+    match result {
+        Some(Ok(Ok(()))) => {},
+        err @ _ => log::warn!("Failed to set icon correctly: {:?}", err),
+    }
+}
+
 fn main() -> bl::BError {
     let log_file = save_system::PROJECT_DIR.cache_dir().join("debug.log");
     println!("Writing debug logs to {:?}", log_file);
@@ -135,6 +160,7 @@ fn main() -> bl::BError {
         .with_advanced_input(true)
         .with_tile_dimensions(12, 12)
         .build()?;
+    maybe_load_icon();
     let first_state = || gamestates::profile_selection::try_load_default_profile();
     let gs = MainState {
         manager: gamestates::base::GameStateManager::new(

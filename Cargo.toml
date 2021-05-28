@@ -38,6 +38,9 @@ clipboard = "0.5"
 derivative = "2"
 rayon = "1"
 textwrap = { version = "0.13", default-features = false }
+bmp = "0.5"
+# Needs to be same version as on bracket-lib
+winit = ">= 0"
 # I have some unmerged additions to this crate
 steamworks = { git = "https://github.com/yancouto/steamworks-rs", optional = true }
 

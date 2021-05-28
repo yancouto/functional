@@ -1,0 +1,1 @@
+Files in this directory are directly embedded in code, via `include_bytes!`, so they're included in the binary and don't need to be shipped separately.

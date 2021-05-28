@@ -185,6 +185,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bmp"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69985ff4f58085ac696454692d0b646a66ad1f9cc9be294c91dc51bb5df511ae"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "bracket-algorithm-traits"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1047,6 +1056,7 @@ checksum = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
 name = "functional"
 version = "0.1.0"
 dependencies = [
+ "bmp",
  "bracket-lib",
  "build-deps",
  "clipboard",
@@ -1071,6 +1081,7 @@ dependencies = [
  "textwrap 0.13.4",
  "thiserror",
  "vec1",
+ "winit",
  "xi-core-lib",
  "xi-rpc",
 ]
