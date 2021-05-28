@@ -4,6 +4,7 @@ use crate::{gamestates::base::TickData, math::*, prelude::*};
 
 pub trait TextEditorInner {
     fn on_event(&mut self, event: &bl::BEvent, input: &bl::Input);
+    fn load_string(&mut self, str: String);
     fn load_file(&mut self, path: PathBuf) -> std::io::Result<()>;
     fn to_string(&self) -> String;
     fn draw(&mut self, data: &mut TickData);

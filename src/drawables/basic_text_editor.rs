@@ -177,6 +177,8 @@ impl TextEditorInner for BasicTextEditor {
     fn rect(&self) -> &Rect { &self.rect }
 
     fn set_cursor(&mut self, enable: bool) { self.cursor_enabled = enable; }
+
+    fn load_string(&mut self, str: String) { self.load_text(str); }
 }
 
 impl BasicTextEditor {

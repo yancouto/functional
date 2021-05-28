@@ -262,6 +262,8 @@ impl TextEditorInner for XiEditor {
     fn rect(&self) -> &Rect { &self.rect }
 
     fn set_cursor(&mut self, enable: bool) { self.cursor_enabled = enable; }
+
+    fn load_string(&mut self, _str: String) { unimplemented!() }
 }
 
 impl XiEditor {

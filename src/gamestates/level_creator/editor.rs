@@ -8,11 +8,21 @@ use crate::{
 };
 
 const WORKSHOP_FILE: &str = "workshop.yaml";
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct WorkshopConfig {
     title:        String,
     description:  String,
     published_id: Option<u64>,
+}
+
+impl Default for WorkshopConfig {
+    fn default() -> Self {
+        Self {
+            title:        "some title here".to_string(),
+            description:  "some description here".to_string(),
+            published_id: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,35 +51,45 @@ impl<Editor: TextEditor> EditorState<Editor> {
         let buttons_h = 3;
         let title_editor = BasicTextEditor::new(
             "Title".to_string(),
-            Rect::new(title_i + 2, 1, 20, 1),
-            "untitled".to_string(),
+            Rect::new(title_i + 2, 1, w - 5, 1),
+            String::new(),
         );
         let mut description_editor = BasicTextEditor::new(
             "Description".to_string(),
             Rect::new(desc_i + 2, 1, w, desc_h),
-            "Some description".to_string(),
+            String::new(),
         );
         description_editor.set_cursor(false);
         let mut main_editor = Editor::new(
             "Level config".to_string(),
             Rect::new(editor_i + 2, 1, w, H - editor_i - 3 - buttons_h),
-            "".to_string(),
+            String::new(),
         );
         main_editor.set_cursor(false);
-        Self {
+        let mut this = Self {
             root,
             title_editor,
             description_editor,
             main_editor,
             selected_editor: Editors::Title,
-        }
+        };
+        this.reload_config();
+        this
     }
 
     fn workshop_file(&self) -> PathBuf { self.root.join(WORKSHOP_FILE) }
 
+    fn reload_config(&mut self) {
+        let config = self.read_config();
+        self.title_editor.load_string(config.title);
+        self.description_editor.load_string(config.description);
+        // TODO: load main editor
+    }
+
     fn read_config(&self) -> WorkshopConfig {
         match std::fs::File::open(self.workshop_file()).map(|f| serde_yaml::from_reader(f)) {
             Ok(Ok(config)) => config,
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => WorkshopConfig::default(),
             err @ _ => {
                 log::warn!("Failed to read workshop config! {:?}", err);
                 debug_assert!(false);
