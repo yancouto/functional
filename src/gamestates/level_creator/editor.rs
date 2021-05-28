@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::super::base::*;
 use crate::{
-    drawables::{BasicTextEditor, TextEditor, TextEditorInner}, prelude::*
+    drawables::{black, BasicTextEditor, TextEditor, TextEditorInner}, prelude::*
 };
 
 const WORKSHOP_FILE: &str = "workshop.yaml";
@@ -18,8 +18,8 @@ struct WorkshopConfig {
 impl Default for WorkshopConfig {
     fn default() -> Self {
         Self {
-            title:        "some title here".to_string(),
-            description:  "some description here".to_string(),
+            title:        "".to_string(),
+            description:  "".to_string(),
             published_id: None,
         }
     }
@@ -98,8 +98,11 @@ impl<Editor: TextEditor> EditorState<Editor> {
         }
     }
 
-    fn write_config(&self, config: &WorkshopConfig) {
-        match std::fs::File::create(self.workshop_file()).map(|f| serde_yaml::to_writer(f, config))
+    fn save_config(&self) {
+        let mut config = self.read_config();
+        config.title = self.title_editor.to_string();
+        config.description = self.description_editor.to_string();
+        match std::fs::File::create(self.workshop_file()).map(|f| serde_yaml::to_writer(f, &config))
         {
             Ok(Ok(_)) => {},
             err @ _ => {
@@ -126,6 +129,8 @@ fn inside_consider_border(mouse: &Pos, rect: &Rect) -> bool {
     ))
 }
 
+const SAVE: &str = "Save";
+
 impl<Editor: TextEditor> GameState for EditorState<Editor> {
     fn name(&self) -> &'static str { "LevelEditor" }
 
@@ -133,7 +138,16 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         self.title_editor.draw(&mut data);
         self.description_editor.draw(&mut data);
         self.main_editor.draw(&mut data);
-        GameStateEvent::None
+
+        if data.button(SAVE, Pos::new(H - 3, 0), black()) {
+            self.save_config();
+        }
+
+        if data.pressed_key == Some(Key::Escape) {
+            GameStateEvent::Pop(1)
+        } else {
+            GameStateEvent::None
+        }
     }
 
     fn on_event(&mut self, event: bl::BEvent, input: &bl::Input) {
