@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::super::base::*;
 use crate::{
-    drawables::{BasicTextEditor, TextEditor}, prelude::*
+    drawables::{BasicTextEditor, TextEditor, TextEditorInner}, prelude::*
 };
 
 const WORKSHOP_FILE: &str = "workshop.yaml";
@@ -15,7 +15,7 @@ struct WorkshopConfig {
     published_id: Option<u64>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Editors {
     Title,
     Description,
@@ -39,23 +39,28 @@ impl<Editor: TextEditor> EditorState<Editor> {
         let desc_i = title_i + 4;
         let editor_i = desc_i + desc_h + 3;
         let buttons_h = 3;
+        let title_editor = BasicTextEditor::new(
+            "Title".to_string(),
+            Rect::new(title_i + 2, 1, 20, 1),
+            "untitled".to_string(),
+        );
+        let mut description_editor = BasicTextEditor::new(
+            "Description".to_string(),
+            Rect::new(desc_i + 2, 1, w, desc_h),
+            "Some description".to_string(),
+        );
+        description_editor.set_cursor(false);
+        let mut main_editor = Editor::new(
+            "Level config".to_string(),
+            Rect::new(editor_i + 2, 1, w, H - editor_i - 3 - buttons_h),
+            "".to_string(),
+        );
+        main_editor.set_cursor(false);
         Self {
             root,
-            title_editor: BasicTextEditor::new(
-                "Title".to_string(),
-                Rect::new(title_i + 2, 1, 20, 1),
-                "untitled".to_string(),
-            ),
-            description_editor: BasicTextEditor::new(
-                "Description".to_string(),
-                Rect::new(desc_i + 2, 1, w, desc_h),
-                "Some description".to_string(),
-            ),
-            main_editor: Editor::new(
-                "Level config".to_string(),
-                Rect::new(editor_i + 2, 1, w, H - editor_i - 3 - buttons_h),
-                "".to_string(),
-            ),
+            title_editor,
+            description_editor,
+            main_editor,
             selected_editor: Editors::Title,
         }
     }
@@ -83,6 +88,22 @@ impl<Editor: TextEditor> EditorState<Editor> {
             },
         }
     }
+
+    fn editor(&mut self) -> &mut dyn TextEditorInner {
+        match self.selected_editor {
+            Editors::Title => &mut self.title_editor,
+            Editors::Description => &mut self.description_editor,
+            Editors::Main => &mut self.main_editor,
+        }
+    }
+}
+fn inside_consider_border(mouse: &Pos, rect: &Rect) -> bool {
+    mouse.inside(&Rect::new(
+        rect.pos.i - 2,
+        rect.pos.j - 1,
+        rect.size.w + 2,
+        rect.size.h + 3,
+    ))
 }
 
 impl<Editor: TextEditor> GameState for EditorState<Editor> {
@@ -98,18 +119,21 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
     fn on_event(&mut self, event: bl::BEvent, input: &bl::Input) {
         if let bl::BEvent::MouseButtonDown { button: 0 } = event {
             let mouse = Pos::from_xy(input.mouse_tile_pos(0));
-            if mouse.inside(self.title_editor.rect()) {
-                self.selected_editor = Editors::Title;
-            } else if mouse.inside(self.description_editor.rect()) {
-                self.selected_editor = Editors::Description;
-            } else if mouse.inside(self.main_editor.rect()) {
-                self.selected_editor = Editors::Main;
+            let new_editor = if inside_consider_border(&mouse, self.title_editor.rect()) {
+                Some(Editors::Title)
+            } else if inside_consider_border(&mouse, self.description_editor.rect()) {
+                Some(Editors::Description)
+            } else if inside_consider_border(&mouse, self.main_editor.rect()) {
+                Some(Editors::Main)
+            } else {
+                None
+            };
+            if let Some(editor) = new_editor {
+                self.editor().set_cursor(false);
+                self.selected_editor = editor;
+                self.editor().set_cursor(true);
             }
         }
-        match self.selected_editor {
-            Editors::Title => self.title_editor.on_event(&event, &input),
-            Editors::Description => self.description_editor.on_event(&event, &input),
-            Editors::Main => self.main_editor.on_event(&event, &input),
-        }
+        self.editor().on_event(&event, input);
     }
 }

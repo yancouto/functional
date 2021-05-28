@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, path::PathBuf, time::Duration};
 
-use super::TextEditor;
+use super::{TextEditor, TextEditorInner};
 use crate::{gamestates::base::TickData, math::*, prelude::*};
 
 #[derive(Debug)]
@@ -10,6 +10,7 @@ pub struct BasicTextEditor {
     cursor:            Pos,
     text:              Vec1<Vec<char>>,
     cursor_blink_rate: Duration,
+    cursor_enabled:    bool,
 }
 
 impl BasicTextEditor {
@@ -50,9 +51,12 @@ impl TextEditor for BasicTextEditor {
             cursor: Pos { i: 0, j: 0 },
             text: vec1![vec![]],
             cursor_blink_rate: Duration::from_secs_f32(0.5),
+            cursor_enabled: true,
         }
     }
+}
 
+impl TextEditorInner for BasicTextEditor {
     fn on_event(&mut self, event: &bl::BEvent, _input: &bl::Input) {
         match event {
             bl::BEvent::Character { c } => {
@@ -142,7 +146,8 @@ impl TextEditor for BasicTextEditor {
     }
 
     fn draw(&mut self, data: &mut TickData) {
-        let cursor_on = (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
+        let cursor_on = self.cursor_enabled
+            && (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
         data.title_box(
             &self.title,
             Rect::new(
@@ -170,6 +175,8 @@ impl TextEditor for BasicTextEditor {
     }
 
     fn rect(&self) -> &Rect { &self.rect }
+
+    fn set_cursor(&mut self, enable: bool) { self.cursor_enabled = enable; }
 }
 
 impl BasicTextEditor {

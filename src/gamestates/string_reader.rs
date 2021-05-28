@@ -2,7 +2,7 @@ use crossbeam::channel::*;
 
 use super::base::*;
 use crate::{
-    drawables::{BasicTextEditor, TextEditor}, prelude::*
+    drawables::{BasicTextEditor, TextEditor, TextEditorInner}, prelude::*
 };
 
 #[derive(Debug)]

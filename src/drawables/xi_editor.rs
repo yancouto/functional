@@ -6,7 +6,7 @@ use xi_core_lib::rpc::{
     EditCommand, EditNotification, EditRequest, GestureType, LineRange, SelectionGranularity
 };
 
-use super::TextEditor;
+use super::{black, TextEditor, TextEditorInner};
 use crate::{gamestates::base::TickData, math::*, prelude::*, text_editor::interface::*};
 
 #[derive(Debug, Default, Clone)]
@@ -27,6 +27,7 @@ pub struct XiEditor {
     selections:        Vec<(Pos, Pos)>,
     text:              Vec<Line>,
     cursor_blink_rate: Duration,
+    cursor_enabled:    bool,
     view_id:           xi_core_lib::ViewId,
     send:              ClientMessageSender,
     recv:              ServerMessageReceiver,
@@ -59,6 +60,7 @@ impl TextEditor for XiEditor {
             cursor: Pos { i: 0, j: 0 },
             text: vec![],
             cursor_blink_rate: Duration::from_secs_f32(0.5),
+            cursor_enabled: true,
             send,
             recv,
             view_id: resp.0,
@@ -77,7 +79,9 @@ impl TextEditor for XiEditor {
         }));
         this
     }
+}
 
+impl TextEditorInner for XiEditor {
     fn on_event(&mut self, event: &bl::BEvent, input: &bl::Input) {
         use bl::VirtualKeyCode as K;
         let pressed = input.key_pressed_set();
@@ -208,7 +212,8 @@ impl TextEditor for XiEditor {
         while let Some(n) = self.recv.next_notif() {
             self.handle_notif(n);
         }
-        let cursor_on = (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
+        let cursor_on = self.cursor_enabled
+            && (data.time.div_duration_f32(self.cursor_blink_rate) as i32 % 2) == 0;
         data.title_box(
             &self.title,
             Rect::new(
@@ -243,16 +248,20 @@ impl TextEditor for XiEditor {
             }
         }
 
-        if cursor_on {
-            data.console.set_bg(
-                self.cursor.j + self.rect.pos.j,
-                self.cursor.i + self.rect.pos.i,
-                bl::RGBA::from_f32(1., 1., 1., 0.5),
-            );
-        }
+        data.console.set_bg(
+            self.cursor.j + self.rect.pos.j,
+            self.cursor.i + self.rect.pos.i,
+            if cursor_on {
+                bl::RGBA::from_f32(1., 1., 1., 0.5)
+            } else {
+                black()
+            },
+        );
     }
 
     fn rect(&self) -> &Rect { &self.rect }
+
+    fn set_cursor(&mut self, enable: bool) { self.cursor_enabled = enable; }
 }
 
 impl XiEditor {
