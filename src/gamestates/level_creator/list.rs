@@ -60,6 +60,7 @@ impl LevelCreatorLevelListState {
         {
             let dir = self.root.join(&title);
             std::fs::create_dir_all(&dir).expect("Failed to create directory for level");
+            self.reload();
         }
         self.go_to_level(&title)
     }

@@ -54,4 +54,6 @@ impl GameState for StringReaderState {
     fn on_event(&mut self, event: bl::BEvent, input: &bl::Input) {
         self.editor.on_event(&event, &input);
     }
+
+    fn clear_terminal(&self) -> bool { false }
 }

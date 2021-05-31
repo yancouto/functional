@@ -131,7 +131,9 @@ impl GameStateManager {
         self.all_gs.last_mut().time += time_passed;
         let event = with_current_console(ctx.active_console, |console| {
             let input = bl::INPUT.lock();
-            console.cls();
+            if self.all_gs.last().cur.clear_terminal() {
+                console.cls();
+            }
             let tick_data = TickData::new(
                 self.all_gs.last(),
                 event_data,
@@ -205,4 +207,5 @@ pub trait GameState {
     fn name(&self) -> &'static str;
     fn tick(&mut self, data: TickData) -> GameStateEvent;
     fn on_event(&mut self, _event: bl::BEvent, _input: &bl::Input) {}
+    fn clear_terminal(&self) -> bool { true }
 }
