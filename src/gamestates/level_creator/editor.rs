@@ -11,9 +11,9 @@ const WORKSHOP_FILE: &str = "workshop.yaml";
 const CONFIG_FILE: &str = "config.jsonnet";
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WorkshopConfig {
-    pub title:       String,
-    pub description: String,
-    published_id:    Option<u64>,
+    pub title:        String,
+    pub description:  String,
+    pub published_id: Option<u64>,
 }
 
 impl Default for WorkshopConfig {

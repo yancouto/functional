@@ -17,13 +17,15 @@ pub enum ValidationError {
 
 pub fn validate(workshop: WorkshopConfig, config: PathBuf) -> Result<(), ValidationError> {
     if workshop.title.is_empty() {
-        return Err(ValidationError::EmptyTitle);
+        Err(ValidationError::EmptyTitle)?;
     } else if workshop.description.is_empty() {
-        return Err(ValidationError::EmptyDescription);
+        Err(ValidationError::EmptyDescription)?;
     }
     let mut vm = JsonnetVm::new();
-    vm.evaluate_file(config)
-        .map_err(|err| ValidationError::JsonnetError(err.to_string()))?;
+    let _str = match vm.evaluate_file(config) {
+        Ok(str) => str.to_string(),
+        Err(err) => Err(ValidationError::JsonnetError(err.to_string()))?,
+    };
     Ok(())
 }
 
@@ -58,4 +60,54 @@ impl GameState for ValidationState {
     }
 
     fn clear_terminal(&self) -> bool { false }
+}
+
+#[cfg(test)]
+mod test {
+    use std::io::Write;
+
+    use super::*;
+
+    fn workshop() -> WorkshopConfig {
+        WorkshopConfig {
+            title: "a".to_string(),
+            description: "b".to_string(),
+            ..Default::default()
+        }
+    }
+
+    fn validate_with_json(json: &str) -> Result<(), ValidationError> {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        write!(file.as_file_mut(), "{}", json).unwrap();
+        validate(workshop(), file.path().to_owned())
+    }
+
+    #[test]
+    fn validation_errors() {
+        assert_matches!(
+            validate(WorkshopConfig::default(), PathBuf::new()),
+            Err(ValidationError::EmptyTitle)
+        );
+        assert_matches!(
+            validate(
+                WorkshopConfig {
+                    title: "a".to_string(),
+                    ..Default::default()
+                },
+                PathBuf::new()
+            ),
+            Err(ValidationError::EmptyDescription)
+        );
+        assert_matches!(
+            validate_with_json("not a json"),
+            Err(ValidationError::JsonnetError(..))
+        );
+    }
+
+    #[test]
+    fn validation_ok() {
+        assert_matches!(validate_with_json("{}"), Ok(()));
+        assert_matches!(validate_with_json(r#"{"a": "b"}"#), Ok(()));
+        assert_matches!(validate_with_json(r#"{a: "b"}"#), Ok(()));
+    }
 }
