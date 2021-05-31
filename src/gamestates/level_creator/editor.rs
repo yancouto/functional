@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -8,6 +8,7 @@ use crate::{
 };
 
 const WORKSHOP_FILE: &str = "workshop.yaml";
+const CONFIG_FILE: &str = "config.jsonnet";
 #[derive(Debug, Serialize, Deserialize)]
 struct WorkshopConfig {
     title:        String,
@@ -39,6 +40,7 @@ pub struct EditorState<Editor: TextEditor> {
     description_editor: BasicTextEditor,
     main_editor:        Editor,
     selected_editor:    Editors,
+    exiting:            bool,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
@@ -72,6 +74,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             description_editor,
             main_editor,
             selected_editor: Editors::Title,
+            exiting: false,
         };
         this.reload_config();
         this
@@ -79,11 +82,15 @@ impl<Editor: TextEditor> EditorState<Editor> {
 
     fn workshop_file(&self) -> PathBuf { self.root.join(WORKSHOP_FILE) }
 
+    fn config_file(&self) -> PathBuf { self.root.join(CONFIG_FILE) }
+
     fn reload_config(&mut self) {
         let config = self.read_config();
         self.title_editor.load_string(config.title);
         self.description_editor.load_string(config.description);
-        // TODO: load main editor
+        self.main_editor
+            .load_file(self.config_file())
+            .debug_unwrap();
     }
 
     fn read_config(&self) -> WorkshopConfig {
@@ -110,6 +117,9 @@ impl<Editor: TextEditor> EditorState<Editor> {
                 debug_assert!(false);
             },
         }
+        std::fs::File::create(self.config_file())
+            .and_then(|mut f| write!(f, "{}", self.main_editor.to_string()))
+            .debug_expect("Failed to write config file.");
     }
 
     fn editor(&mut self) -> &mut dyn TextEditorInner {
@@ -130,6 +140,7 @@ fn inside_consider_border(mouse: &Pos, rect: &Rect) -> bool {
 }
 
 const SAVE: &str = "Save";
+const RELOAD: &str = "Reload";
 
 impl<Editor: TextEditor> GameState for EditorState<Editor> {
     fn name(&self) -> &'static str { "LevelEditor" }
@@ -142,15 +153,38 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         if data.button(SAVE, Pos::new(H - 3, 0), black()) {
             self.save_config();
         }
-
-        if data.pressed_key == Some(Key::Escape) {
-            GameStateEvent::Pop(1)
-        } else {
-            GameStateEvent::None
+        if data.button(RELOAD, Pos::new(H - 3, SAVE.len() as i32 + 2), black()) {
+            self.reload_config();
         }
+
+        data.instructions(&["Press ESC to go back"]);
+
+        if self.exiting {
+            let but = data.box_with_options(
+                "Exiting",
+                "Do you want to save your changes?",
+                Rect::centered(30, 20),
+                &["Save", "Discard", "Cancel"],
+            );
+            if but == Some(0) {
+                self.save_config();
+                return GameStateEvent::Pop(1);
+            } else if but == Some(1) {
+                return GameStateEvent::Pop(1);
+            } else if but == Some(2) {
+                self.exiting = false;
+            }
+        }
+        if data.pressed_key == Some(Key::Escape) {
+            self.exiting = !self.exiting;
+        }
+        GameStateEvent::None
     }
 
     fn on_event(&mut self, event: bl::BEvent, input: &bl::Input) {
+        if self.exiting {
+            return;
+        }
         if let bl::BEvent::MouseButtonDown { button: 0 } = event {
             let mouse = Pos::from_xy(input.mouse_tile_pos(0));
             let new_editor = if inside_consider_border(&mouse, self.title_editor.rect()) {
