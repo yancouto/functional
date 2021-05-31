@@ -2,7 +2,7 @@ use std::{io::Write, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use super::super::base::*;
+use super::{super::base::*, validate, ValidationState};
 use crate::{
     drawables::{black, BasicTextEditor, TextEditor, TextEditorInner}, prelude::*
 };
@@ -10,10 +10,10 @@ use crate::{
 const WORKSHOP_FILE: &str = "workshop.yaml";
 const CONFIG_FILE: &str = "config.jsonnet";
 #[derive(Debug, Serialize, Deserialize)]
-struct WorkshopConfig {
-    title:        String,
-    description:  String,
-    published_id: Option<u64>,
+pub struct WorkshopConfig {
+    pub title:       String,
+    pub description: String,
+    published_id:    Option<u64>,
 }
 
 impl Default for WorkshopConfig {
@@ -141,6 +141,7 @@ fn inside_consider_border(mouse: &Pos, rect: &Rect) -> bool {
 
 const SAVE: &str = "Save";
 const RELOAD: &str = "Reload";
+const VALIDATE: &str = "Validate";
 
 impl<Editor: TextEditor> GameState for EditorState<Editor> {
     fn name(&self) -> &'static str { "LevelEditor" }
@@ -156,8 +157,22 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         if data.button(RELOAD, Pos::new(H - 3, SAVE.len() as i32 + 2), black()) {
             self.reload_config();
         }
+        if data.button(
+            VALIDATE,
+            Pos::new(H - 3, (SAVE.len() + RELOAD.len()) as i32 + 4),
+            black(),
+        ) || (data.ctrl && data.pressed_key == Some(Key::Return))
+        {
+            self.save_config();
+            return GameStateEvent::Push(box ValidationState::new(
+                validate(self.read_config(), self.config_file()).err(),
+            ));
+        }
 
-        data.instructions(&["Press ESC to go back"]);
+        data.instructions(&[
+            "Press CTRL+ENTER or the button to validate",
+            "Press ESC to go back",
+        ]);
 
         if self.exiting {
             let but = data.box_with_options(

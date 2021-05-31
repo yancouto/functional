@@ -116,8 +116,8 @@ impl GameState for LevelCreatorLevelListState {
             GameStateEvent::Pop(1)
         } else {
             match self.levels.as_mut().zip(data.pressed_key) {
-                Some((v, Key::Down)) => v.cursor_decrement(),
-                Some((v, Key::Up)) => v.cursor_increment(),
+                Some((v, Key::Up)) => v.cursor_decrement(),
+                Some((v, Key::Down)) => v.cursor_increment(),
                 _ => {},
             }
             GameStateEvent::None
