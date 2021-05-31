@@ -24,7 +24,7 @@ serde = { version = "1", features = ["derive"] }
 directories = "3"
 log = "0.4"
 simplelog = "0.10.0"
-vec1 = "1"
+vec1 = {version = "1", features = ["serde"]}
 savefile = "0.7"
 savefile-derive = "0.7"
 parking_lot = "0.11"

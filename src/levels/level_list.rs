@@ -9,8 +9,8 @@ pub struct JLevel {
     pub name:                   String,
     pub description:            String,
     pub extra_info:             Option<String>,
-    pub test_cases:             Vec<(String, String)>,
-    pub solutions:              Vec<String>,
+    pub test_cases:             Vec1<(String, String)>,
+    pub solutions:              Vec1<String>,
     #[serde(default)]
     pub wrong_solutions:        Vec<String>,
     #[serde(default)]
@@ -27,14 +27,14 @@ pub struct JLevel {
 #[serde(deny_unknown_fields)]
 pub struct JSection {
     pub name:   SectionName,
-    pub levels: Vec<JLevel>,
+    pub levels: Vec1<JLevel>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct JLevelConfig {
-    pub sections: Vec<JSection>,
-    pub tests:    Vec<(String, String)>,
+    pub sections: Vec1<JSection>,
+    pub tests:    Vec1<(String, String)>,
 }
 
 const RAW_LEVEL_CONFIG: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/level_config.json"));
@@ -45,47 +45,36 @@ pub fn raw_load_level_config() -> JLevelConfig {
 
 fn load_all() -> Vec1<Section> {
     let config = raw_load_level_config();
-    Vec1::try_from_vec(
-        config
-            .sections
-            .into_iter()
-            .map(|s| {
-                let section_name = s.name;
-                Section {
-                    name:   s.name,
-                    levels: Vec1::try_from_vec(
-                        s.levels
-                            .into_iter()
-                            .enumerate()
-                            .map(|(idx, l)| {
-                                if l.extra_info_is_hint {
-                                    debug_assert!(l.extra_info.is_some());
-                                }
-                                Level {
-                                    idx,
-                                    name: l.name,
-                                    description: l.description,
-                                    extra_info: l.extra_info,
-                                    section: section_name,
-                                    test_cases: l
-                                        .test_cases
-                                        .into_iter()
-                                        .map(|t| TestCase::from(&t.0, &t.1))
-                                        .collect(),
-                                    solutions: l.solutions,
-                                    wrong_solutions: l.wrong_solutions,
-                                    show_constants: l.show_constants,
-                                    extra_info_is_hint: l.extra_info_is_hint,
-                                }
-                            })
-                            .collect(),
-                    )
-                    .unwrap(),
-                }
-            })
-            .collect(),
-    )
-    .unwrap()
+    config.sections.mapped(|s| {
+        let section_name = s.name;
+        Section {
+            name:   s.name,
+            levels: Vec1::try_from_vec(
+                s.levels
+                    .into_iter()
+                    .enumerate()
+                    .map(|(idx, l)| {
+                        if l.extra_info_is_hint {
+                            debug_assert!(l.extra_info.is_some());
+                        }
+                        Level {
+                            idx,
+                            name: l.name,
+                            description: l.description,
+                            extra_info: l.extra_info,
+                            section: section_name,
+                            test_cases: l.test_cases.mapped(|t| TestCase::from(&t.0, &t.1)),
+                            solutions: l.solutions,
+                            wrong_solutions: l.wrong_solutions,
+                            show_constants: l.show_constants,
+                            extra_info_is_hint: l.extra_info_is_hint,
+                        }
+                    })
+                    .collect(),
+            )
+            .unwrap(),
+        }
+    })
 }
 
 #[derive(

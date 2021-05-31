@@ -26,8 +26,8 @@ pub struct Level {
     /// index of the level in the section
     pub idx:                usize,
     pub extra_info:         Option<String>,
-    pub test_cases:         Vec<TestCase>,
-    pub solutions:          Vec<String>,
+    pub test_cases:         Vec1<TestCase>,
+    pub solutions:          Vec1<String>,
     pub wrong_solutions:    Vec<String>,
     pub show_constants:     bool,
     pub extra_info_is_hint: bool,
