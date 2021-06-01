@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use jsonnet::JsonnetVm;
+use serde::{Deserialize, Serialize};
 
 use super::{super::base::*, UserLevelConfig, WorkshopConfig};
 use crate::{
@@ -50,7 +51,7 @@ impl UserLevelConfig {
             })
     }
 
-    fn validate(&self) -> Result<(), ValidationError> {
+    fn validate(self, workshop: WorkshopConfig) -> Result<ParsedUserLevelConfig, ValidationError> {
         if self.extra_info.is_some() && self.hint.is_some() {
             Err(ValidationError::HasExtraInfoAndHint)?
         }
@@ -121,11 +122,32 @@ impl UserLevelConfig {
                 }
             })?;
 
-        Ok(())
+        Ok(ParsedUserLevelConfig {
+            name:               self.name.unwrap_or(workshop.title),
+            description:        self.description.unwrap_or(workshop.description),
+            extra_info_is_hint: self.hint.is_some(),
+            extra_info:         self.extra_info.or(self.hint),
+            test_cases:         self.test_cases,
+            extra_constants:    self.extra_constants,
+        })
     }
 }
 
-pub fn validate(workshop: WorkshopConfig, config: PathBuf) -> Result<(), ValidationError> {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ParsedUserLevelConfig {
+    name:               String,
+    description:        String,
+    extra_info:         Option<String>,
+    extra_info_is_hint: bool,
+    test_cases:         Vec1<(String, String)>,
+    #[serde(default)]
+    extra_constants:    Vec<(String, String)>,
+}
+
+pub fn validate(
+    workshop: WorkshopConfig,
+    config: PathBuf,
+) -> Result<ParsedUserLevelConfig, ValidationError> {
     if workshop.title.is_empty() {
         Err(ValidationError::EmptyTitle)?;
     } else if workshop.description.is_empty() {
@@ -137,7 +159,7 @@ pub fn validate(workshop: WorkshopConfig, config: PathBuf) -> Result<(), Validat
         Err(err) => Err(ValidationError::JsonnetError(err.to_string()))?,
     };
     let config: UserLevelConfig = serde_json::from_str(&str)?;
-    config.validate()
+    config.validate(workshop)
 }
 
 #[derive(Debug)]
@@ -190,7 +212,8 @@ mod test {
     fn validate_with_json(json: &str) -> Result<(), ValidationError> {
         let mut file = tempfile::NamedTempFile::new().unwrap();
         write!(file.as_file_mut(), "{}", json).unwrap();
-        validate(workshop(), file.path().to_owned())
+        validate(workshop(), file.path().to_owned())?;
+        Ok(())
     }
 
     #[test]

@@ -39,5 +39,8 @@ pub struct UserLevelConfig {
     #[serde(default)]
     /// This is an optional list of additional constants the player may use. By default the
     /// user knows all constants from the game.
+    ///
+    /// Constants are two-element arrays. First element is the name, which must be UPPER_CASE.
+    /// Second element is the constant term.
     pub extra_constants: Vec<(String, String)>,
 }
