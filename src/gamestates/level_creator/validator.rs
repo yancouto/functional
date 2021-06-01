@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use jsonnet::JsonnetVm;
 
-use super::{super::base::*, WorkshopConfig};
+use super::{super::base::*, UserLevelConfig, WorkshopConfig};
 use crate::prelude::*;
 
 #[derive(thiserror::Error, Debug)]
@@ -13,6 +13,8 @@ pub enum ValidationError {
     EmptyDescription,
     #[error("Error reading config: {0}")]
     JsonnetError(String),
+    #[error("Error parsing JSON config: {0}")]
+    ParseError(#[from] serde_json::Error),
 }
 
 pub fn validate(workshop: WorkshopConfig, config: PathBuf) -> Result<(), ValidationError> {
@@ -22,10 +24,11 @@ pub fn validate(workshop: WorkshopConfig, config: PathBuf) -> Result<(), Validat
         Err(ValidationError::EmptyDescription)?;
     }
     let mut vm = JsonnetVm::new();
-    let _str = match vm.evaluate_file(config) {
+    let str = match vm.evaluate_file(config) {
         Ok(str) => str.to_string(),
         Err(err) => Err(ValidationError::JsonnetError(err.to_string()))?,
     };
+    let _config: UserLevelConfig = serde_json::from_str(&str)?;
     Ok(())
 }
 
@@ -102,12 +105,17 @@ mod test {
             validate_with_json("not a json"),
             Err(ValidationError::JsonnetError(..))
         );
+        assert_matches!(
+            validate_with_json(r#"{"test_cases": [["f:A", "A"]]}"#),
+            Err(ValidationError::ParseError(..))
+        );
     }
 
     #[test]
     fn validation_ok() {
-        assert_matches!(validate_with_json("{}"), Ok(()));
-        assert_matches!(validate_with_json(r#"{"a": "b"}"#), Ok(()));
-        assert_matches!(validate_with_json(r#"{a: "b"}"#), Ok(()));
+        assert_matches!(
+            validate_with_json(r#"{"test_cases": [["f:A", "A"]], "solutions": ["x:x"]}"#),
+            Ok(())
+        );
     }
 }
