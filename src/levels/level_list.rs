@@ -61,7 +61,7 @@ fn load_all() -> Vec1<Section> {
                         description: l.description,
                         extra_info: l.extra_info,
                         section: section_name,
-                        test_cases: l.test_cases.mapped(|t| TestCase::from(&t.0, &t.1)),
+                        test_cases: l.test_cases.mapped(|t| TestCase::from_or_fail(&t.0, &t.1)),
                         solutions: l.solutions,
                         wrong_solutions: l.wrong_solutions,
                         show_constants: l.show_constants,

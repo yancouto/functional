@@ -53,14 +53,21 @@ impl TestCaseRun {
 }
 
 impl TestCase {
-    pub fn from(application: &str, result: &str) -> Self {
+    pub fn from(application: Box<Node>, expected_result: Box<Node>) -> Self {
         Self {
-            application:     parse_or_fail(application),
+            application,
+            expected_result,
+        }
+    }
+
+    pub fn from_or_fail(application: &str, result: &str) -> Self {
+        Self::from(
+            parse_or_fail(application),
             // fine to use all here since this is not user supplied
-            expected_result: interpret(parse_or_fail(result), false, ConstantProvider::all())
+            interpret(parse_or_fail(result), false, ConstantProvider::all())
                 .expect("Failed to interpret result")
                 .term,
-        }
+        )
     }
 
     fn test_expression(&self, expression: Box<Node>) -> Box<Node> {
@@ -70,7 +77,7 @@ impl TestCase {
         }
     }
 
-    fn test(&self, expression: Box<Node>, provider: ConstantProvider) -> TestCaseRun {
+    pub fn test(&self, expression: Box<Node>, provider: ConstantProvider) -> TestCaseRun {
         let test_expression = self.test_expression(expression);
         let result = interpret(test_expression.clone(), false, provider);
         TestCaseRun {
