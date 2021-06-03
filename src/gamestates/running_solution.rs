@@ -9,13 +9,13 @@ use crate::{
 #[derive(Debug)]
 pub struct RunningSolutionState {
     level:        Level,
-    save_profile: Rc<SaveProfile>,
+    save_profile: Arc<SaveProfile>,
     handle:       thread::JoinHandle<()>,
     receiver:     channel::Receiver<TestRunResults>,
 }
 
 impl RunningSolutionState {
-    pub fn new(level: Level, code: String, save_profile: Rc<SaveProfile>) -> Self {
+    pub fn new(level: Level, code: String, save_profile: Arc<SaveProfile>) -> Self {
         let (sender, receiver) = channel::bounded(0);
         let provider = ConstantProvider::new(level.clone(), save_profile.clone());
         let handle = std::thread::spawn({

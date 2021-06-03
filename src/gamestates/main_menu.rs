@@ -47,11 +47,11 @@ impl MenuItem {
 
 pub struct MainMenuState {
     items:        VecWithCursor<MenuItem>,
-    save_profile: Rc<SaveProfile>,
+    save_profile: Arc<SaveProfile>,
 }
 
 impl MainMenuState {
-    pub fn new(save_profile: Rc<SaveProfile>) -> Self {
+    pub fn new(save_profile: Arc<SaveProfile>) -> Self {
         Self {
             items: vec1![
                 MenuItem::Play,

@@ -112,7 +112,7 @@ struct Interpreter {
     fully_resolve:       bool,
     yield_intermediates: bool,
     provider:            ConstantProvider,
-    reductions:          Rc<AtomicU32>,
+    reductions:          Arc<AtomicU32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -253,7 +253,7 @@ pub fn interpret(
     fully_resolve: bool,
     provider: ConstantProvider,
 ) -> Result<Interpreted, InterpretError> {
-    let reductions = Rc::new(AtomicU32::new(0));
+    let reductions = Arc::new(AtomicU32::new(0));
     let mut gen = Interpreter {
         fully_resolve,
         yield_intermediates: false,
@@ -310,7 +310,7 @@ pub fn interpret_itermediates(
             fully_resolve,
             yield_intermediates: true,
             provider,
-            reductions: Rc::new(AtomicU32::new(0)),
+            reductions: Arc::new(AtomicU32::new(0)),
         }
         .interpret(0, root),
         finished: false,

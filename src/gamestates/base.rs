@@ -27,7 +27,7 @@ pub struct TickData<'a> {
     /// Current keys pressed
     pub keys_pressed: &'a HashSet<bl::VirtualKeyCode>,
     /// Steam client
-    pub steam_client: Option<Rc<SteamClient>>,
+    pub steam_client: Option<Arc<SteamClient>>,
     ctx:              &'a mut bl::BTerm,
 }
 
@@ -38,7 +38,7 @@ impl<'a> TickData<'a> {
         console: &'a mut Box<dyn bl::Console>,
         ctx: &'a mut bl::BTerm,
         input: &'a bl::Input,
-        steam_client: Option<Rc<SteamClient>>,
+        steam_client: Option<Arc<SteamClient>>,
     ) -> Self {
         TickData {
             time: data.time,
@@ -64,7 +64,7 @@ pub type SteamClient = ();
 
 pub struct GameStateManager {
     all_gs:       Vec1<GSData>,
-    steam_client: Option<Rc<SteamClient>>,
+    steam_client: Option<Arc<SteamClient>>,
 }
 
 // Will we ever need two consoles?
@@ -83,7 +83,7 @@ impl GameStateManager {
                 cur:  first,
                 time: Duration::default(),
             }),
-            steam_client: client.map(Rc::new),
+            steam_client: client.map(Arc::new),
         };
         this.entered_gamestate();
         this

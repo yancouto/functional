@@ -2,8 +2,7 @@
 
 pub const W: i32 = 130;
 pub const H: i32 = 80;
-// Ugly, TODO: remove
-pub type Rc<T> = std::sync::Arc<T>;
+pub use std::sync::Arc;
 
 pub use bl::VirtualKeyCode as Key;
 pub use bracket_lib::prelude as bl;

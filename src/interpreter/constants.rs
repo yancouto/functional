@@ -132,7 +132,7 @@ struct CompletionData {
     // Level this constant data is for
     level:   Level,
     // Save profile with list of completed levels
-    profile: Rc<SaveProfile>,
+    profile: Arc<SaveProfile>,
 }
 
 #[derive(Debug, Clone)]
@@ -143,7 +143,7 @@ pub struct ConstantProvider {
 }
 
 impl ConstantProvider {
-    pub fn new(current_level: Level, profile: Rc<SaveProfile>) -> Self {
+    pub fn new(current_level: Level, profile: Arc<SaveProfile>) -> Self {
         Self {
             numerals:        match &current_level {
                 Level::GameLevel(gl) =>
@@ -209,7 +209,7 @@ impl ConstantProvider {
 }
 
 impl Level {
-    pub fn all_known_constants(&self, save_profile: Rc<SaveProfile>) -> Vec<&'static str> {
+    pub fn all_known_constants(&self, save_profile: Arc<SaveProfile>) -> Vec<&'static str> {
         match self {
             Level::GameLevel(gl) =>
                 if gl.show_constants {
@@ -239,20 +239,20 @@ mod test {
     fn test_provider() {
         let p0 = ConstantProvider::new(
             (&LEVELS[1].levels[0]).into(),
-            Rc::new(SaveProfile::fake(vec![])),
+            Arc::new(SaveProfile::fake(vec![])),
         );
         assert!(p0.get("TRUE").is_some());
         assert!(p0.get("IF").is_none());
         let p1 = ConstantProvider::new(
             (&LEVELS[1].levels[1]).into(),
-            Rc::new(SaveProfile::fake(vec!["if"])),
+            Arc::new(SaveProfile::fake(vec!["if"])),
         );
         assert!(p1.get("TRUE").is_some());
         assert!(p1.get("IF").is_some());
         assert!(p1.get("NOT").is_none());
         let p2 = ConstantProvider::new(
             (&LEVELS[1].levels[2]).into(),
-            Rc::new(SaveProfile::fake(vec!["not"])),
+            Arc::new(SaveProfile::fake(vec!["not"])),
         );
         assert!(p2.get("NOT").is_some());
         assert!(p2.get("IF").is_none());

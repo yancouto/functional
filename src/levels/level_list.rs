@@ -176,7 +176,7 @@ mod test {
                             ConstantProvider::new(
                                 l.into(),
                                 // Let's assume we have solved all levels so far.
-                                Rc::new(SaveProfile::fake(all_levels_so_far.clone())),
+                                Arc::new(SaveProfile::fake(all_levels_so_far.clone())),
                             ),
                         )
                         .expect(&format!(
@@ -273,7 +273,7 @@ mod test {
                 base::{with_current_console, EventTickData, GSData, TickData}, editor::EditorState
             }, save_system::SaveProfile
         };
-        let fake_profile = Rc::new(SaveProfile::fake(vec![]));
+        let fake_profile = Arc::new(SaveProfile::fake(vec![]));
         let mut term = fake_bterm();
         bl::BACKEND_INTERNAL
             .lock()

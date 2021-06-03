@@ -10,11 +10,11 @@ pub struct LevelSelectionState<'a> {
     sections:     VecWithCursor<&'a Section>,
     /// Index of selected level inside section
     level_i:      Option<usize>,
-    save_profile: Rc<SaveProfile>,
+    save_profile: Arc<SaveProfile>,
 }
 
 impl LevelSelectionState<'static> {
-    pub fn new(save_profile: Rc<SaveProfile>) -> Self {
+    pub fn new(save_profile: Arc<SaveProfile>) -> Self {
         LevelSelectionState {
             sections: Vec1::try_from_vec(LEVELS.iter().map(|x| x).collect())
                 .unwrap()

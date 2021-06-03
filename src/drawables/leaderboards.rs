@@ -115,7 +115,7 @@ fn get_leaderboard_data(
     sender: channel::Sender<LdData>,
     level: Level,
     upload_score: Option<AccStats>,
-    client: Rc<SteamClient>,
+    client: Arc<SteamClient>,
     friend_sender: channel::Sender<FriendResult>,
 ) -> Result<(), LeaderboardLoadError> {
     log::info!("Finding or creating leaderboard");

@@ -5,7 +5,7 @@ use crate::{
 #[derive(Debug)]
 pub struct ShowResultsState {
     level:        Level,
-    save_profile: Rc<SaveProfile>,
+    save_profile: Arc<SaveProfile>,
     results:      TestRunResults,
     leaderboards: Leaderboards,
 }
@@ -15,7 +15,7 @@ const LDB_W: i32 = 40;
 const BOX_H: i32 = 30;
 
 impl ShowResultsState {
-    pub fn new(level: Level, results: TestRunResults, save_profile: Rc<SaveProfile>) -> Self {
+    pub fn new(level: Level, results: TestRunResults, save_profile: Arc<SaveProfile>) -> Self {
         save_profile.mark_level_as_tried(&level.base().name, get_result(&results));
         let stats = match get_result(&results) {
             LevelResult::Success { stats } => Some(stats),

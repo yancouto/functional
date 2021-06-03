@@ -10,14 +10,14 @@ pub struct EditorState<Editor: TextEditor> {
     level:            Level,
     editor:           Editor,
     current_solution: u8,
-    save_profile:     Rc<SaveProfile>,
+    save_profile:     Arc<SaveProfile>,
     last_save:        Duration,
     known_constants:  Option<Vec1<&'static str>>,
     pressed_hint:     bool,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
-    pub fn new(level: Level, save_profile: Rc<SaveProfile>) -> Self {
+    pub fn new(level: Level, save_profile: Arc<SaveProfile>) -> Self {
         let mut state = Self {
             save_profile: save_profile.clone(),
             known_constants: Vec1::try_from_vec(level.all_known_constants(save_profile)).ok(),
