@@ -40,10 +40,16 @@ pub struct GameLevel {
     pub show_constants:  bool,
 }
 
+#[derive(Debug)]
+pub struct UserCreatedLevel {
+    base: BaseLevel,
+}
+
 // This should be lightweight and easy to clone
 #[derive(Debug, Clone)]
 pub enum Level {
     GameLevel(&'static GameLevel),
+    UserCreatedLevel(Arc<UserCreatedLevel>),
 }
 
 impl From<&'static GameLevel> for Level {
@@ -54,6 +60,7 @@ impl Level {
     pub fn base(&self) -> &BaseLevel {
         match self {
             Level::GameLevel(gl) => &gl.base,
+            Level::UserCreatedLevel(uc) => &uc.base,
         }
     }
 }

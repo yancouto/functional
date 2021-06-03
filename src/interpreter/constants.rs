@@ -39,6 +39,8 @@ impl ConstantNode {
                             .map(|l| l.result.is_success())
                             .unwrap_or(false),
             },
+            // Allow all constants for now
+            Level::UserCreatedLevel(..) => true,
         }
     }
 }
@@ -152,6 +154,7 @@ impl ConstantProvider {
                     } else {
                         Numerals::None
                     },
+                Level::UserCreatedLevel(..) => Numerals::Church,
             },
             completion_data: Some(CompletionData {
                 level: current_level,
@@ -217,6 +220,8 @@ impl Level {
                 } else {
                     vec![]
                 },
+            Level::UserCreatedLevel(..) =>
+                ConstantProvider::new(self.clone(), save_profile).all_known_constants(),
         }
     }
 }
