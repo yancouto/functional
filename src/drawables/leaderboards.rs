@@ -28,7 +28,7 @@ pub struct Leaderboards {
     location:    Rect,
     player_data: Option<AccStats>,
     status:      LoadStatus,
-    level:       &'static Level,
+    level:       Level,
     friends:     FriendLeaderboard,
 }
 
@@ -113,7 +113,7 @@ fn get_common(data: &Vec<Vec<u32>>) -> u32 {
 #[cfg(feature = "steam")]
 fn get_leaderboard_data(
     sender: channel::Sender<LdData>,
-    level: &'static Level,
+    level: Level,
     upload_score: Option<AccStats>,
     client: Rc<SteamClient>,
     friend_sender: channel::Sender<FriendResult>,
@@ -121,7 +121,7 @@ fn get_leaderboard_data(
     log::info!("Finding or creating leaderboard");
     let (send, recv) = channel::bounded(1);
     client.user_stats().find_or_create_leaderboard(
-        &format!("level_{}", level.name),
+        &format!("level_{}", level.base().name),
         steamworks::LeaderboardSortMethod::Ascending,
         steamworks::LeaderboardDisplayType::Numeric,
         move |result| send.send(result).debug_unwrap(),
@@ -197,7 +197,7 @@ fn get_leaderboard_data(
 impl Leaderboards {
     pub fn new(
         location: Rect,
-        level: &'static Level,
+        level: Level,
         player_data: Option<AccStats>,
         friend_rect: Rect,
     ) -> Self {
@@ -338,8 +338,11 @@ impl Leaderboards {
         match &self.status {
             LoadStatus::Uninitialized => {
                 if let Some(client) = &data.steam_client {
-                    let (level, client, f_sender) =
-                        (self.level, client.clone(), self.friends.get_sender());
+                    let (level, client, f_sender) = (
+                        self.level.clone(),
+                        client.clone(),
+                        self.friends.get_sender(),
+                    );
                     // TODO: Not always upload player data, only when it's not worse
                     let stats = self.player_data.clone();
                     let (send, recv) = channel::bounded(1);

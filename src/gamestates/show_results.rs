@@ -4,7 +4,7 @@ use crate::{
 };
 #[derive(Debug)]
 pub struct ShowResultsState {
-    level:        &'static Level,
+    level:        Level,
     save_profile: Rc<SaveProfile>,
     results:      TestRunResults,
     leaderboards: Leaderboards,
@@ -15,12 +15,8 @@ const LDB_W: i32 = 40;
 const BOX_H: i32 = 30;
 
 impl ShowResultsState {
-    pub fn new(
-        level: &'static Level,
-        results: TestRunResults,
-        save_profile: Rc<SaveProfile>,
-    ) -> Self {
-        save_profile.mark_level_as_tried(&level.name, get_result(&results));
+    pub fn new(level: Level, results: TestRunResults, save_profile: Rc<SaveProfile>) -> Self {
+        save_profile.mark_level_as_tried(&level.base().name, get_result(&results));
         let stats = match get_result(&results) {
             LevelResult::Success { stats } => Some(stats),
             _ => None,
@@ -32,7 +28,7 @@ impl ShowResultsState {
             BOX_H,
         );
         Self {
-            level,
+            level: level.clone(),
             save_profile,
             results,
             leaderboards: Leaderboards::new(
@@ -90,7 +86,7 @@ impl GameState for ShowResultsState {
                     black(),
                 ) {
                     return GameStateEvent::Push(box DebuggerState::new(
-                        self.level,
+                        self.level.clone(),
                         self.save_profile.clone(),
                         run.clone(),
                     ));

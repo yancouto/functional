@@ -25,18 +25,20 @@ struct ConstantNode {
 
 impl ConstantNode {
     fn can_be_used(&self, data: &CompletionData) -> bool {
-        match &self.method {
-            DiscoveryMethod::BeforeLevel { section, lvl_idx } =>
-                (*section, *lvl_idx) <= (data.level.section, data.level.idx),
-            DiscoveryMethod::LevelCompleted { name, section } =>
-                *section <= data.level.section
-                    && *name != data.level.name
-                    && data
-                        .profile
-                        .get_levels_info()
-                        .get(name)
-                        .map(|l| l.result.is_success())
-                        .unwrap_or(false),
+        match data.level {
+            Level::GameLevel(gl) => match &self.method {
+                DiscoveryMethod::BeforeLevel { section, lvl_idx } =>
+                    (*section, *lvl_idx) <= (gl.section, gl.idx),
+                DiscoveryMethod::LevelCompleted { name, section } =>
+                    *section <= gl.section
+                        && *name != gl.base.name
+                        && data
+                            .profile
+                            .get_levels_info()
+                            .get(name)
+                            .map(|l| l.result.is_success())
+                            .unwrap_or(false),
+            },
         }
     }
 }
@@ -128,7 +130,7 @@ impl Numerals {
 #[derive(Debug, Clone)]
 struct CompletionData {
     // Level this constant data is for
-    level:   &'static Level,
+    level:   Level,
     // Save profile with list of completed levels
     profile: Rc<SaveProfile>,
 }
@@ -141,17 +143,20 @@ pub struct ConstantProvider {
 }
 
 impl ConstantProvider {
-    pub fn new(current_level: &'static Level, profile: Rc<SaveProfile>) -> Self {
+    pub fn new(current_level: Level, profile: Rc<SaveProfile>) -> Self {
         Self {
+            numerals:        match &current_level {
+                Level::GameLevel(gl) =>
+                    if gl.section >= SectionName::Numerals {
+                        Numerals::Church
+                    } else {
+                        Numerals::None
+                    },
+            },
             completion_data: Some(CompletionData {
                 level: current_level,
                 profile,
             }),
-            numerals:        if current_level.section >= SectionName::Numerals {
-                Numerals::Church
-            } else {
-                Numerals::None
-            },
         }
     }
 
@@ -204,11 +209,14 @@ impl ConstantProvider {
 }
 
 impl Level {
-    pub fn all_known_constants(&'static self, save_profile: Rc<SaveProfile>) -> Vec<&'static str> {
-        if self.show_constants {
-            ConstantProvider::new(&self, save_profile).all_known_constants()
-        } else {
-            vec![]
+    pub fn all_known_constants(&self, save_profile: Rc<SaveProfile>) -> Vec<&'static str> {
+        match self {
+            Level::GameLevel(gl) =>
+                if gl.show_constants {
+                    ConstantProvider::new(self.clone(), save_profile).all_known_constants()
+                } else {
+                    vec![]
+                },
         }
     }
 }
@@ -229,16 +237,21 @@ mod test {
 
     #[test]
     fn test_provider() {
-        let p0 = ConstantProvider::new(&LEVELS[1].levels[0], Rc::new(SaveProfile::fake(vec![])));
+        let p0 = ConstantProvider::new(
+            (&LEVELS[1].levels[0]).into(),
+            Rc::new(SaveProfile::fake(vec![])),
+        );
         assert!(p0.get("TRUE").is_some());
         assert!(p0.get("IF").is_none());
-        let p1 =
-            ConstantProvider::new(&LEVELS[1].levels[1], Rc::new(SaveProfile::fake(vec!["if"])));
+        let p1 = ConstantProvider::new(
+            (&LEVELS[1].levels[1]).into(),
+            Rc::new(SaveProfile::fake(vec!["if"])),
+        );
         assert!(p1.get("TRUE").is_some());
         assert!(p1.get("IF").is_some());
         assert!(p1.get("NOT").is_none());
         let p2 = ConstantProvider::new(
-            &LEVELS[1].levels[2],
+            (&LEVELS[1].levels[2]).into(),
             Rc::new(SaveProfile::fake(vec!["not"])),
         );
         assert!(p2.get("NOT").is_some());

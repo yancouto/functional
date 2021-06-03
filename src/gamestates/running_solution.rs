@@ -8,20 +8,23 @@ use crate::{
 };
 #[derive(Debug)]
 pub struct RunningSolutionState {
-    level:        &'static Level,
+    level:        Level,
     save_profile: Rc<SaveProfile>,
     handle:       thread::JoinHandle<()>,
     receiver:     channel::Receiver<TestRunResults>,
 }
 
 impl RunningSolutionState {
-    pub fn new(level: &'static Level, code: String, save_profile: Rc<SaveProfile>) -> Self {
+    pub fn new(level: Level, code: String, save_profile: Rc<SaveProfile>) -> Self {
         let (sender, receiver) = channel::bounded(0);
-        let provider = ConstantProvider::new(level, save_profile.clone());
-        let handle = std::thread::spawn(move || {
-            sender
-                .send(level.test(code.chars(), provider))
-                .debug_unwrap()
+        let provider = ConstantProvider::new(level.clone(), save_profile.clone());
+        let handle = std::thread::spawn({
+            let level = level.clone();
+            move || {
+                sender
+                    .send(level.test(code.chars(), provider))
+                    .debug_unwrap()
+            }
         });
         Self {
             level,
@@ -40,7 +43,7 @@ impl GameState for RunningSolutionState {
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         if let Ok(results) = self.receiver.try_recv() {
             GameStateEvent::Switch(box ShowResultsState::new(
-                self.level,
+                self.level.clone(),
                 results,
                 self.save_profile.clone(),
             ))

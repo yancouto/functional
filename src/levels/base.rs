@@ -18,19 +18,44 @@ pub struct TestCase {
     expected_result: Box<Node>,
 }
 
+// Every level has these fields, game levels and user created ones
 #[derive(Debug)]
-pub struct Level {
+pub struct BaseLevel {
     pub name:               String,
     pub description:        String,
-    pub section:            SectionName,
-    /// index of the level in the section
-    pub idx:                usize,
     pub extra_info:         Option<String>,
-    pub test_cases:         Vec1<TestCase>,
-    pub solutions:          Vec1<String>,
-    pub wrong_solutions:    Vec<String>,
-    pub show_constants:     bool,
     pub extra_info_is_hint: bool,
+    pub test_cases:         Vec1<TestCase>,
+}
+
+// One the game's core levels
+#[derive(Debug)]
+pub struct GameLevel {
+    pub base:            BaseLevel,
+    pub section:         SectionName,
+    /// index of the level in the section
+    pub idx:             usize,
+    pub solutions:       Vec1<String>,
+    pub wrong_solutions: Vec<String>,
+    pub show_constants:  bool,
+}
+
+// This should be lightweight and easy to clone
+#[derive(Debug, Clone)]
+pub enum Level {
+    GameLevel(&'static GameLevel),
+}
+
+impl From<&'static GameLevel> for Level {
+    fn from(level: &'static GameLevel) -> Self { Self::GameLevel(level) }
+}
+
+impl Level {
+    pub fn base(&self) -> &BaseLevel {
+        match self {
+            Level::GameLevel(gl) => &gl.base,
+        }
+    }
 }
 
 pub fn parse_or_fail(str: &str) -> Box<Node> {
@@ -154,6 +179,7 @@ impl Level {
         let provider = ConstantProvider::all();
         let ans = Ok(TestCaseRuns {
             runs: self
+                .base()
                 .test_cases
                 .par_iter()
                 .map(|t| t.test(node.clone(), provider.clone()))
@@ -162,7 +188,7 @@ impl Level {
         });
         log::info!(
             "Ran solution for level '{}' in {:?}",
-            self.name,
+            self.base().name,
             Instant::now() - ts
         );
         ans

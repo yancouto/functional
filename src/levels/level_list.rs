@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use super::{Level, TestCase};
+use super::{BaseLevel, GameLevel, TestCase};
 use crate::prelude::*;
 fn get_true() -> bool { true }
 #[derive(Debug, Deserialize)]
@@ -55,17 +55,22 @@ fn load_all() -> Vec1<Section> {
                     if l.extra_info_is_hint {
                         debug_assert!(l.extra_info.is_some());
                     }
-                    let level = Level {
+                    let level = GameLevel {
+                        base: BaseLevel {
+                            name:        l.name,
+                            description: l.description,
+                            extra_info:  l.extra_info,
+                            test_cases:  l
+                                .test_cases
+                                .mapped(|t| TestCase::from_or_fail(&t.0, &t.1)),
+
+                            extra_info_is_hint: l.extra_info_is_hint,
+                        },
                         idx,
-                        name: l.name,
-                        description: l.description,
-                        extra_info: l.extra_info,
                         section: section_name,
-                        test_cases: l.test_cases.mapped(|t| TestCase::from_or_fail(&t.0, &t.1)),
                         solutions: l.solutions,
                         wrong_solutions: l.wrong_solutions,
                         show_constants: l.show_constants,
-                        extra_info_is_hint: l.extra_info_is_hint,
                     };
                     idx += 1;
                     level
@@ -102,7 +107,7 @@ pub enum SectionName {
 
 pub struct Section {
     pub name:   SectionName,
-    pub levels: Vec1<Level>,
+    pub levels: Vec1<GameLevel>,
 }
 
 lazy_static! {
@@ -116,7 +121,9 @@ mod test {
     use rayon::prelude::*;
     use strum::IntoEnumIterator;
 
-    use super::{super::get_result, *};
+    use super::{
+        super::{base::Level, get_result}, *
+    };
     use crate::{
         interpreter::{interpreter::test::interpret_ok, ConstantProvider}, save_system::{LevelResult, SaveProfile}
     };
@@ -132,7 +139,7 @@ mod test {
         let names = LEVELS
             .iter()
             .flat_map(|s| s.levels.as_vec())
-            .map(|l| l.name.clone())
+            .map(|l| l.base.name.clone())
             .collect::<HashSet<_>>();
         assert_eq!(
             names.len(),
@@ -158,21 +165,24 @@ mod test {
             .filter(|s| s.name <= section)
             .flat_map(|s| s.levels.as_vec().iter())
             .for_each(|l| {
-                all_levels_so_far.push(l.name.as_str());
+                all_levels_so_far.push(l.base.name.as_str());
                 if l.section < section {
                     return;
                 }
                 l.solutions.par_iter().for_each(|s| {
-                    let r = l
+                    let r = Level::GameLevel(l)
                         .test(
                             s.chars(),
                             ConstantProvider::new(
-                                l,
+                                l.into(),
                                 // Let's assume we have solved all levels so far.
                                 Rc::new(SaveProfile::fake(all_levels_so_far.clone())),
                             ),
                         )
-                        .expect(&format!("On '{}' failed to compile solution {}", l.name, s));
+                        .expect(&format!(
+                            "On '{}' failed to compile solution {}",
+                            l.base.name, s
+                        ));
 
                     r.runs.iter().for_each(|r| {
                         assert!(
@@ -180,7 +190,7 @@ mod test {
                         "Code '{}' does not reduce to '{}' on level '{}', instead reduced to {:?}",
                         r.test_expression,
                         r.expected_result,
-                        l.name,
+                        l.base.name,
                         r.result.clone().map(|r| format!("{}", r.term)),
                     )
                     });
@@ -222,11 +232,11 @@ mod test {
         LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
             l.wrong_solutions.iter().for_each(|s| {
                 assert_matches!(
-                    get_result(&l.test(s.chars(), ConstantProvider::all())),
+                    get_result(&Level::GameLevel(l).test(s.chars(), ConstantProvider::all())),
                     LevelResult::Failure,
                     "Code was solution {} on level {}",
                     s,
-                    l.name
+                    l.base.name
                 )
             })
         });
@@ -275,7 +285,7 @@ mod test {
             });
         LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
             let mut gs_data = GSData {
-                cur:  box EditorState::<BasicTextEditor>::new(&l, fake_profile.clone()),
+                cur:  box EditorState::<BasicTextEditor>::new(l.into(), fake_profile.clone()),
                 time: Duration::new(0, 0),
             };
             with_current_console(0, |mut c| {

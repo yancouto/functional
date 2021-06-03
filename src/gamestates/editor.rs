@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct EditorState<Editor: TextEditor> {
-    level:            &'static Level,
+    level:            Level,
     editor:           Editor,
     current_solution: u8,
     save_profile:     Rc<SaveProfile>,
@@ -17,8 +17,10 @@ pub struct EditorState<Editor: TextEditor> {
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
-    pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>) -> Self {
+    pub fn new(level: Level, save_profile: Rc<SaveProfile>) -> Self {
         let mut state = Self {
+            save_profile: save_profile.clone(),
+            known_constants: Vec1::try_from_vec(level.all_known_constants(save_profile)).ok(),
             level,
             editor: Editor::new(
                 "Text Editor".to_string(),
@@ -28,10 +30,8 @@ impl<Editor: TextEditor> EditorState<Editor> {
                 },
                 String::new(),
             ),
-            save_profile: save_profile.clone(),
             current_solution: 1,
             last_save: Duration::from_secs(0),
-            known_constants: Vec1::try_from_vec(level.all_known_constants(save_profile)).ok(),
             pressed_hint: false,
         };
         state.load_solution(1);
@@ -41,14 +41,14 @@ impl<Editor: TextEditor> EditorState<Editor> {
     fn load_solution(&mut self, solution: u8) {
         let _ = self.editor.load_file(
             self.save_profile
-                .level_code_file(&self.level.name, solution),
+                .level_code_file(&self.level.base().name, solution),
         );
         self.current_solution = solution;
     }
 
     fn save_current_solution(&mut self, current_time: Duration) {
         self.save_profile.write_level(
-            &self.level.name,
+            &self.level.base().name,
             self.current_solution,
             &self.editor.to_string(),
         );
@@ -61,17 +61,17 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         data.text_box(
-            &self.level.name,
-            &self.level.description,
+            &self.level.base().name,
+            &self.level.base().description,
             Rect::new(1, 0, W / 2, 30),
             true,
         );
-        if let Some(info) = &self.level.extra_info {
-            if self.level.extra_info_is_hint && !self.pressed_hint {
+        if let Some(info) = &self.level.base().extra_info {
+            if self.level.base().extra_info_is_hint && !self.pressed_hint {
                 self.pressed_hint = data.button("Get hint", Pos::new(2, W / 2 + 1), black());
             } else {
                 data.text_box(
-                    if self.level.extra_info_is_hint {
+                    if self.level.base().extra_info_is_hint {
                         "Hint"
                     } else {
                         "Extra info"
@@ -126,14 +126,14 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
         {
             self.save_current_solution(data.time);
             return GameStateEvent::Push(box RunningSolutionState::new(
-                self.level,
+                self.level.clone(),
                 self.editor.to_string(),
                 self.save_profile.clone(),
             ));
         } else if data.button(OPEN, Pos::new(H - 3, 2 + RUN.len() as i32 + 3), black()) {
             return GameStateEvent::Push(box PlaygroundState::<Editor>::new(
                 self.editor.to_string(),
-                ConstantProvider::new(self.level, self.save_profile.clone()),
+                ConstantProvider::new(self.level.clone(), self.save_profile.clone()),
             ));
         }
 

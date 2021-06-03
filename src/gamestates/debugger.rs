@@ -9,7 +9,7 @@ pub struct DebuggerState {
 }
 
 impl DebuggerState {
-    pub fn new(level: &'static Level, save_profile: Rc<SaveProfile>, run: TestCaseRun) -> Self {
+    pub fn new(level: Level, save_profile: Rc<SaveProfile>, run: TestCaseRun) -> Self {
         let mut steps = vec1![run.test_expression.clone()];
         steps.append(
             &mut interpret_itermediates(

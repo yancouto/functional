@@ -50,8 +50,8 @@ impl GameState for LevelSelectionState<'static> {
             data.print(Pos::new(2, MID_J + CURSOR_J), "Levels in section");
             let mut levels_info = self.save_profile.get_levels_info();
             for (i, level) in self.sections.get().levels.iter().enumerate() {
-                let info = levels_info.entry(level.name.clone()).or_default();
-                let mut text = Cow::Borrowed(&level.name);
+                let info = levels_info.entry(level.base.name.clone()).or_default();
+                let mut text = Cow::Borrowed(&level.base.name);
                 match info.result {
                     LevelResult::Success { stats } => text.to_mut().push_str(&format!(
                         " (completed, {:.2} reductions, {} functions)",
@@ -102,7 +102,7 @@ impl GameState for LevelSelectionState<'static> {
             Some(Key::Return) =>
                 if let Some(l_i) = self.level_i {
                     GameStateEvent::Push(box EditorState::<XiEditor>::new(
-                        &self.sections.get().levels[l_i],
+                        (&self.sections.get().levels[l_i]).into(),
                         self.save_profile.clone(),
                     ))
                 } else {
