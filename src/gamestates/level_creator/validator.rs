@@ -235,11 +235,11 @@ pub fn validate(
 
 #[derive(Debug)]
 pub struct ValidationState {
-    err: Option<ValidationError>,
+    level: Result<ParsedUserLevelConfig, ValidationError>,
 }
 
 impl ValidationState {
-    pub fn new(err: Option<ValidationError>) -> Self { Self { err } }
+    pub fn new(level: Result<ParsedUserLevelConfig, ValidationError>) -> Self { Self { level } }
 }
 
 impl GameState for ValidationState {
@@ -248,9 +248,9 @@ impl GameState for ValidationState {
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         data.text_box(
             "Level validation",
-            &match &self.err {
-                Some(err) => format!("ERROR: {}", err),
-                None => "No validation errors, level looks good.".to_string(),
+            &match &self.level {
+                Ok(_) => "No validation errors, level looks good.".to_string(),
+                Err(err) => format!("ERROR: {}", err),
             },
             Rect::centered(70, 60),
             true,

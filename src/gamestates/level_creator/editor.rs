@@ -164,9 +164,10 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         ) || (data.ctrl && data.pressed_key == Some(Key::Return))
         {
             self.save_config();
-            return GameStateEvent::Push(box ValidationState::new(
-                validate(self.read_config(), self.config_file()).err(),
-            ));
+            return GameStateEvent::Push(box ValidationState::new(validate(
+                self.read_config(),
+                self.config_file(),
+            )));
         }
 
         data.instructions(&[
