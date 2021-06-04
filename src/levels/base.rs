@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 use thiserror::Error;
 
@@ -9,7 +9,7 @@ use crate::{
     }, prelude::*, save_system::LevelResult
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TestCase {
     /// Must be a function that receives the code and returns the result.
     application:     Box<Node>,
@@ -42,7 +42,8 @@ pub struct GameLevel {
 
 #[derive(Debug)]
 pub struct UserCreatedLevel {
-    base: BaseLevel,
+    pub base:            BaseLevel,
+    pub extra_constants: HashMap<String, Box<Node>>,
 }
 
 // This should be lightweight and easy to clone

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, convert::TryFrom, path::PathBuf};
 
 use jsonnet::JsonnetVm;
 use serde::{Deserialize, Serialize};
@@ -7,7 +7,7 @@ use super::{super::base::*, UserLevelConfig, WorkshopConfig};
 use crate::{
     interpreter::{
         parse, tokenize, ConstantProvider, InterpretError, Node, ParseError, TokenizeError
-    }, levels::TestCase, prelude::*
+    }, levels::{BaseLevel, Level, TestCase, UserCreatedLevel}, prelude::*
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -37,6 +37,8 @@ pub enum ValidationError {
     },
     #[error("Wrong solution #{0} passes all tests.")]
     WrongSolutionIsCorrect(usize),
+    #[error("Constant name must only have upper case A-Z characters or underscores, instead given '{0}'")]
+    InvalidConstantName(String),
 }
 
 impl UserLevelConfig {
@@ -49,6 +51,14 @@ impl UserLevelConfig {
             .and_then(|tokens| {
                 parse(tokens).map_err(|err| ValidationError::ParseError(err, source()))
             })
+    }
+
+    fn check_string_uppercase(name: &str) -> Result<(), ValidationError> {
+        if name.chars().any(|c| c != '_' && !c.is_ascii_uppercase()) {
+            Err(ValidationError::InvalidConstantName(name.to_string()))
+        } else {
+            Ok(())
+        }
     }
 
     fn validate(self, workshop: WorkshopConfig) -> Result<ParsedUserLevelConfig, ValidationError> {
@@ -74,10 +84,29 @@ impl UserLevelConfig {
             .enumerate()
             .map(|(idx, sol)| Self::parse(|| format!("wrong solution #{}", idx + 1), sol))
             .collect::<Result<Vec<_>, ValidationError>>()?;
+        let extra_constants = self
+            .extra_constants
+            .iter()
+            .map(|(name, term)| {
+                Self::check_string_uppercase(name)?;
+                Ok((
+                    name.clone(),
+                    Self::parse(|| format!("constant '{}'", name), term)?,
+                ))
+            })
+            .collect::<Result<HashMap<String, Box<Node>>, ValidationError>>()?;
 
-        // TODO: use extra_constants here
-        let provider = ConstantProvider::all();
-
+        let parsed = Arc::new(UserCreatedLevel {
+            base: BaseLevel {
+                name:               String::new(),
+                description:        String::new(),
+                extra_info_is_hint: false,
+                extra_info:         None,
+                test_cases:         test_cases.clone(),
+            },
+            extra_constants,
+        });
+        let provider = ConstantProvider::new(Level::UserCreatedLevel(parsed.clone()), None);
         solutions
             .into_par_iter()
             .enumerate()
@@ -142,6 +171,48 @@ pub struct ParsedUserLevelConfig {
     test_cases:         Vec1<(String, String)>,
     #[serde(default)]
     extra_constants:    Vec<(String, String)>,
+}
+
+impl TryFrom<ParsedUserLevelConfig> for UserCreatedLevel {
+    type Error = ValidationError;
+
+    fn try_from(config: ParsedUserLevelConfig) -> Result<Self, ValidationError> {
+        Ok(Self {
+            base:            BaseLevel {
+                name:               config.name,
+                description:        config.description,
+                extra_info:         config.extra_info,
+                extra_info_is_hint: config.extra_info_is_hint,
+                test_cases:         {
+                    let mut idx = 0;
+                    config.test_cases.try_mapped(|(term, result)| {
+                        idx += 1;
+                        Result::<_, ValidationError>::Ok(TestCase::from(
+                            UserLevelConfig::parse(
+                                || format!("test case {}'s application", idx),
+                                &term,
+                            )?,
+                            UserLevelConfig::parse(
+                                || format!("test case {}'s result", idx),
+                                &result,
+                            )?,
+                        ))
+                    })?
+                },
+            },
+            extra_constants: config
+                .extra_constants
+                .into_iter()
+                .map(|(name, term)| {
+                    UserLevelConfig::check_string_uppercase(&name)?;
+                    Ok((
+                        name.clone(),
+                        UserLevelConfig::parse(|| format!("constant '{}'", name), &term)?,
+                    ))
+                })
+                .collect::<Result<HashMap<String, Box<Node>>, ValidationError>>()?,
+        })
+    }
 }
 
 pub fn validate(
@@ -259,6 +330,23 @@ mod test {
             ),
             Err(ValidationError::WrongSolutionIsCorrect(..))
         );
+        assert_matches!(
+            validate_with_json(
+                r#"{
+                test_cases: [["f: f A", "A A"]],
+                solutions: ["UNKNOWN"]}"#
+            ),
+            Err(ValidationError::WrongSolution { .. }),
+        );
+        assert_matches!(
+            validate_with_json(
+                r#"{
+                test_cases: [["f: f A", "A"]],
+                solutions: ["x:x"],
+                extra_constants: [["A2", "x: x x"]]}"#
+            ),
+            Err(ValidationError::InvalidConstantName(..)),
+        );
     }
 
     #[test]
@@ -273,6 +361,15 @@ mod test {
                 test_cases: [["f: f TRUE FALSE A B", "A"],["f: f FALSE FALSE A B", "B"]],
                 solutions: ["a:b: x:y: a x (b x y)"],
                 wrong_solutions: ["x:x"]}"#
+            ),
+            Ok(()),
+        );
+        assert_matches!(
+            validate_with_json(
+                r#"{
+                test_cases: [["f: f A", "A A"]],
+                solutions: ["DOUBLE"],
+                extra_constants: [["DOUBLE", "x: x x"]]}"#
             ),
             Ok(()),
         );

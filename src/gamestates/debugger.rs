@@ -15,7 +15,7 @@ impl DebuggerState {
             &mut interpret_itermediates(
                 run.test_expression.clone(),
                 false,
-                ConstantProvider::new(level, save_profile),
+                ConstantProvider::new(level, Some(save_profile)),
             )
             .take(30)
             .collect(),

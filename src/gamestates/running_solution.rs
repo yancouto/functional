@@ -17,7 +17,7 @@ pub struct RunningSolutionState {
 impl RunningSolutionState {
     pub fn new(level: Level, code: String, save_profile: Arc<SaveProfile>) -> Self {
         let (sender, receiver) = channel::bounded(0);
-        let provider = ConstantProvider::new(level.clone(), save_profile.clone());
+        let provider = ConstantProvider::new(level.clone(), Some(save_profile.clone()));
         let handle = std::thread::spawn({
             let level = level.clone();
             move || {

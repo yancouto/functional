@@ -133,7 +133,7 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
         } else if data.button(OPEN, Pos::new(H - 3, 2 + RUN.len() as i32 + 3), black()) {
             return GameStateEvent::Push(box PlaygroundState::<Editor>::new(
                 self.editor.to_string(),
-                ConstantProvider::new(self.level.clone(), self.save_profile.clone()),
+                ConstantProvider::new(self.level.clone(), Some(self.save_profile.clone())),
             ));
         }
 

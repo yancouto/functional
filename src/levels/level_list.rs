@@ -176,7 +176,7 @@ mod test {
                             ConstantProvider::new(
                                 l.into(),
                                 // Let's assume we have solved all levels so far.
-                                Arc::new(SaveProfile::fake(all_levels_so_far.clone())),
+                                Some(Arc::new(SaveProfile::fake(all_levels_so_far.clone()))),
                             ),
                         )
                         .expect(&format!(

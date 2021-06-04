@@ -25,22 +25,31 @@ struct ConstantNode {
 
 impl ConstantNode {
     fn can_be_used(&self, data: &CompletionData) -> bool {
-        match data.level {
-            Level::GameLevel(gl) => match &self.method {
+        match data {
+            CompletionData {
+                level: Level::GameLevel(gl),
+                profile: Some(profile),
+            } => match &self.method {
                 DiscoveryMethod::BeforeLevel { section, lvl_idx } =>
                     (*section, *lvl_idx) <= (gl.section, gl.idx),
                 DiscoveryMethod::LevelCompleted { name, section } =>
                     *section <= gl.section
                         && *name != gl.base.name
-                        && data
-                            .profile
+                        && profile
                             .get_levels_info()
                             .get(name)
                             .map(|l| l.result.is_success())
                             .unwrap_or(false),
             },
             // Allow all constants for now
-            Level::UserCreatedLevel(..) => true,
+            CompletionData {
+                level: Level::UserCreatedLevel(..),
+                ..
+            } => true,
+            _ => {
+                debug_assert!(false);
+                false
+            },
         }
     }
 }
@@ -134,7 +143,7 @@ struct CompletionData {
     // Level this constant data is for
     level:   Level,
     // Save profile with list of completed levels
-    profile: Arc<SaveProfile>,
+    profile: Option<Arc<SaveProfile>>,
 }
 
 #[derive(Debug, Clone)]
@@ -145,7 +154,7 @@ pub struct ConstantProvider {
 }
 
 impl ConstantProvider {
-    pub fn new(current_level: Level, profile: Arc<SaveProfile>) -> Self {
+    pub fn new(current_level: Level, profile: Option<Arc<SaveProfile>>) -> Self {
         Self {
             numerals:        match &current_level {
                 Level::GameLevel(gl) =>
@@ -175,15 +184,24 @@ impl ConstantProvider {
         if let Ok(x) = name.parse::<u16>() {
             self.numerals.get_num(x)
         } else {
-            ALL_CONSTANTS
-                .get(name)
-                .filter(|n| {
-                    self.completion_data
-                        .as_ref()
-                        .map(|l| n.can_be_used(l))
-                        .unwrap_or(true)
-                })
-                .map(|n| n.term.clone())
+            let constant = match &self.completion_data {
+                Some(CompletionData {
+                    level: Level::UserCreatedLevel(uc),
+                    ..
+                }) => uc.extra_constants.get(name).cloned(),
+                _ => None,
+            };
+            constant.or_else(|| {
+                ALL_CONSTANTS
+                    .get(name)
+                    .filter(|n| {
+                        self.completion_data
+                            .as_ref()
+                            .map(|l| n.can_be_used(l))
+                            .unwrap_or(true)
+                    })
+                    .map(|n| n.term.clone())
+            })
         }
     }
 
@@ -216,12 +234,12 @@ impl Level {
         match self {
             Level::GameLevel(gl) =>
                 if gl.show_constants {
-                    ConstantProvider::new(self.clone(), save_profile).all_known_constants()
+                    ConstantProvider::new(self.clone(), Some(save_profile)).all_known_constants()
                 } else {
                     vec![]
                 },
             Level::UserCreatedLevel(..) =>
-                ConstantProvider::new(self.clone(), save_profile).all_known_constants(),
+                ConstantProvider::new(self.clone(), Some(save_profile)).all_known_constants(),
         }
     }
 }
@@ -244,20 +262,20 @@ mod test {
     fn test_provider() {
         let p0 = ConstantProvider::new(
             (&LEVELS[1].levels[0]).into(),
-            Arc::new(SaveProfile::fake(vec![])),
+            Some(Arc::new(SaveProfile::fake(vec![]))),
         );
         assert!(p0.get("TRUE").is_some());
         assert!(p0.get("IF").is_none());
         let p1 = ConstantProvider::new(
             (&LEVELS[1].levels[1]).into(),
-            Arc::new(SaveProfile::fake(vec!["if"])),
+            Some(Arc::new(SaveProfile::fake(vec!["if"]))),
         );
         assert!(p1.get("TRUE").is_some());
         assert!(p1.get("IF").is_some());
         assert!(p1.get("NOT").is_none());
         let p2 = ConstantProvider::new(
             (&LEVELS[1].levels[2]).into(),
-            Arc::new(SaveProfile::fake(vec!["not"])),
+            Some(Arc::new(SaveProfile::fake(vec!["not"]))),
         );
         assert!(p2.get("NOT").is_some());
         assert!(p2.get("IF").is_none());
