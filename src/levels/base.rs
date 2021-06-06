@@ -44,6 +44,9 @@ pub struct GameLevel {
 pub struct UserCreatedLevel {
     pub base:            BaseLevel,
     pub extra_constants: HashMap<String, Box<Node>>,
+    /// If this is a level the user subscribed through steam, the published file id
+    /// otherwise None
+    pub id:              Option<u64>,
 }
 
 // This should be lightweight and easy to clone
@@ -62,6 +65,15 @@ impl Level {
         match self {
             Level::GameLevel(gl) => &gl.base,
             Level::UserCreatedLevel(uc) => &uc.base,
+        }
+    }
+
+    /// A unique identifier that may be used for this level for saves/leaderboards
+    /// Might not exist if the level is user created and not uploaded to Steam
+    pub fn uuid(&self) -> Option<String> {
+        match &self {
+            Level::GameLevel(gl) => Some(gl.base.name.clone()),
+            Level::UserCreatedLevel(uc) => uc.id.map(|id| format!("{}", id)),
         }
     }
 }

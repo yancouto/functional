@@ -178,15 +178,19 @@ impl TextEditorInner for XiEditor {
         }
     }
 
-    fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
+    fn load_file(&mut self, path: Option<PathBuf>) -> std::io::Result<()> {
         self.send.send_notification(CoreNotification::CloseView {
             view_id: self.view_id,
         });
         let resp = serde_json::from_value::<ViewId>(
             self.send
                 .send_request_block(CoreRequest::NewView {
-                    file_path: if path.exists() {
-                        Some(path.to_string_lossy().to_string())
+                    file_path: if let Some(inner_path) = path {
+                        if inner_path.exists() {
+                            Some(inner_path.to_string_lossy().to_string())
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     },

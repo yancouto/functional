@@ -39,6 +39,10 @@ type MainThreadSteamClient = steamworks::SingleClient;
 #[cfg(not(feature = "steam"))]
 type MainThreadSteamClient = ();
 
+lazy_static! {
+    pub static ref CMD_LINE_OPTIONS: Opt = Opt::from_args();
+}
+
 struct MainState {
     manager: gamestates::base::GameStateManager,
     client:  Option<MainThreadSteamClient>,
@@ -56,16 +60,19 @@ impl bl::GameState for MainState {
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "functional")]
-struct Opt {
+pub struct Opt {
     /// Skip intro screen
     #[structopt(long)]
     skip_intro: bool,
     /// Run game connected to steam
     #[structopt(long)]
-    steam:      bool,
+    steam: bool,
     /// Run game connected to steam when developing it locally
     #[structopt(long)]
-    steam_dev:  bool,
+    steam_dev: bool,
+    /// Quick rollback in case we get too many levels, highly unlikely
+    #[structopt(long)]
+    dont_save_custom_leaderboards: bool,
 }
 
 use prelude::*;
@@ -116,7 +123,7 @@ fn main() -> bl::BError {
     ])
     .expect("Failed to set up logger.");
 
-    let opt = Opt::from_args();
+    let opt = &CMD_LINE_OPTIONS;
     let clients = if opt.steam || opt.steam_dev {
         #[cfg(feature = "steam")]
         {

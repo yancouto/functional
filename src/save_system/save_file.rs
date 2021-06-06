@@ -4,7 +4,7 @@ use directories::*;
 use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use savefile::SavefileError;
 
-use crate::{interpreter::AccStats, prelude::*};
+use crate::{interpreter::AccStats, levels::Level, prelude::*};
 
 lazy_static! {
     pub static ref PROJECT_DIR: ProjectDirs = {
@@ -96,40 +96,31 @@ impl SaveProfile {
 
     pub fn name(&self) -> &str { &self.name }
 
-    pub fn write_level(&self, level_name: &str, solution: u8, code: &str) {
-        log::debug!("Writing solution {} of level {}", solution, level_name);
-        self.write_level_impl(level_name, solution, code)
+    pub fn write_level(&self, level: &Level, solution: u8, code: &str) {
+        log::debug!(
+            "Writing solution {} of level {}",
+            solution,
+            level.base().name
+        );
+        self.write_level_impl(&level, solution, code)
             .debug_expect("Error writing level");
     }
 
-    pub fn level_code_file(&self, level_name: &str, solution: u8) -> PathBuf {
-        self.path
-            .join(format!("levels/{}/{}.code", level_name, solution))
+    pub fn level_code_file(&self, level: &Level, solution: u8) -> Option<PathBuf> {
+        level
+            .uuid()
+            .map(|id| self.path.join(format!("levels/{}/{}.code", id, solution)))
     }
 
-    #[allow(dead_code)]
-    pub fn read_level(&self, level_name: &str, solution: u8) -> String {
-        log::debug!("Reading solution {} of level {}", solution, level_name);
-        self.read_level_impl(level_name, solution)
-            .unwrap_or_else(|err| {
-                if err.kind() != io::ErrorKind::NotFound {
-                    log::warn!("Error reading level: {:?}", err);
-                }
-                String::new()
-            })
-    }
-
-    pub fn mark_level_as_tried(&self, level_name: &str, result: LevelResult) {
-        let mut save_file = self.current_save_file.lock();
-        let stored_result = &mut save_file
-            .level_info
-            .entry(level_name.to_string())
-            .or_default()
-            .result;
-        let new_result = stored_result.get_best(result);
-        if *stored_result != new_result {
-            *stored_result = new_result;
-            self.write(SAVE_FILE, &*save_file);
+    pub fn mark_level_as_tried(&self, level: &Level, result: LevelResult) {
+        if let Some(id) = level.uuid() {
+            let mut save_file = self.current_save_file.lock();
+            let stored_result = &mut save_file.level_info.entry(id).or_default().result;
+            let new_result = stored_result.get_best(result);
+            if *stored_result != new_result {
+                *stored_result = new_result;
+                self.write(SAVE_FILE, &*save_file);
+            }
         }
     }
 
@@ -191,17 +182,15 @@ impl SaveProfile {
         write(self.path.join(path), CURRENT_SAVE_VERSION, data);
     }
 
-    fn write_level_impl(&self, level_name: &str, solution: u8, code: &str) -> io::Result<()> {
-        let path = self.level_code_file(level_name, solution);
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
+    fn write_level_impl(&self, level: &Level, solution: u8, code: &str) -> io::Result<()> {
+        if let Some(path) = self.level_code_file(level, solution) {
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::write(path, code)
+        } else {
+            Ok(())
         }
-        fs::write(path, code)
-    }
-
-    fn read_level_impl(&self, level_name: &str, solution: u8) -> io::Result<String> {
-        let path = self.level_code_file(level_name, solution);
-        Ok(String::from_utf8_lossy(&fs::read(path)?).into_owned())
     }
 }
 

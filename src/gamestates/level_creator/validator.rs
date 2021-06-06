@@ -105,6 +105,7 @@ impl UserLevelConfig {
                 test_cases:         test_cases.clone(),
             },
             extra_constants,
+            id: None,
         });
         let provider = ConstantProvider::new(Level::UserCreatedLevel(parsed.clone()), None);
         solutions
@@ -211,6 +212,7 @@ impl TryFrom<ParsedUserLevelConfig> for UserCreatedLevel {
                     ))
                 })
                 .collect::<Result<HashMap<String, Box<Node>>, ValidationError>>()?,
+            id:              None,
         })
     }
 }

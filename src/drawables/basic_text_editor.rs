@@ -131,8 +131,8 @@ impl TextEditorInner for BasicTextEditor {
         }
     }
 
-    fn load_file(&mut self, path: PathBuf) -> std::io::Result<()> {
-        let file_data = std::fs::read(path)?;
+    fn load_file(&mut self, path: Option<PathBuf>) -> std::io::Result<()> {
+        let file_data = path.map(|path| std::fs::read(path)).unwrap_or(Ok(vec![]))?;
         self.load_text(String::from_utf8_lossy(&file_data).to_string());
         Ok(())
     }

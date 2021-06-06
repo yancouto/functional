@@ -14,6 +14,7 @@ type LdData = HashMap<AccStats, u32>;
 #[derive(Debug)]
 enum LoadStatus {
     Uninitialized,
+    CustomLevelNoUpload,
     Loading(
         Receiver<LdData>,
         JoinHandle<Result<(), LeaderboardLoadError>>,
@@ -113,7 +114,7 @@ fn get_common(data: &Vec<Vec<u32>>) -> u32 {
 #[cfg(feature = "steam")]
 fn get_leaderboard_data(
     sender: channel::Sender<LdData>,
-    level: Level,
+    level_id: String,
     upload_score: Option<AccStats>,
     client: Arc<SteamClient>,
     friend_sender: channel::Sender<FriendResult>,
@@ -121,7 +122,7 @@ fn get_leaderboard_data(
     log::info!("Finding or creating leaderboard");
     let (send, recv) = channel::bounded(1);
     client.user_stats().find_or_create_leaderboard(
-        &format!("level_{}", level.base().name),
+        &format!("level_{}", level_id),
         steamworks::LeaderboardSortMethod::Ascending,
         steamworks::LeaderboardDisplayType::Numeric,
         move |result| send.send(result).debug_unwrap(),
@@ -327,6 +328,8 @@ impl Leaderboards {
             &match &self.status {
                 LoadStatus::Uninitialized =>
                     "Use Steam version of the game for leaderboards".to_string(),
+                LoadStatus::CustomLevelNoUpload =>
+                    "No leaderboards for custom user levels".to_string(),
                 LoadStatus::Loaded(_) => "".to_string(),
                 LoadStatus::Failed(e) => format!("Failed to get leaderboards. ({})", e),
                 LoadStatus::Loading(..) => "Loading...".to_string(),
@@ -337,21 +340,25 @@ impl Leaderboards {
         #[cfg(feature = "steam")]
         match &self.status {
             LoadStatus::Uninitialized => {
-                if let Some(client) = &data.steam_client {
-                    let (level, client, f_sender) = (
-                        self.level.clone(),
-                        client.clone(),
-                        self.friends.get_sender(),
-                    );
+                if matches!(self.level, Level::UserCreatedLevel(..))
+                    && crate::CMD_LINE_OPTIONS.dont_save_custom_leaderboards
+                {
+                    self.status = LoadStatus::CustomLevelNoUpload;
+                } else if let (Some(client), Some(level_id)) =
+                    (&data.steam_client, self.level.uuid())
+                {
+                    let (client, f_sender) = (client.clone(), self.friends.get_sender());
                     // TODO: Not always upload player data, only when it's not worse
                     let stats = self.player_data.clone();
                     let (send, recv) = channel::bounded(1);
                     self.status = LoadStatus::Loading(
                         recv,
                         std::thread::spawn(move || {
-                            get_leaderboard_data(send, level, stats, client, f_sender)
+                            get_leaderboard_data(send, level_id, stats, client, f_sender)
                         }),
                     );
+                } else if data.steam_client.is_some() {
+                    self.status = LoadStatus::CustomLevelNoUpload;
                 }
             },
             LoadStatus::Loading(recv, _) => {
@@ -378,6 +385,7 @@ impl Leaderboards {
                 self.draw_ld(data, data_points);
             },
             LoadStatus::Failed(_) => {},
+            LoadStatus::CustomLevelNoUpload => {},
         }
         self.friends.draw(data);
     }

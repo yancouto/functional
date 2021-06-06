@@ -89,7 +89,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
         self.title_editor.load_string(config.title);
         self.description_editor.load_string(config.description);
         self.main_editor
-            .load_file(self.config_file())
+            .load_file(Some(self.config_file()))
             .debug_unwrap();
     }
 

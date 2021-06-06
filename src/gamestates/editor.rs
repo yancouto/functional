@@ -39,19 +39,15 @@ impl<Editor: TextEditor> EditorState<Editor> {
     }
 
     fn load_solution(&mut self, solution: u8) {
-        let _ = self.editor.load_file(
-            self.save_profile
-                .level_code_file(&self.level.base().name, solution),
-        );
+        let _ = self
+            .editor
+            .load_file(self.save_profile.level_code_file(&self.level, solution));
         self.current_solution = solution;
     }
 
     fn save_current_solution(&mut self, current_time: Duration) {
-        self.save_profile.write_level(
-            &self.level.base().name,
-            self.current_solution,
-            &self.editor.to_string(),
-        );
+        self.save_profile
+            .write_level(&self.level, self.current_solution, &self.editor.to_string());
         self.last_save = current_time;
     }
 }
