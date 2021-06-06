@@ -264,7 +264,7 @@ pub fn interpret(
     loop {
         match gen.as_mut().resume(()) {
             GeneratorState::Yielded(_) => {
-                debug_assert!(false, "yield_intermediates is set to false")
+                debug_unreachable!("yield_intermediates is set to false")
             },
             GeneratorState::Complete(ret) =>
                 break ret.map(|term| Interpreted {

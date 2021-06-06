@@ -109,7 +109,7 @@ impl FriendLeaderboard {
                                 .collect(),
                         );
                     } else {
-                        debug_assert!(false);
+                        debug_unreachable!();
                     },
                 Ok(Err(e)) => {
                     self.state = State::Failed(e);

@@ -99,7 +99,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => WorkshopConfig::default(),
             err @ _ => {
                 log::warn!("Failed to read workshop config! {:?}", err);
-                debug_assert!(false);
+                debug_unreachable!();
                 WorkshopConfig::default()
             },
         }
@@ -114,7 +114,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             Ok(Ok(_)) => {},
             err @ _ => {
                 log::warn!("Failed to write workshop config! {:?}", err);
-                debug_assert!(false);
+                debug_unreachable!();
             },
         }
         std::fs::File::create(self.config_file())

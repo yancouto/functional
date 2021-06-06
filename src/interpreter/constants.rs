@@ -47,7 +47,7 @@ impl ConstantNode {
                 ..
             } => true,
             _ => {
-                debug_assert!(false);
+                debug_unreachable!();
                 false
             },
         }

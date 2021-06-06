@@ -8,6 +8,8 @@ use serde_json::Value as Json;
 pub use xi_core_lib::rpc::{CoreNotification, CoreRequest};
 use xi_core_lib::XiCore;
 use xi_rpc::{RemoteError, RpcLoop};
+
+use crate::prelude::*;
 type ServerResponse = Result<Json, RemoteError>;
 use crossbeam::channel::{unbounded as channel, Receiver, Sender};
 use serde::de::Error;
@@ -190,7 +192,7 @@ impl Write for JsonSender {
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        debug_assert!(false, "Not expecting flush");
+        debug_unreachable!("Not expecting flush");
         Ok(())
     }
 }
@@ -239,7 +241,7 @@ impl JsonReceiver {
 
 impl Read for JsonReceiver {
     fn read(&mut self, mut buf: &mut [u8]) -> Result<usize, std::io::Error> {
-        debug_assert!(false, "Shouldn't call read directly!");
+        debug_unreachable!("Shouldn't call read directly!");
         let ret = buf.write(self.buf.as_bytes());
         self.buf.clear();
         ret

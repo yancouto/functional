@@ -226,7 +226,7 @@ impl Leaderboards {
             {
                 *v += freq;
             } else {
-                debug_assert!(false);
+                debug_unreachable!();
             }
         }
         let (pi, pj) = if let Some(a) = &self.player_data {

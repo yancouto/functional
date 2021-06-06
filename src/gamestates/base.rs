@@ -179,7 +179,7 @@ impl GameStateManager {
                     match self.all_gs.pop() {
                         Err(_) => {
                             log::error!("Trying to pop only gamestate, ignoring.");
-                            debug_assert!(false);
+                            debug_unreachable!();
                         },
                         Ok(gs) => log::info!("Popped gamestate {}", gs.cur.name()),
                     }

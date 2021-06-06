@@ -6,6 +6,7 @@ pub use std::sync::Arc;
 
 pub use bl::VirtualKeyCode as Key;
 pub use bracket_lib::prelude as bl;
+pub use more_asserts::*;
 pub use rayon::prelude::*;
 pub use vec1::{vec1, Vec1};
 

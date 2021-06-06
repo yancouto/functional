@@ -40,6 +40,7 @@ rayon = "1"
 textwrap = { version = "0.13", default-features = false }
 bmp = "0.5"
 jsonnet-rs = "0.17"
+more-asserts = "0.2"
 # Needs to be same version as on bracket-lib
 winit = ">= 0"
 # I have some unmerged additions to this crate
