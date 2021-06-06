@@ -56,7 +56,7 @@ impl GameState for ShowResultsState {
         data.text_box("Solution results", &text, ret.clone(), true);
 
         let mut instructions = Vec::with_capacity(2);
-        instructions.push("Press ESC to go back");
+        instructions.push("Press ESC to go back to editor");
         let mut success = false;
 
         if let Ok(runs) = &self.results {
@@ -111,7 +111,7 @@ impl GameState for ShowResultsState {
         self.leaderboards.draw(&mut data);
 
         if success {
-            instructions.push("Press ENTER to go to level selection")
+            instructions.push("Press ENTER to exit level")
         }
 
         data.instructions(&instructions);

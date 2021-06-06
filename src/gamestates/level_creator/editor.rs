@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{super::base::*, validate, ValidationState};
 use crate::{
-    drawables::{black, BasicTextEditor, TextEditor, TextEditorInner}, prelude::*
+    drawables::{black, BasicTextEditor, TextEditor, TextEditorInner}, prelude::*, save_system::SaveProfile
 };
 
 const WORKSHOP_FILE: &str = "workshop.yaml";
@@ -41,10 +41,11 @@ pub struct EditorState<Editor: TextEditor> {
     main_editor:        Editor,
     selected_editor:    Editors,
     exiting:            bool,
+    save_profile:       Arc<SaveProfile>,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
-    pub fn new(root: PathBuf) -> Self {
+    pub fn new(root: PathBuf, save_profile: Arc<SaveProfile>) -> Self {
         let desc_h = 4;
         let w = W / 2 - 2;
         let title_i = 0;
@@ -75,6 +76,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             main_editor,
             selected_editor: Editors::Title,
             exiting: false,
+            save_profile,
         };
         this.reload_config();
         this
@@ -164,10 +166,10 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         ) || (data.ctrl && data.pressed_key == Some(Key::Return))
         {
             self.save_config();
-            return GameStateEvent::Push(box ValidationState::new(validate(
-                self.read_config(),
-                self.config_file(),
-            )));
+            return GameStateEvent::Push(box ValidationState::new(
+                validate(self.read_config(), self.config_file()),
+                self.save_profile.clone(),
+            ));
         }
 
         data.instructions(&[

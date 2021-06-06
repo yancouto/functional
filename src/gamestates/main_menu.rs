@@ -36,7 +36,9 @@ impl MenuItem {
                 String::new(),
                 ConstantProvider::all(),
             )),
-            MenuItem::LevelCreator => GameStateEvent::Push(box LevelCreatorLevelListState::new()),
+            MenuItem::LevelCreator => GameStateEvent::Push(box LevelCreatorLevelListState::new(
+                menu.save_profile.clone(),
+            )),
             MenuItem::Quit => {
                 data.quit();
                 GameStateEvent::None

@@ -4,20 +4,21 @@ use crossbeam::channel::Receiver;
 
 use super::super::base::*;
 use crate::{
-    drawables::{black, XiEditor}, gamestates::{level_creator, string_reader::StringReaderState}, prelude::*, save_system::PROJECT_DIR, utils::vec_with_cursor::VecWithCursor
+    drawables::{black, XiEditor}, gamestates::{level_creator, string_reader::StringReaderState}, prelude::*, save_system::{SaveProfile, PROJECT_DIR}, utils::vec_with_cursor::VecWithCursor
 };
 
 #[derive(Debug)]
 pub struct LevelCreatorLevelListState {
-    root:       PathBuf,
-    levels:     Option<VecWithCursor<String>>,
-    title_recv: Option<Receiver<Option<String>>>,
+    root:         PathBuf,
+    levels:       Option<VecWithCursor<String>>,
+    title_recv:   Option<Receiver<Option<String>>>,
+    save_profile: Arc<SaveProfile>,
 }
 
 const CUSTOM_LEVELS: &str = "custom_levels";
 
 impl LevelCreatorLevelListState {
-    pub fn new() -> Self {
+    pub fn new(save_profile: Arc<SaveProfile>) -> Self {
         let root = PROJECT_DIR.data_dir().join(CUSTOM_LEVELS);
         log::info!("Looking for custom levels on {:?}", root);
         std::fs::create_dir_all(&root).debug_expect("Failed to create custom_levels dir");
@@ -25,6 +26,7 @@ impl LevelCreatorLevelListState {
             root,
             levels: None,
             title_recv: None,
+            save_profile,
         };
         this.reload();
         this
@@ -48,7 +50,10 @@ impl LevelCreatorLevelListState {
 
     fn go_to_level(&mut self, name: &str) -> GameStateEvent {
         let dir = self.root.join(name);
-        GameStateEvent::Push(box level_creator::EditorState::<XiEditor>::new(dir))
+        GameStateEvent::Push(box level_creator::EditorState::<XiEditor>::new(
+            dir,
+            self.save_profile.clone(),
+        ))
     }
 
     fn create_level(&mut self, title: String) -> GameStateEvent {

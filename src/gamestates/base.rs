@@ -175,6 +175,7 @@ impl GameStateManager {
             },
             GameStateEvent::Pop(n) => {
                 debug_assert_ne!(n, 0, "Can't pop 0 gamestates, use None.");
+                ctx.cls(); // Always clear screen when popping
                 for _ in 0..n.into() {
                     match self.all_gs.pop() {
                         Err(_) => {

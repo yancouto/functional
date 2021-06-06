@@ -1,13 +1,15 @@
-use std::{collections::HashMap, convert::TryFrom, path::PathBuf};
+use std::{
+    collections::HashMap, convert::{TryFrom, TryInto}, path::PathBuf
+};
 
 use jsonnet::JsonnetVm;
 use serde::{Deserialize, Serialize};
 
 use super::{super::base::*, UserLevelConfig, WorkshopConfig};
 use crate::{
-    interpreter::{
+    drawables::{black, XiEditor}, gamestates::{base::GameStateEvent, editor::EditorState}, interpreter::{
         parse, tokenize, ConstantProvider, InterpretError, Node, ParseError, TokenizeError
-    }, levels::{BaseLevel, Level, TestCase, UserCreatedLevel}, prelude::*
+    }, levels::{BaseLevel, Level, TestCase, UserCreatedLevel}, prelude::*, save_system::SaveProfile
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -163,7 +165,7 @@ impl UserLevelConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ParsedUserLevelConfig {
     name:               String,
     description:        String,
@@ -217,6 +219,16 @@ impl TryFrom<ParsedUserLevelConfig> for UserCreatedLevel {
     }
 }
 
+impl TryFrom<ParsedUserLevelConfig> for Level {
+    type Error = ValidationError;
+
+    fn try_from(value: ParsedUserLevelConfig) -> Result<Self, Self::Error> {
+        value
+            .try_into()
+            .map(|ucl| Level::UserCreatedLevel(Arc::new(ucl)))
+    }
+}
+
 pub fn validate(
     workshop: WorkshopConfig,
     config: PathBuf,
@@ -237,27 +249,56 @@ pub fn validate(
 
 #[derive(Debug)]
 pub struct ValidationState {
-    level: Result<ParsedUserLevelConfig, ValidationError>,
+    level:        Result<ParsedUserLevelConfig, ValidationError>,
+    save_profile: Arc<SaveProfile>,
 }
 
 impl ValidationState {
-    pub fn new(level: Result<ParsedUserLevelConfig, ValidationError>) -> Self { Self { level } }
+    pub fn new(
+        level: Result<ParsedUserLevelConfig, ValidationError>,
+        save_profile: Arc<SaveProfile>,
+    ) -> Self {
+        Self {
+            level,
+            save_profile,
+        }
+    }
 }
 
 impl GameState for ValidationState {
     fn name(&self) -> &'static str { "Validation" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
+        let rect = Rect::centered(70, 60);
         data.text_box(
             "Level validation",
             &match &self.level {
                 Ok(_) => "No validation errors, level looks good.".to_string(),
                 Err(err) => format!("ERROR: {}", err),
             },
-            Rect::centered(70, 60),
+            rect,
             true,
         );
-        data.instructions(&["Press ESC to go back"]);
+        let mut instructions = Vec::with_capacity(2);
+        const PLAY: &str = "Play";
+        if let Ok(uc) = &self.level {
+            if data.button(PLAY, Pos::new(rect.bottom() - 3, rect.pos.j + 1), black())
+                || (data.ctrl && data.pressed_key == Some(Key::Return))
+            {
+                if let Ok(level) = uc.clone().try_into() {
+                    return GameStateEvent::Push(box EditorState::<XiEditor>::new(
+                        level,
+                        self.save_profile.clone(),
+                    ));
+                } else {
+                    debug_unreachable!("Should not be error");
+                }
+            }
+            instructions.push("Press CTRL+ENTER or the button to play level");
+        }
+        instructions.push("Press ESC to go back");
+        data.instructions(&instructions);
+
         if data.pressed_key == Some(Key::Escape) {
             GameStateEvent::Pop(1)
         } else {
