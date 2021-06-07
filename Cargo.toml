@@ -47,8 +47,8 @@ winit = ">= 0"
 steamworks = { git = "https://github.com/yancouto/steamworks-rs", optional = true }
 
 [dev-dependencies]
-tempfile = "3"
 pretty_assertions = "0.7"
+tempfile = "3"
 
 [dependencies.bracket-lib]
 version = "0.8.1"

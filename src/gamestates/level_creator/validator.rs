@@ -315,7 +315,8 @@ impl GameState for ValidationState {
                     black(),
                 ) || (data.ctrl && data.pressed_key == Some(Key::U))
                 {
-                    let (state, recv) = UploadingLevelState::new(client, self.config.clone());
+                    let (state, recv) =
+                        UploadingLevelState::new(uc.clone(), client, self.config.clone());
                     self.id_recv = Some(recv);
                     return GameStateEvent::Push(box state);
                 }
