@@ -1,7 +1,6 @@
 use std::{convert::TryFrom, iter::FromIterator, path::PathBuf, time::Duration};
 
 use clipboard::{ClipboardContext, ClipboardProvider};
-use derivative::Derivative;
 use xi_core_lib::rpc::{
     EditCommand, EditNotification, EditRequest, GestureType, LineRange, SelectionGranularity
 };

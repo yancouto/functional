@@ -1,5 +1,4 @@
 use crossbeam::channel::*;
-use derivative::Derivative;
 use thiserror::Error;
 
 use super::{super::base::*, ParsedUserLevelConfig, WorkshopConfig};
