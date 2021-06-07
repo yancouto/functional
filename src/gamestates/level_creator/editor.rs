@@ -1,5 +1,6 @@
 use std::{io::Write, path::PathBuf};
 
+use crossbeam::channel::Receiver;
 use serde::{Deserialize, Serialize};
 
 use super::{super::base::*, validate, ValidationState};
@@ -9,7 +10,7 @@ use crate::{
 
 const WORKSHOP_FILE: &str = "workshop.yaml";
 const CONFIG_FILE: &str = "config.jsonnet";
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WorkshopConfig {
     pub title:        String,
     pub description:  String,
@@ -42,6 +43,7 @@ pub struct EditorState<Editor: TextEditor> {
     selected_editor:    Editors,
     exiting:            bool,
     save_profile:       Arc<SaveProfile>,
+    id_recv:            Option<Receiver<u64>>,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
@@ -77,6 +79,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             selected_editor: Editors::Title,
             exiting: false,
             save_profile,
+            id_recv: None,
         };
         this.reload_config();
         this
@@ -107,10 +110,11 @@ impl<Editor: TextEditor> EditorState<Editor> {
         }
     }
 
-    fn save_config(&self) {
+    fn save_config(&self, new_id: Option<u64>) {
         let mut config = self.read_config();
         config.title = self.title_editor.to_string();
         config.description = self.description_editor.to_string();
+        config.published_id = config.published_id.or(new_id);
         match std::fs::File::create(self.workshop_file()).map(|f| serde_yaml::to_writer(f, &config))
         {
             Ok(Ok(_)) => {},
@@ -154,7 +158,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
         self.main_editor.draw(&mut data);
 
         if data.button(SAVE, Pos::new(H - 3, 0), black()) {
-            self.save_config();
+            self.save_config(None);
         }
         if data.button(RELOAD, Pos::new(H - 3, SAVE.len() as i32 + 2), black()) {
             self.reload_config();
@@ -165,17 +169,26 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             black(),
         ) || (data.ctrl && data.pressed_key == Some(Key::Return))
         {
-            self.save_config();
-            return GameStateEvent::Push(box ValidationState::new(
-                validate(self.read_config(), self.config_file()),
+            self.save_config(None);
+            let workshop = self.read_config();
+            let (validator, recv) = ValidationState::new(
+                validate(workshop.clone(), self.config_file()),
                 self.save_profile.clone(),
-            ));
+                workshop,
+            );
+            self.id_recv = Some(recv);
+            return GameStateEvent::Push(box validator);
         }
 
         data.instructions(&[
             "Press CTRL+ENTER or the button to validate",
             "Press ESC to go back",
         ]);
+
+        // Only need to try once
+        if let Some(new_id) = self.id_recv.take().and_then(|r| r.try_recv().ok()) {
+            self.save_config(Some(new_id));
+        }
 
         if self.exiting {
             let but = data.box_with_options(
@@ -185,7 +198,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
                 &["Save", "Discard", "Cancel"],
             );
             if but == Some(0) {
-                self.save_config();
+                self.save_config(None);
                 return GameStateEvent::Pop(1);
             } else if but == Some(1) {
                 return GameStateEvent::Pop(1);

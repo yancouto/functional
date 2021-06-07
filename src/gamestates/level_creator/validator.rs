@@ -2,12 +2,13 @@ use std::{
     collections::HashMap, convert::{TryFrom, TryInto}, path::PathBuf
 };
 
+use crossbeam::channel::{Receiver, Sender};
 use jsonnet::JsonnetVm;
 use serde::{Deserialize, Serialize};
 
 use super::{super::base::*, UserLevelConfig, WorkshopConfig};
 use crate::{
-    drawables::{black, XiEditor}, gamestates::{base::GameStateEvent, editor::EditorState}, interpreter::{
+    drawables::{black, XiEditor}, gamestates::{base::GameStateEvent, editor::EditorState, level_creator::UploadingLevelState}, interpreter::{
         parse, tokenize, ConstantProvider, InterpretError, Node, ParseError, TokenizeError
     }, levels::{BaseLevel, Level, TestCase, UserCreatedLevel}, prelude::*, save_system::SaveProfile
 };
@@ -251,17 +252,28 @@ pub fn validate(
 pub struct ValidationState {
     level:        Result<ParsedUserLevelConfig, ValidationError>,
     save_profile: Arc<SaveProfile>,
+    config:       WorkshopConfig,
+    id_send:      Sender<u64>,
+    id_recv:      Option<Receiver<u64>>,
 }
 
 impl ValidationState {
     pub fn new(
         level: Result<ParsedUserLevelConfig, ValidationError>,
         save_profile: Arc<SaveProfile>,
-    ) -> Self {
-        Self {
-            level,
-            save_profile,
-        }
+        config: WorkshopConfig,
+    ) -> (Self, Receiver<u64>) {
+        let (send, recv) = crossbeam::channel::unbounded();
+        (
+            Self {
+                level,
+                save_profile,
+                config,
+                id_send: send,
+                id_recv: None,
+            },
+            recv,
+        )
     }
 }
 
@@ -279,8 +291,9 @@ impl GameState for ValidationState {
             rect,
             true,
         );
-        let mut instructions = Vec::with_capacity(2);
+        let mut instructions = Vec::with_capacity(3);
         const PLAY: &str = "Play";
+        const UPLOAD: &str = "Upload";
         if let Ok(uc) = &self.level {
             if data.button(PLAY, Pos::new(rect.bottom() - 3, rect.pos.j + 1), black())
                 || (data.ctrl && data.pressed_key == Some(Key::Return))
@@ -294,10 +307,28 @@ impl GameState for ValidationState {
                     debug_unreachable!("Should not be error");
                 }
             }
-            instructions.push("Press CTRL+ENTER or the button to play level");
+            if let Some(client) = data.steam_client.clone() {
+                instructions.push("Press CTRL+U or UPLOAD to upload level to steam");
+                if data.button(
+                    UPLOAD,
+                    Pos::new(rect.bottom() - 3, rect.pos.j + 3 + PLAY.len() as i32),
+                    black(),
+                ) || (data.ctrl && data.pressed_key == Some(Key::U))
+                {
+                    let (state, recv) = UploadingLevelState::new(client, self.config.clone());
+                    self.id_recv = Some(recv);
+                    return GameStateEvent::Push(box state);
+                }
+            }
+            instructions.push("Press CTRL+ENTER or PLAY to test play level");
         }
         instructions.push("Press ESC to go back");
         data.instructions(&instructions);
+
+        // Get id from uploader and return it to level creator editor
+        if let Some(id) = self.id_recv.take().and_then(|r| r.try_recv().ok()) {
+            self.id_send.send(id).debug_unwrap();
+        }
 
         if data.pressed_key == Some(Key::Escape) {
             GameStateEvent::Pop(1)
