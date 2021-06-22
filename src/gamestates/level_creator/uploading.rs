@@ -54,6 +54,8 @@ fn open_file_page(client: &SteamClient, id: u64) {
         .activate_game_overlay_to_web_page(&format!("steam://url/CommunityFilePage/{}", id));
 }
 
+pub const LEVEL_FILE: &str = "level.json";
+
 #[cfg(feature = "steam")]
 fn upload_level_impl(
     id_sender: Sender<u64>,
@@ -94,7 +96,7 @@ fn upload_level_impl(
         .join(format!("{}", published_id));
     std::fs::create_dir_all(&cache)?;
 
-    std::fs::write(cache.join("level.json"), serde_json::to_vec(&level)?)?;
+    std::fs::write(cache.join(LEVEL_FILE), serde_json::to_vec(&level)?)?;
     log::debug!("Level stored in dir {:?}", cache);
     client
         .ugc()

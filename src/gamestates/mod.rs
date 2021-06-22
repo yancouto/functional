@@ -11,3 +11,4 @@ pub mod running_solution;
 pub mod save_loader;
 pub mod show_results;
 pub mod string_reader;
+pub mod user_created_levels;

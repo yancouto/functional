@@ -1,5 +1,5 @@
 use super::{
-    base::*, level_creator::LevelCreatorLevelListState, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState
+    base::*, level_creator::LevelCreatorLevelListState, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState, user_created_levels::UserCreatedLevelsState
 };
 use crate::{
     drawables::XiEditor, gamestates::playground::PlaygroundState, interpreter::ConstantProvider, prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor
@@ -9,6 +9,7 @@ enum MenuItem {
     Play,
     Settings,
     LevelCreator,
+    UserCreatedLevels,
     ChangeProfile,
     Playground,
     Quit,
@@ -23,6 +24,7 @@ impl MenuItem {
             MenuItem::Playground => "playground",
             MenuItem::Quit => "quit game",
             MenuItem::LevelCreator => "level creator",
+            MenuItem::UserCreatedLevels => "user created levels",
         }
     }
 
@@ -43,6 +45,10 @@ impl MenuItem {
                 data.quit();
                 GameStateEvent::None
             },
+            MenuItem::UserCreatedLevels => GameStateEvent::Push(box UserCreatedLevelsState::new(
+                menu.save_profile.clone(),
+                data.steam_client.as_deref(),
+            )),
         }
     }
 }
@@ -58,6 +64,7 @@ impl MainMenuState {
             items: vec1![
                 MenuItem::Play,
                 MenuItem::Playground,
+                MenuItem::UserCreatedLevels,
                 MenuItem::LevelCreator,
                 MenuItem::Settings,
                 MenuItem::ChangeProfile,
