@@ -30,3 +30,12 @@ jobs:
       run: cargo build --verbose --no-default-features --features bracket-lib/opengl
     - name: Run tests
       run: cargo test --verbose --no-default-features --features bracket-lib/opengl
+    - name: Build docs
+      run: cargo doc --verbose --no-default-features --features bracket-lib/opengl
+    - name: Deploy to GitHub Pages
+      uses: crazy-max/ghaction-github-pages@v2
+      with:
+        target_branch: gh-pages
+        build_dir: target/doc
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
