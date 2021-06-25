@@ -72,7 +72,12 @@ impl Rect {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn top(&self) -> i32 { self.pos.i }
+
     pub fn bottom(&self) -> i32 { self.pos.i + self.size.h - 1 }
 
     pub fn left(&self) -> i32 { self.pos.j }
+
+    pub fn right(&self) -> i32 { self.pos.j + self.size.w - 1 }
 }

@@ -41,6 +41,7 @@ pub struct EditorState<Editor: TextEditor> {
     description_editor: BasicTextEditor,
     main_editor:        Editor,
     selected_editor:    Editors,
+    tips_screen:        Rect,
     exiting:            bool,
     save_profile:       Arc<SaveProfile>,
     id_recv:            Option<Receiver<u64>>,
@@ -65,9 +66,10 @@ impl<Editor: TextEditor> EditorState<Editor> {
             String::new(),
         );
         description_editor.set_cursor(false);
+        let editor_rect = Rect::new(editor_i + 2, 1, w, H - editor_i - 3 - buttons_h);
         let mut main_editor = Editor::new(
             "Level config".to_string(),
-            Rect::new(editor_i + 2, 1, w, H - editor_i - 3 - buttons_h),
+            editor_rect.clone(),
             String::new(),
         );
         main_editor.set_cursor(false);
@@ -76,6 +78,12 @@ impl<Editor: TextEditor> EditorState<Editor> {
             title_editor,
             description_editor,
             main_editor,
+            tips_screen: Rect::new(
+                2,
+                editor_rect.right() + 2,
+                W - editor_rect.right() - 2,
+                H - 2 - 3,
+            ),
             selected_editor: Editors::Title,
             exiting: false,
             save_profile,
@@ -149,6 +157,33 @@ const SAVE: &str = "Save";
 const RELOAD: &str = "Reload";
 const VALIDATE: &str = "Validate";
 
+const INSTRUCTIONS: &str = r#"
+To create a level, first give it a name and a description, which will be shown in the Steam Workshop config.
+
+The level config should be a JSON object which describes the levels. The most important fields of it are:
+
+- test_cases: A list, each element must be a list with exactly two strings, a test case. The first element is a function that is applied to the user's solution, and the second must be the expected result.
+
+- solutions: A list with at least one valid solution to the problem.
+
+The syntax is JSONNET, a superset of JSON that allows easier writing of JSON files. Plain JSON also works fine.
+
+Here's a simple of a level that accepts identity functions:
+{
+    test_cases: [["f: f a", "a"]],
+    solutions: ["x: x"]
+}
+
+Press Validate to validate the level config is valid. If it is, you can play the level to test alternate solutions, or upload it to Steam. Once uploaded, further uploads will just edit it.
+
+See the full level schema for more ways to customise your level.
+"#;
+
+const INST_BUTTONS: &[(&str, &str)] = &[
+    ("See JSONNET syntax", "https://jsonnet.org/"),
+    ("See full level schema", "https://yancouto.github.io/functional/functional/gamestates/level_creator/level_config/struct.UserLevelConfig.html"),
+];
+
 impl<Editor: TextEditor> GameState for EditorState<Editor> {
     fn name(&self) -> &'static str { "LevelEditor" }
 
@@ -178,6 +213,20 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
             );
             self.id_recv = Some(recv);
             return GameStateEvent::Push(box validator);
+        }
+
+        data.text_box("Instructions", INSTRUCTIONS, self.tips_screen.clone(), true);
+
+        let mut i = self.tips_screen.bottom();
+
+        for (text, link) in INST_BUTTONS {
+            i -= 3;
+            if data.button(text, Pos::new(i, self.tips_screen.left() + 1), black()) {
+                #[cfg(feature = "steam")]
+                if let Some(client) = &data.steam_client {
+                    client.friends().activate_game_overlay_to_web_page(link);
+                }
+            }
         }
 
         data.instructions(&[
