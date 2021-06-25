@@ -5,6 +5,14 @@ use crate::prelude::*;
 #[derive(Debug, Serialize, Deserialize)]
 /// UserLevelConfig is the format in which the JSON level config file must be specified.
 /// See the field descriptions belows for more information.
+///
+/// Example of a valid level:
+/// ```text
+/// {
+///   test_cases: [["f: f a", "a"]],
+///   solutions: ["x: x"]
+/// }
+/// ```
 pub struct UserLevelConfig {
     /// Name of the level shown in the UI. If not present, defaults to the same name as
     /// in the Workshop.
@@ -34,7 +42,8 @@ pub struct UserLevelConfig {
     /// `["a:b: x:y: a x (b x y)", "a:b: NOT (AND (NOT a) (NOT b))"]`
     pub solutions:       Vec1<String>,
     #[serde(default)]
-    /// You may optionally specify wrong solutions, to make sure they do not pass all tests.
+    /// You may optionally specify wrong solutions, and validation will make sure they do not
+    /// pass all tests.
     pub wrong_solutions: Vec<String>,
     #[serde(default)]
     /// This is an optional list of additional constants the player may use. By default the
@@ -42,5 +51,7 @@ pub struct UserLevelConfig {
     ///
     /// Constants are two-element arrays. First element is the name, which must be UPPER_CASE.
     /// Second element is the constant term.
+    ///
+    /// Example: `[["DUPLICATE", "x: x x"]]`
     pub extra_constants: Vec<(String, String)>,
 }

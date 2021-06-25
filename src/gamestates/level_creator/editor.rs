@@ -82,7 +82,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
                 2,
                 editor_rect.right() + 2,
                 W - editor_rect.right() - 2,
-                H - 2 - 3,
+                H - 2 - 4,
             ),
             selected_editor: Editors::Title,
             exiting: false,
