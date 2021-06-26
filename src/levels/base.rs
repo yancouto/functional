@@ -12,7 +12,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct TestCase {
     /// Must be a function that receives the code and returns the result.
-    application:     Box<Node>,
+    pub application: Box<Node>,
     /// Result of the application
     /// TODO: Maybe we need more complex checking?
     expected_result: Box<Node>,

@@ -2,7 +2,7 @@ local lib = import 'lib.libsonnet';
 {
   name: 'decompositon',
   description: |||
-    Write function DEC that, given a number X, outputs its decomposition in increasing powers of two. That is, it should output a list of unique decreasing powers of two, such that its sum is X. It is guaranteed such decomposition always exists and is unique.
+    Write function DEC that, given a number X, outputs its decomposition in increasing powers of two. That is, it should output a list of unique increasing powers of two, such that its sum is X. It is guaranteed such decomposition always exists and is unique.
     
     For example:
     - DEC 12 -> [4, 8]

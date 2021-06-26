@@ -5,6 +5,10 @@ local lib = import 'lib.libsonnet';
   description: |||
     Write function MUL that, given two numerals X and Y, reduces to X.Y, that is, X multiplied by Y.
     
+    Examples:
+    - MUL 2 3 -> 6
+    - MUL 0 5 -> 0
+    
     The input is well formed, that is, it's always two numerals.
   |||,
   test_cases: [
