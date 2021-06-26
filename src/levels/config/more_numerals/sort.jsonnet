@@ -14,7 +14,7 @@ local pl = import '../pair_and_list/lib.libsonnet';
   |||,
   test_cases: [
     lib.test_list_num('f: f %s' % [pl.list(v)], std.sort(v))
-    for v in [[2], [4, 3], [1, 3, 2], [4, 2, 1, 3]]
+    for v in [[2], [4, 3], [1, 3, 2], [4, 2, 1, 3], [7, 5, 3, 2]]
   ],
   solutions: [
     |||
