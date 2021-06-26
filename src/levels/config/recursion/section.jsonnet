@@ -10,5 +10,6 @@
     import 'zip.jsonnet',
     import 'eqblist.jsonnet',
     import 'concat.jsonnet',
+    import 'reverse.jsonnet',
   ],
 }

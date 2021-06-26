@@ -34,8 +34,8 @@ impl<T> AlgorithmAssert<T> for Option<T> {
     }
 }
 
-const MAX_LEVEL: usize = 100;
-const MAX_SIZE: u32 = 2000;
+const MAX_LEVEL: usize = 500;
+const MAX_SIZE: u32 = 10000;
 
 use std::pin::Pin;
 

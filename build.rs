@@ -5,6 +5,7 @@ use jsonnet::JsonnetVm;
 
 fn get_level_config_json() -> String {
     let mut vm = JsonnetVm::new();
+    vm.max_stack(1000);
     let out = vm
         .evaluate_file("src/levels/config/level_config.jsonnet")
         .expect("Failed to parse jsonnet")

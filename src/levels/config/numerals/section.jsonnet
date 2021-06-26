@@ -11,5 +11,6 @@
     import 'is_odd.jsonnet',
     import 'min.jsonnet',
     import 'max.jsonnet',
+    import 'decomposition.jsonnet',
   ],
 }
