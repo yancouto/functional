@@ -45,6 +45,7 @@ pub struct EditorState<Editor: TextEditor> {
     exiting:            bool,
     save_profile:       Arc<SaveProfile>,
     id_recv:            Option<Receiver<u64>>,
+    last_button:        usize,
 }
 
 impl<Editor: TextEditor> EditorState<Editor> {
@@ -88,6 +89,7 @@ impl<Editor: TextEditor> EditorState<Editor> {
             exiting: false,
             save_profile,
             id_recv: None,
+            last_button: 0,
         };
         this.reload_config();
         this
@@ -245,6 +247,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
                 "Do you want to save your changes?",
                 Rect::centered(30, 20),
                 &["Save", "Discard", "Cancel"],
+                &mut self.last_button,
             );
             if but == Some(0) {
                 self.save_config(None);

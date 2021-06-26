@@ -3,8 +3,9 @@ use crate::{gamestates::base::*, prelude::*, save_system};
 
 #[derive(Debug)]
 pub struct SaveLoaderState {
-    user:     String,
-    err_text: String,
+    user:          String,
+    err_text:      String,
+    last_selected: usize,
 }
 
 impl SaveLoaderState {
@@ -22,6 +23,7 @@ impl SaveLoaderState {
                     If you're feeling adventureous, you might want to try to fix the save yourself.",
                     err
                 ),
+                last_selected: 0,
             },
         }
     }
@@ -36,6 +38,7 @@ impl GameState for SaveLoaderState {
             &self.err_text,
             Rect::centered(70, 35),
             &["Reset save", "Go back to profile selection"],
+            &mut self.last_selected,
         ) {
             GameStateEvent::Switch(if i == 0 {
                 save_system::reset_profile(&self.user);

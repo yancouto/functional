@@ -71,18 +71,25 @@ impl TickData<'_> {
         text: &str,
         rect: Rect,
         buttons: &[&str],
+        last_selected: &mut usize,
     ) -> Option<usize> {
         self.text_box(title, text, rect, true);
         let mut ans = None;
+        *last_selected = buttons.len().min(*last_selected);
+        if self.pressed_key == Some(Key::Up) {
+            *last_selected = (*last_selected + buttons.len() - 1) % buttons.len();
+        } else if self.pressed_key == Some(Key::Down) {
+            *last_selected = (*last_selected + 1) % buttons.len();
+        }
+        let cursor_on = ((self.time.as_millis() / 500) % 2) == 0;
         for (i, txt) in buttons.iter().enumerate() {
-            if self.button(
-                *txt,
-                Pos::new(
-                    rect.bottom() - 3 * (buttons.len() - i) as i32,
-                    rect.left() + 1,
-                ),
-                black(),
-            ) {
+            let pi = rect.bottom() - 3 * (buttons.len() - i) as i32;
+            if cursor_on && i == *last_selected {
+                self.char(Pos::new(pi + 1, rect.left() + 1), '>');
+            }
+            if self.button(*txt, Pos::new(pi, rect.left() + 3), black())
+                || (i == *last_selected && self.pressed_key == Some(Key::Return))
+            {
                 ans = Some(i);
             }
         }
