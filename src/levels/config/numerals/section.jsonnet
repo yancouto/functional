@@ -15,5 +15,6 @@
     import 'max.jsonnet',
     import 'decomposition.jsonnet',
     import 'primes.jsonnet',
+    import 'sort.jsonnet',
   ],
 }

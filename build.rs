@@ -12,7 +12,7 @@ fn get_level_config_json() -> String {
         ])
         .output()
     {
-        Ok(o) => String::from_utf8(o.stdout).unwrap(),
+        Ok(o) if !o.stdout.is_empty() => String::from_utf8(o.stdout).unwrap(),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             let mut vm = JsonnetVm::new();
             let out = vm
@@ -21,6 +21,7 @@ fn get_level_config_json() -> String {
                 .to_string();
             out
         },
+        Ok(o) => panic!("{}", String::from_utf8_lossy(&o.stderr)),
         Err(e) => panic!("Failed to run {:?}", e),
     }
 }

@@ -7,6 +7,7 @@
     import 'all.jsonnet',
     import 'map.jsonnet',
     import 'none.jsonnet',
+    import 'filter.jsonnet',
     import 'zip.jsonnet',
     import 'eqblist.jsonnet',
     import 'concat.jsonnet',
