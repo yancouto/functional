@@ -1,5 +1,5 @@
+local lib = import '../numerals/lib.libsonnet';
 local pl = import '../pair_and_list/lib.libsonnet';
-local lib = import 'lib.libsonnet';
 {
   name: 'sort',
   description: |||

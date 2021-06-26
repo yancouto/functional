@@ -103,6 +103,9 @@ pub enum SectionName {
     PairAndList,
     Recursion,
     Numerals,
+    #[strum(serialize = "more numerals")]
+    #[serde(rename = "more numerals")]
+    MoreNumerals,
 }
 
 pub struct Section {
@@ -225,7 +228,14 @@ mod test {
         }
     }
 
-    solution_tests!(Basic, Boolean, Numerals, PairAndList, Recursion);
+    solution_tests!(
+        Basic,
+        Boolean,
+        Numerals,
+        PairAndList,
+        Recursion,
+        MoreNumerals
+    );
 
     #[test]
     fn test_wrong_solutions() {

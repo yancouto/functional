@@ -1,4 +1,4 @@
-local lib = import 'lib.libsonnet';
+local lib = import '../numerals/lib.libsonnet';
 {
   name: 'primes',
   description: |||
