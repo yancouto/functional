@@ -4,13 +4,25 @@ use build_deps::rerun_if_changed_paths;
 use jsonnet::JsonnetVm;
 
 fn get_level_config_json() -> String {
-    let mut vm = JsonnetVm::new();
-    vm.max_stack(1000);
-    let out = vm
-        .evaluate_file("src/levels/config/level_config.jsonnet")
-        .expect("Failed to parse jsonnet")
-        .to_string();
-    out
+    match std::process::Command::new("jsonnet")
+        .args(&[
+            "-J",
+            "src/levels/config",
+            "src/levels/config/level_config.jsonnet",
+        ])
+        .output()
+    {
+        Ok(o) => String::from_utf8(o.stdout).unwrap(),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            let mut vm = JsonnetVm::new();
+            let out = vm
+                .evaluate_file("src/levels/config/level_config.jsonnet")
+                .expect("Failed to parse jsonnet")
+                .to_string();
+            out
+        },
+        Err(e) => panic!("Failed to run {:?}", e),
+    }
 }
 
 fn main() {

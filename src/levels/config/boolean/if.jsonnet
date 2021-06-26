@@ -6,7 +6,7 @@
     - FALSE = a: b: b
     
     That is, TRUE is a two argument function that returns the first element, and FALSE returns the second.
-
+    
     Write function IF, that is, a three-parameter function that is given a boolean, and two other values (say, A and B). If the boolean is TRUE, then it reduces to A, otherwise, it reduces to B. 
     
     For example:

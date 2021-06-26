@@ -18,9 +18,9 @@
     The main objective of each level is to just write a term that solves the problem.
     
     However, you can also compare your stats to those of other players. Two stats are collected:
-
+    
     - Reductions: How many steps your solution takes to solve the test cases, in average.
-
+    
     - Functions: How many functions are used in your term. Note that this will be equal to the number of ':'.
   |||,
   test_cases: [

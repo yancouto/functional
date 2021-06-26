@@ -19,7 +19,7 @@ local pl = import '../pair_and_list/lib.libsonnet';
     - F [FALSE, FALSE, TRUE, TRUE, FALSE] -> [TRUE, TRUE, FALSE]
     - F [TRUE, FALSE] -> [TRUE, FALSE]
     - F [FALSE, TRUE] -> [TRUE]
-
+    
     Let's reason why you can use Y in the way we said.
     
     Let F a self-referential function. Let's write it as

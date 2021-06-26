@@ -7,7 +7,7 @@ local bool_lib = import '../boolean/lib.libsonnet';
     Examples:
     - EQ 1 1 -> TRUE
     - EQ 1 0 -> FALSE
-
+        
     The input is well formed, that is, it's always two numerals.
   |||,
   test_cases: [
