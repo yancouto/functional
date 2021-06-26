@@ -9,5 +9,7 @@
     import 'mul.jsonnet',
     import 'increasing_list.jsonnet',
     import 'is_odd.jsonnet',
+    import 'min.jsonnet',
+    import 'max.jsonnet',
   ],
 }
