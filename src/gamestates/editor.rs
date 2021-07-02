@@ -93,6 +93,7 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
                 },
             ) && idx != self.current_solution
             {
+                SFX::Select.play();
                 self.save_current_solution(data.time);
                 self.load_solution(idx);
             }

@@ -1,20 +1,37 @@
 use super::{base::*, save_loader::SaveLoaderState};
 use crate::{
-    drawables::{BasicTextEditor, TextEditor, *}, prelude::*, save_system::{edit_and_save, load_common}
+    drawables::{BasicTextEditor, TextEditor, *}, prelude::*, save_system::{edit_and_save, get_save_dir, load_common}
 };
 
 pub struct ProfileSelectionState {
-    editor: BasicTextEditor,
+    editor:         BasicTextEditor,
+    known_profiles: Vec<String>,
 }
 
 impl ProfileSelectionState {
     pub fn new() -> Self {
+        let known_profiles = match get_save_dir().read_dir() {
+            Ok(dir) => dir
+                .into_iter()
+                .filter_map(|maybe_entry| match maybe_entry {
+                    Ok(entry) =>
+                        if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                            entry.file_name().to_str().map(|s| s.to_string())
+                        } else {
+                            None
+                        },
+                    Err(_) => None,
+                })
+                .collect(),
+            Err(_) => vec![],
+        };
         Self {
             editor: BasicTextEditor::new(
                 "Enter profile name:".to_string(),
                 Rect::centered(20, 1),
                 String::new(),
             ),
+            known_profiles,
         }
     }
 }
@@ -60,9 +77,19 @@ impl GameState for ProfileSelectionState {
     fn name(&self) -> &'static str { "ProfileSelection" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
-        // TODO: Add current profiles list
         self.editor.draw(&mut data);
         data.instructions(&["Press ENTER to create or load profile"]);
+
+        let mut i = H / 2 - self.known_profiles.len() as i32 * 3 / 2 - 3;
+        let j = W - 30;
+        if !self.known_profiles.is_empty() {
+            data.print(Pos::new(i, j), "Known profiles:");
+        }
+        for profile in &self.known_profiles {
+            i += 3;
+            data.print(Pos::new(i, j), profile);
+        }
+
         let name = self.editor.to_string();
         if let Some(err) = validate(&name) {
             data.console

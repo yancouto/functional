@@ -200,7 +200,8 @@ impl Drop for SaveProfile {
     }
 }
 
-fn get_save_profile(name: &str) -> PathBuf { PROJECT_DIR.data_dir().join("savegames").join(name) }
+pub fn get_save_dir() -> PathBuf { PROJECT_DIR.data_dir().join("savegames") }
+fn get_save_profile(name: &str) -> PathBuf { get_save_dir().join(name) }
 
 fn get_common_file() -> PathBuf { PROJECT_DIR.data_dir().join("common.data") }
 
