@@ -1126,6 +1126,7 @@ dependencies = [
  "more-asserts",
  "parking_lot 0.11.1",
  "pretty_assertions",
+ "rand 0.8.4",
  "rayon",
  "savefile",
  "savefile-derive",

@@ -1,6 +1,7 @@
 use ears::{AudioController, Sound, SoundData, SoundError};
 use enum_map::{enum_map, Enum, EnumMap};
 use parking_lot::Mutex;
+use rand::Rng;
 
 use crate::{prelude::*, save_system::load_common};
 
@@ -19,7 +20,10 @@ impl SFX {
         let mut manager = MANAGER.lock();
         match Sound::new_with_data(manager.data[self].clone()) {
             Ok(mut s) => {
-                s.set_volume(manager.volume as f32 / 10.0);
+                s.set_pitch(rand::thread_rng().gen_range(0.8..1.2));
+                s.set_volume(
+                    (manager.volume as f32 / 10.0) * rand::thread_rng().gen_range(0.9..1.1),
+                );
                 s.play();
                 manager.playing.push(s);
             },
