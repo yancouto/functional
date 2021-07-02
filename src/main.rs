@@ -8,6 +8,7 @@
 #![feature(backtrace)]
 #![feature(assert_matches)]
 #![feature(option_zip)]
+#![feature(drain_filter)]
 #[macro_use]
 extern crate lazy_static;
 
@@ -21,6 +22,7 @@ extern crate derivative;
 #[macro_use]
 extern crate maplit;
 
+mod audio;
 mod drawables;
 mod gamestates;
 mod interpreter;

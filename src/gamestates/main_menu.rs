@@ -29,6 +29,7 @@ impl MenuItem {
     }
 
     fn on_click(&self, menu: &MainMenuState, data: &mut TickData) -> GameStateEvent {
+        SFX::Select.play();
         match self {
             MenuItem::Play =>
                 GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),

@@ -1,6 +1,6 @@
 use std::{collections::HashSet, time::Duration};
 
-use crate::prelude::*;
+use crate::{audio, prelude::*};
 
 pub struct GSData {
     pub cur:  Box<dyn GameState>,
@@ -132,6 +132,7 @@ impl GameStateManager {
     }
 
     pub fn tick(&mut self, ctx: &mut bl::BTerm) {
+        audio::tick();
         let event_data = self.process_events(ctx);
         let time_passed = Duration::from_secs_f32(ctx.frame_time_ms / 1000.);
         self.all_gs.last_mut().time += time_passed;

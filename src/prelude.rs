@@ -11,5 +11,5 @@ pub use rayon::prelude::*;
 pub use vec1::{vec1, Vec1};
 
 pub use crate::{
-    math::{Pos, Rect}, utils::debug_asserts::*
+    audio::SFX, math::{Pos, Rect}, utils::debug_asserts::*
 };
