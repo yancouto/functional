@@ -1,10 +1,9 @@
 use super::{
-    base::*, level_creator::LevelCreatorLevelListState, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState, user_created_levels::UserCreatedLevelsState
+    base::*, level_creator::LevelCreatorLevelListState, level_selection::LevelSelectionState, profile_selection::ProfileSelectionState, settings::SettingsState, user_created_levels::UserCreatedLevelsState
 };
 use crate::{
     drawables::XiEditor, gamestates::playground::PlaygroundState, interpreter::ConstantProvider, prelude::*, save_system::SaveProfile, utils::vec_with_cursor::VecWithCursor
 };
-
 enum MenuItem {
     Play,
     Settings,
@@ -19,7 +18,7 @@ impl MenuItem {
     fn name(&self) -> &'static str {
         match self {
             MenuItem::Play => "play",
-            MenuItem::Settings => "settings (TODO!)",
+            MenuItem::Settings => "settings",
             MenuItem::ChangeProfile => "change profile",
             MenuItem::Playground => "playground",
             MenuItem::Quit => "quit game",
@@ -33,7 +32,7 @@ impl MenuItem {
         match self {
             MenuItem::Play =>
                 GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),
-            MenuItem::Settings => GameStateEvent::None,
+            MenuItem::Settings => GameStateEvent::Push(box SettingsState::new()),
             MenuItem::ChangeProfile => GameStateEvent::Switch(box ProfileSelectionState::new()),
             MenuItem::Playground => GameStateEvent::Push(box PlaygroundState::<XiEditor>::new(
                 String::new(),

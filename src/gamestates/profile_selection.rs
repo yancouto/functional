@@ -1,6 +1,6 @@
 use super::{base::*, save_loader::SaveLoaderState};
 use crate::{
-    drawables::{BasicTextEditor, TextEditor, *}, prelude::*, save_system::{load_common, write_common, CommonConfig}
+    drawables::{BasicTextEditor, TextEditor, *}, prelude::*, save_system::{edit_and_save, load_common}
 };
 
 pub struct ProfileSelectionState {
@@ -69,8 +69,8 @@ impl GameState for ProfileSelectionState {
                 .print_color_centered(H / 2 + 5, light_red(), black(), err.str());
         } else {
             if data.pressed_key == Some(Key::Return) && !name.is_empty() {
-                write_common(CommonConfig {
-                    default_profile: Some(name.clone()),
+                edit_and_save(|c| {
+                    c.default_profile = Some(name.clone());
                 });
                 return GameStateEvent::Switch(SaveLoaderState::try_load(name));
             }

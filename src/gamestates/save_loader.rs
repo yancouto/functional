@@ -44,7 +44,7 @@ impl GameState for SaveLoaderState {
                 save_system::reset_profile(&self.user);
                 Self::try_load(self.user.clone())
             } else {
-                save_system::write_common(Default::default());
+                save_system::edit_and_save(|c| c.default_profile.take());
                 try_load_default_profile()
             })
         } else {

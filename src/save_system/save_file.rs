@@ -214,16 +214,30 @@ pub fn reset_profile(name: &str) {
     fs::remove_file(get_save_profile(name).join(SAVE_FILE)).debug_unwrap();
 }
 
-const CURRENT_COMMON_VERSION: u32 = 0;
-#[derive(Savefile, Debug, Default)]
+const CURRENT_COMMON_VERSION: u32 = 1;
+#[derive(Savefile, Debug)]
 pub struct CommonConfig {
     pub default_profile: Option<String>,
+    #[savefile_default_val = "7"]
+    #[savefile_versions = "1.."]
+    pub volume:          u8,
+}
+
+impl Default for CommonConfig {
+    fn default() -> Self {
+        Self {
+            default_profile: None,
+            volume:          7,
+        }
+    }
 }
 
 pub fn load_common() -> CommonConfig {
     read(get_common_file(), CURRENT_COMMON_VERSION).debug_unwrap_or_default()
 }
 
-pub fn write_common(common: CommonConfig) {
-    write(get_common_file(), CURRENT_COMMON_VERSION, &common);
+pub fn edit_and_save<R, F: FnOnce(&mut CommonConfig) -> R>(edit_fn: F) {
+    let mut config = load_common();
+    edit_fn(&mut config);
+    write(get_common_file(), CURRENT_COMMON_VERSION, &config);
 }

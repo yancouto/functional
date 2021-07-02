@@ -9,6 +9,7 @@ pub mod playground;
 pub mod profile_selection;
 pub mod running_solution;
 pub mod save_loader;
+pub mod settings;
 pub mod show_results;
 pub mod string_reader;
 pub mod user_created_levels;

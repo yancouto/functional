@@ -2,7 +2,7 @@ use ears::{AudioController, Sound, SoundData, SoundError};
 use enum_map::{enum_map, Enum, EnumMap};
 use parking_lot::Mutex;
 
-use crate::prelude::*;
+use crate::{prelude::*, save_system::load_common};
 
 #[derive(strum::Display, Debug, Enum, Clone, Copy)]
 #[strum(serialize_all = "snake_case")]
@@ -19,6 +19,7 @@ impl SFX {
         let mut manager = MANAGER.lock();
         match Sound::new_with_data(manager.data[self].clone()) {
             Ok(mut s) => {
+                s.set_volume(manager.volume as f32 / 10.0);
                 s.play();
                 manager.playing.push(s);
             },
@@ -36,15 +37,18 @@ struct AudioManager {
     playing: Vec<Sound>,
     // Use std::sync::Mutex here because it's what ears lib requires
     data:    EnumMap<SFX, Arc<std::sync::Mutex<SoundData>>>,
+    volume:  u8,
 }
 
 impl AudioManager {
     fn new() -> Result<Self, SoundError> {
+        let config = load_common();
         Ok(Self {
             playing: Vec::new(),
             data:    enum_map! {
                 sfx => Arc::new(std::sync::Mutex::new(SoundData::new(&format!("assets/sounds/{}.wav", sfx))?)),
             },
+            volume:  config.volume,
         })
     }
 
@@ -52,3 +56,5 @@ impl AudioManager {
 }
 
 pub fn tick() { MANAGER.lock().tick(); }
+
+pub fn set_volume(vol: u8) { MANAGER.lock().volume = vol.min(10).max(0); }
