@@ -155,7 +155,7 @@ fn main() -> bl::BError {
         .with_title("functional")
         // We use the event queue
         .with_advanced_input(true)
-        .with_tile_dimensions(12, 12)
+        .with_tile_dimensions(12, 15)
         .build()?;
     maybe_load_icon();
     let first_state = || gamestates::profile_selection::try_load_default_profile();
