@@ -16,13 +16,30 @@ pub enum SFX {
 }
 
 impl SFX {
+    fn pitch_var(self) -> f32 {
+        match self {
+            Self::Win => 0.01,
+            Self::Wrong => 0.05,
+            _ => 0.15,
+        }
+    }
+
+    fn volume_var(self) -> f32 {
+        match self {
+            Self::Win | Self::Wrong => 0.01,
+            _ => 0.1,
+        }
+    }
+
     pub fn play(self) {
+        let (pitch_var, volume_var) = (self.pitch_var(), self.volume_var());
         let mut manager = MANAGER.lock();
         match Sound::new_with_data(manager.data[self].clone()) {
             Ok(mut s) => {
-                s.set_pitch(rand::thread_rng().gen_range(0.8..1.2));
+                s.set_pitch(rand::thread_rng().gen_range((1.0 - pitch_var)..(1.0 + pitch_var)));
                 s.set_volume(
-                    (manager.volume as f32 / 10.0) * rand::thread_rng().gen_range(0.9..1.1),
+                    (manager.volume as f32 / 10.0)
+                        * rand::thread_rng().gen_range((1.0 - volume_var)..(1.0 + volume_var)),
                 );
                 s.play();
                 manager.playing.push(s);
