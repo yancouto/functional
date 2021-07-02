@@ -53,7 +53,13 @@ impl<'a> TickData<'a> {
         }
     }
 
-    pub fn quit(&mut self) { self.ctx.quit(); }
+    pub fn quit(&mut self) { Self::quit_game(&mut self.ctx) }
+
+    /// ALWAYS CALL THIS TO QUIT
+    pub fn quit_game(ctx: &mut bl::BTerm) {
+        ears::cleanup();
+        ctx.quit();
+    }
 }
 
 #[cfg(feature = "steam")]
@@ -97,7 +103,7 @@ impl GameStateManager {
             match e {
                 // Blib stops tracking close events when we activate event queue
                 bl::BEvent::CloseRequested => {
-                    ctx.quit();
+                    TickData::quit_game(ctx);
                 },
                 bl::BEvent::MouseClick {
                     button: 0,

@@ -125,6 +125,7 @@ fn main() -> bl::BError {
         ),
     ])
     .expect("Failed to set up logger.");
+    ears::init().unwrap();
 
     let opt = &CMD_LINE_OPTIONS;
     let clients = if opt.steam || opt.steam_dev {

@@ -951,6 +951,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 
 [[package]]
+name = "ears"
+version = "0.8.0"
+source = "git+https://github.com/yancouto/ears#c0c14ff9ca636cc44dc784df6b2f986d905ceed2"
+dependencies = [
+ "lazy_static",
+ "libc",
+ "pkg-config",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1088,6 +1098,7 @@ dependencies = [
  "crossbeam 0.8.0",
  "derivative",
  "directories",
+ "ears",
  "jsonnet-rs",
  "lazy_static",
  "log",

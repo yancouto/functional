@@ -41,6 +41,8 @@ textwrap = { version = "0.13", default-features = false }
 bmp = "0.5"
 jsonnet-rs = "0.17"
 more-asserts = "0.2"
+# Until https://github.com/nickbrowne/ears/pull/20 is merged
+ears = { git = "https://github.com/yancouto/ears" }
 # Needs to be same version as on bracket-lib
 winit = ">= 0"
 # I have some unmerged additions to this crate
