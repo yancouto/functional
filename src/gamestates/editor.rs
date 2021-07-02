@@ -127,6 +127,7 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
                 self.save_profile.clone(),
             ));
         } else if data.button(OPEN, Pos::new(H - 3, 2 + RUN.len() as i32 + 3), black()) {
+            SFX::Select.play();
             return GameStateEvent::Push(box PlaygroundState::<Editor>::new(
                 self.editor.to_string(),
                 ConstantProvider::new(self.level.clone(), Some(self.save_profile.clone())),
@@ -143,6 +144,7 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
         }
 
         if matches!(data.pressed_key, Some(Key::Escape)) {
+            SFX::Back.play();
             self.save_current_solution(data.time);
             GameStateEvent::Pop(1)
         } else {

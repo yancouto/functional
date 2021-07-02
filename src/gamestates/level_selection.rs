@@ -94,18 +94,22 @@ impl GameState for LevelSelectionState<'static> {
         match data.pressed_key {
             Some(Key::Escape) =>
                 if self.level_i.is_some() {
+                    SFX::Select.play();
                     self.level_i.take();
                     GameStateEvent::None
                 } else {
+                    SFX::Back.play();
                     GameStateEvent::Switch(box MainMenuState::new(self.save_profile.clone()))
                 },
             Some(Key::Return) =>
                 if let Some(l_i) = self.level_i {
+                    SFX::Confirm.play();
                     GameStateEvent::Push(box EditorState::<XiEditor>::new(
                         (&self.sections.get().levels[l_i]).into(),
                         self.save_profile.clone(),
                     ))
                 } else {
+                    SFX::Select.play();
                     self.level_i = Some(0);
                     GameStateEvent::None
                 },

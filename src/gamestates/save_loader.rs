@@ -14,7 +14,9 @@ impl SaveLoaderState {
         match profile {
             Ok(p) => box MainMenuState::new(Arc::new(p)),
             // Save corrupted
-            Err(err) => box Self {
+            Err(err) => {
+                SFX::Wrong.play();
+                box Self {
                 user,
                 err_text: format!(
                     "Got the following error:\n{}\n\n These are your options:\n\n
@@ -24,6 +26,7 @@ impl SaveLoaderState {
                     err
                 ),
                 last_selected: 0,
+            }
             },
         }
     }
@@ -40,6 +43,7 @@ impl GameState for SaveLoaderState {
             &["Reset save", "Go back to profile selection"],
             &mut self.last_selected,
         ) {
+            SFX::Confirm.play();
             GameStateEvent::Switch(if i == 0 {
                 save_system::reset_profile(&self.user);
                 Self::try_load(self.user.clone())

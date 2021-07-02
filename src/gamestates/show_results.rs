@@ -117,8 +117,10 @@ impl GameState for ShowResultsState {
         data.instructions(&instructions);
 
         if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
+            SFX::Back.play();
             GameStateEvent::Pop(1)
         } else if success && data.pressed_key == Some(bl::VirtualKeyCode::Return) {
+            SFX::Confirm.play();
             GameStateEvent::Pop(2)
         } else {
             GameStateEvent::None

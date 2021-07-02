@@ -85,6 +85,7 @@ impl GameState for UserCreatedLevelsState {
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         if data.pressed_key == Some(Key::Escape) {
+            SFX::Back.play();
             GameStateEvent::Pop(1)
         } else if let Some(levels) = &mut self.levels {
             data.print(Pos::new(2, 2), "User created levels");
@@ -99,11 +100,17 @@ impl GameState for UserCreatedLevelsState {
             }
             if data.pressed_key == Some(bl::VirtualKeyCode::Return) {
                 match levels.get() {
-                    Ok(lvl) => GameStateEvent::Push(box EditorState::<XiEditor>::new(
-                        Level::UserCreatedLevel(lvl.clone()),
-                        self.save_profile.clone(),
-                    )),
-                    Err(_) => GameStateEvent::None,
+                    Ok(lvl) => {
+                        SFX::Select.play();
+                        GameStateEvent::Push(box EditorState::<XiEditor>::new(
+                            Level::UserCreatedLevel(lvl.clone()),
+                            self.save_profile.clone(),
+                        ))
+                    },
+                    Err(_) => {
+                        SFX::Wrong.play();
+                        GameStateEvent::None
+                    },
                 }
             } else {
                 if data.pressed_key == Some(bl::VirtualKeyCode::Down) {

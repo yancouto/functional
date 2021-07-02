@@ -4,7 +4,7 @@ use crossbeam::channel;
 
 use super::{base::*, show_results::ShowResultsState};
 use crate::{
-    interpreter::ConstantProvider, levels::{Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
+    interpreter::ConstantProvider, levels::{get_result, Level, TestRunResults}, math::*, prelude::*, save_system::SaveProfile
 };
 #[derive(Debug)]
 pub struct RunningSolutionState {
@@ -42,12 +42,18 @@ impl GameState for RunningSolutionState {
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         if let Ok(results) = self.receiver.try_recv() {
+            if get_result(&results).is_success() {
+                SFX::Win.play();
+            } else {
+                SFX::Wrong.play();
+            }
             GameStateEvent::Switch(box ShowResultsState::new(
                 self.level.clone(),
                 results,
                 self.save_profile.clone(),
             ))
         } else if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
+            SFX::Back.play();
             GameStateEvent::Pop(1)
         } else {
             // Let's draw here in the reasonably common case where the solution runs very fast, in that case let's not print

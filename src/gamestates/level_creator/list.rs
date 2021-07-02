@@ -49,6 +49,7 @@ impl LevelCreatorLevelListState {
     }
 
     fn go_to_level(&mut self, name: &str) -> GameStateEvent {
+        SFX::Select.play();
         let dir = self.root.join(name);
         GameStateEvent::Push(box level_creator::EditorState::<XiEditor>::new(
             dir,
@@ -118,6 +119,7 @@ impl GameState for LevelCreatorLevelListState {
                 .map(|name| self.go_to_level(&name))
                 .unwrap_or(GameStateEvent::None)
         } else if data.pressed_key == Some(Key::Escape) {
+            SFX::Back.play();
             GameStateEvent::Pop(1)
         } else {
             match self.levels.as_mut().zip(data.pressed_key) {

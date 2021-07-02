@@ -80,6 +80,7 @@ impl GameState for SettingsState {
             Some(Key::Down) => self.items.cursor_increment(),
             Some(Key::Escape) => {
                 edit_and_save(|c| self.items.inner().iter().for_each(|i| i.save(c)));
+                SFX::Back.play();
                 return GameStateEvent::Pop(1);
             },
             _ => {},

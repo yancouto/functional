@@ -69,6 +69,7 @@ impl GameState for ProfileSelectionState {
                 .print_color_centered(H / 2 + 5, light_red(), black(), err.str());
         } else {
             if data.pressed_key == Some(Key::Return) && !name.is_empty() {
+                SFX::Confirm.play();
                 edit_and_save(|c| {
                     c.default_profile = Some(name.clone());
                 });

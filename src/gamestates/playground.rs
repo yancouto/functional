@@ -106,12 +106,14 @@ impl<Editor: TextEditor> GameState for PlaygroundState<Editor> {
         if data.button("Evaluate", Pos::new(H - 3, 0), black())
             || (data.ctrl && data.pressed_key == Some(Key::Return))
         {
+            SFX::Confirm.play();
             self.eval();
         }
 
         self.print_run_details(&mut data);
 
         if data.pressed_key == Some(Key::Escape) {
+            SFX::Back.play();
             GameStateEvent::Pop(1)
         } else {
             GameStateEvent::None
