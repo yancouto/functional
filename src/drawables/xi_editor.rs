@@ -37,6 +37,17 @@ pub struct XiEditor {
 
 const HARDCODED_MAIN_CONSOLE: usize = 0;
 
+impl XiEditor {
+    fn init_view(&self) {
+        let lines = LineRange {
+            first: 0,
+            last:  self.rect.size.h as i64,
+        };
+        self.send_notif(EditNotification::Scroll(lines.clone()));
+        self.send_notif(EditNotification::RequestLines(lines));
+    }
+}
+
 impl TextEditor for XiEditor {
     fn new(title: String, rect: Rect, initial_text: String) -> Self {
         let (send, recv) = start_xi_thread();
@@ -72,10 +83,7 @@ impl TextEditor for XiEditor {
                 chars: textwrap::fill(&initial_text, rect.size.w as usize),
             });
         }
-        this.send_notif(EditNotification::Scroll(LineRange {
-            first: 0,
-            last:  rect.size.h as i64,
-        }));
+        this.init_view();
         this
     }
 }
@@ -88,7 +96,14 @@ impl TextEditorInner for XiEditor {
         let ctrl = pressed.contains(&K::LControl) || pressed.contains(&K::RControl);
         match event {
             bl::BEvent::Character { c } =>
-                if !c.is_control() {
+                if !c.is_control()
+                    && self
+                        .text
+                        .get(self.cursor.i as usize)
+                        .map(|l| l.text.len())
+                        .debug_unwrap_or(0)
+                        < self.rect.size.w as usize
+                {
                     self.send_notif(EditNotification::Insert {
                         chars: String::from_iter(&[*c]),
                     });
@@ -98,7 +113,9 @@ impl TextEditorInner for XiEditor {
             } => {
                 let notif = match key {
                     K::Back => Some(EditNotification::DeleteBackward),
-                    K::Return | K::NumpadEnter if !ctrl => Some(EditNotification::InsertNewline),
+                    K::Return | K::NumpadEnter
+                        if !ctrl && self.text.len() < self.rect.size.h as usize =>
+                        Some(EditNotification::InsertNewline),
                     K::Right => Some(if shift {
                         EditNotification::MoveRightAndModifySelection
                     } else {
@@ -200,6 +217,7 @@ impl TextEditorInner for XiEditor {
         log::info!("Changing view id from {} to {}", self.view_id, resp.0);
         self.view_id = resp.0;
         self.text = vec![];
+        self.init_view();
         Ok(())
     }
 
@@ -227,10 +245,17 @@ impl TextEditorInner for XiEditor {
             ),
         );
 
-        self.text.iter().enumerate().for_each(|(i, line)| {
-            data.console
-                .print(self.rect.pos.j, i as i32 + self.rect.pos.i, &line.text)
-        });
+        self.text
+            .iter()
+            .take(self.rect.size.h as usize)
+            .enumerate()
+            .for_each(|(i, line)| {
+                data.console.print(
+                    self.rect.pos.j,
+                    i as i32 + self.rect.pos.i,
+                    &line.text[0..(self.rect.size.w as usize).min(line.text.len())],
+                )
+            });
 
         for select in &self.selections {
             let mut init_j = select.0.j;
@@ -266,7 +291,10 @@ impl TextEditorInner for XiEditor {
 
     fn set_cursor(&mut self, enable: bool) { self.cursor_enabled = enable; }
 
-    fn load_string(&mut self, _str: String) { unimplemented!() }
+    fn load_string(&mut self, str: String) {
+        self.load_file(None).debug_unwrap();
+        self.send_notif(EditNotification::Paste { chars: str });
+    }
 }
 
 impl XiEditor {

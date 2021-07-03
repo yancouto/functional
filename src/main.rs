@@ -111,6 +111,7 @@ fn maybe_load_icon() {
 }
 
 fn main() -> bl::BError {
+    let opt = &CMD_LINE_OPTIONS;
     let log_file = save_system::PROJECT_DIR.cache_dir().join("debug.log");
     println!("Writing debug logs to {:?}", log_file);
     CombinedLogger::init(vec![
@@ -129,7 +130,6 @@ fn main() -> bl::BError {
     .expect("Failed to set up logger.");
     ears::init().unwrap();
 
-    let opt = &CMD_LINE_OPTIONS;
     let clients = if opt.steam || opt.steam_dev {
         #[cfg(feature = "steam")]
         {

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{super::base::*, validate, ValidationState};
 use crate::{
-    drawables::{black, BasicTextEditor, TextEditor, TextEditorInner}, prelude::*, save_system::SaveProfile
+    drawables::{black, TextEditor, TextEditorInner}, prelude::*, save_system::SaveProfile
 };
 
 const WORKSHOP_FILE: &str = "workshop.yaml";
@@ -37,8 +37,8 @@ enum Editors {
 #[derive(Debug)]
 pub struct EditorState<Editor: TextEditor> {
     root:               PathBuf,
-    title_editor:       BasicTextEditor,
-    description_editor: BasicTextEditor,
+    title_editor:       Editor,
+    description_editor: Editor,
     main_editor:        Editor,
     selected_editor:    Editors,
     tips_screen:        Rect,
@@ -56,12 +56,12 @@ impl<Editor: TextEditor> EditorState<Editor> {
         let desc_i = title_i + 4;
         let editor_i = desc_i + desc_h + 3;
         let buttons_h = 3;
-        let title_editor = BasicTextEditor::new(
+        let title_editor = Editor::new(
             "Title".to_string(),
             Rect::new(title_i + 2, 1, w - 5, 1),
             String::new(),
         );
-        let mut description_editor = BasicTextEditor::new(
+        let mut description_editor = Editor::new(
             "Description".to_string(),
             Rect::new(desc_i + 2, 1, w, desc_h),
             String::new(),
