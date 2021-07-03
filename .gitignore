@@ -7,5 +7,7 @@ package-lock.json
 # Steam sdk
 /sdk/
 /*.dll
+/*.dylib
 /steam_api64.lib
 /steam_appid.txt
+**/.DS_Store

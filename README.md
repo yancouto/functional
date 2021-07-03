@@ -28,6 +28,15 @@ For the clipboard integration, you need some x11 dependencies. You might already
 For audio, you need openal and libsndfile. On Ubuntu-like, try:
 - `sudo apt-get install libopenal-dev libsndfile1-dev`
 
+### Mac
+
+For ears, install:
+- `brew install openal-soft libsndfile`
+
+And set `PKG_CONFIG_PATH` as specified in the install hints.
+
+To publish package, you need to copy the libsndfile and libopenal dylibs.
+
 ## How to run
 ```
 cargo run
