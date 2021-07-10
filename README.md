@@ -1,7 +1,9 @@
 # functional
 A game about lambda calculus.
 
-Status: Alpha
+Status: Released
+
+https://store.steampowered.com/app/1636730/functional/
 
 ## How to build
 
