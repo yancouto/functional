@@ -37,7 +37,7 @@ For ears, install:
 
 And set `PKG_CONFIG_PATH` as specified in the install hints.
 
-To publish package, you need to copy the libsndfile and libopenal dylibs.
+To publish package, you need to copy the libsndfile and libopenal dylibs, and read [this tutorial](https://medium.com/@donblas/fun-with-rpath-otool-and-install-name-tool-e3e41ae86172) to use `install_name_tool` to use `@executable_path` for the dylibs provided together with the binary.
 
 ## How to run
 ```
