@@ -147,12 +147,12 @@ mod test {
     fn unique_names() {
         let names = LEVELS
             .iter()
-            .flat_map(|s| s.levels.as_vec())
+            .flat_map(|s| &s.levels)
             .map(|l| l.base.name.clone())
             .collect::<HashSet<_>>();
         assert_eq!(
             names.len(),
-            LEVELS.iter().flat_map(|s| s.levels.as_vec()).count(),
+            LEVELS.iter().flat_map(|s| &s.levels).count(),
             "Some name is duplicated in the levels definition"
         );
     }
@@ -172,7 +172,7 @@ mod test {
         LEVELS
             .iter()
             .filter(|s| s.name <= section)
-            .flat_map(|s| s.levels.as_vec().iter())
+            .flat_map(|s| s.levels.iter())
             .for_each(|l| {
                 all_levels_so_far.push(l.base.name.as_str());
                 if l.section < section {
@@ -245,7 +245,7 @@ mod test {
 
     #[test]
     fn test_wrong_solutions() {
-        LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
+        LEVELS.iter().flat_map(|s| &s.levels).for_each(|l| {
             l.wrong_solutions.iter().for_each(|s| {
                 assert_matches!(
                     get_result(&Level::GameLevel(l).test(s.chars(), ConstantProvider::all())),
@@ -299,7 +299,7 @@ mod test {
                 shader_index: 0,
                 font_index:   0,
             });
-        LEVELS.iter().flat_map(|s| s.levels.as_vec()).for_each(|l| {
+        LEVELS.iter().flat_map(|s| &s.levels).for_each(|l| {
             let mut gs_data = GSData {
                 cur:  box EditorState::<BasicTextEditor>::new(l.into(), fake_profile.clone()),
                 time: Duration::new(0, 0),
