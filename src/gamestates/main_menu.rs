@@ -22,8 +22,18 @@ impl MenuItem {
             MenuItem::ChangeProfile => "change profile",
             MenuItem::Playground => "playground",
             MenuItem::Quit => "quit game",
-            MenuItem::LevelCreator => "level creator",
-            MenuItem::UserCreatedLevels => "user created levels",
+            MenuItem::LevelCreator =>
+                if !cfg!(feature = "demo") {
+                    "level creator"
+                } else {
+                    "level creator (FULL GAME ONLY)"
+                },
+            MenuItem::UserCreatedLevels =>
+                if !cfg!(feature = "demo") {
+                    "user created levels"
+                } else {
+                    "user created levels (FULL GAME ONLY)"
+                },
         }
     }
 
@@ -38,6 +48,7 @@ impl MenuItem {
                 String::new(),
                 ConstantProvider::all(),
             )),
+            #[cfg(not(feature = "demo"))]
             MenuItem::LevelCreator => GameStateEvent::Push(box LevelCreatorLevelListState::new(
                 menu.save_profile.clone(),
             )),
@@ -45,10 +56,16 @@ impl MenuItem {
                 data.quit();
                 GameStateEvent::None
             },
+            #[cfg(not(feature = "demo"))]
             MenuItem::UserCreatedLevels => GameStateEvent::Push(box UserCreatedLevelsState::new(
                 menu.save_profile.clone(),
                 data.steam_client.as_deref(),
             )),
+            #[cfg(feature = "demo")]
+            _ => {
+                SFX::Wrong.play();
+                GameStateEvent::None
+            },
         }
     }
 }

@@ -48,6 +48,10 @@ impl GameState for LevelSelectionState<'static> {
         let cursor_on = ((data.time.as_millis() / 500) % 2) == 0;
         if self.level_i.is_some() {
             data.print(Pos::new(2, MID_J + CURSOR_J), "Levels in section");
+            let j = MID_J + CURSOR_J + 2;
+            if self.sections.get().levels.is_empty() && cfg!(feature = "demo") {
+                data.print(Pos::new(self.get_i(0), j), "BUY FULL GAME TO UNLOCK");
+            }
             let mut levels_info = self.save_profile.get_levels_info();
             for (i, level) in self.sections.get().levels.iter().enumerate() {
                 let info = levels_info.entry(level.base.name.clone()).or_default();
@@ -61,7 +65,7 @@ impl GameState for LevelSelectionState<'static> {
                     LevelResult::Failure => text.to_mut().push_str(" (failed)"),
                     LevelResult::NotTried => {},
                 }
-                data.print(Pos::new(self.get_i(i as i32), MID_J + CURSOR_J + 2), &text);
+                data.print(Pos::new(self.get_i(i as i32), j), &text);
             }
             data.instructions(&[
                 "Press ESC/LEFT to close section",
@@ -103,11 +107,16 @@ impl GameState for LevelSelectionState<'static> {
                 },
             Some(Key::Return) =>
                 if let Some(l_i) = self.level_i {
-                    SFX::Confirm.play();
-                    GameStateEvent::Push(box EditorState::<XiEditor>::new(
-                        (&self.sections.get().levels[l_i]).into(),
-                        self.save_profile.clone(),
-                    ))
+                    if self.sections.get().levels.is_empty() {
+                        SFX::Wrong.play();
+                        GameStateEvent::None
+                    } else {
+                        SFX::Confirm.play();
+                        GameStateEvent::Push(box EditorState::<XiEditor>::new(
+                            (&self.sections.get().levels[l_i]).into(),
+                            self.save_profile.clone(),
+                        ))
+                    }
                 } else {
                     SFX::Select.play();
                     self.level_i = Some(0);
@@ -124,14 +133,18 @@ impl GameState for LevelSelectionState<'static> {
             } => match key {
                 Key::Down =>
                     if let Some(li) = self.level_i {
-                        self.level_i = Some((li + 1) % self.sections.get().levels.len());
+                        if !self.sections.get().levels.is_empty() {
+                            self.level_i = Some((li + 1) % self.sections.get().levels.len());
+                        }
                     } else {
                         self.sections.cursor_increment();
                     },
                 Key::Up =>
                     if let Some(li) = self.level_i {
                         let len = self.sections.get().levels.len();
-                        self.level_i = Some((li + len - 1) % len);
+                        if len != 0 {
+                            self.level_i = Some((li + len - 1) % len);
+                        }
                     } else {
                         self.sections.cursor_decrement();
                     },

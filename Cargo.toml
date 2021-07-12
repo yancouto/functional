@@ -10,6 +10,7 @@ default = ["bracket-lib/opengl", "steam"]
 curses = ["bracket-lib/curses"]
 crossterm = ["bracket-lib/crossterm"]
 steam = ["steamworks"]
+demo = []
 
 [build-dependencies]
 jsonnet-rs = "0.17"
