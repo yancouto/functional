@@ -14,6 +14,8 @@ enum MenuItem {
     Quit,
 }
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 impl MenuItem {
     fn name(&self) -> &'static str {
         match self {
@@ -113,6 +115,10 @@ impl GameState for MainMenuState {
         data.print(
             Pos::new(2, CURSOR_J),
             &format!("Hello, {}.", self.save_profile.name()),
+        );
+        data.print(
+            Pos::new(2, W - VERSION.len() as i32 - 3),
+            &format!("v{}", VERSION),
         );
         data.instructions(&[
             "Use UP/DOWN to navigate options",
