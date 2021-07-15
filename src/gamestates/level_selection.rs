@@ -103,7 +103,7 @@ impl GameState for LevelSelectionState<'static> {
                     GameStateEvent::None
                 } else {
                     SFX::Back.play();
-                    GameStateEvent::Switch(box MainMenuState::new(self.save_profile.clone()))
+                    GameStateEvent::Switch(box MainMenuState::new(self.save_profile.clone(), false))
                 },
             Some(Key::Return) =>
                 if let Some(l_i) = self.level_i {

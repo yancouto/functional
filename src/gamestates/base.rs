@@ -91,6 +91,10 @@ impl GameStateManager {
             }),
             steam_client: client.map(Arc::new),
         };
+        #[cfg(feature = "steam")]
+        if let Some(client) = this.steam_client.clone() {
+            crate::utils::steam::configure_user_stats(client);
+        }
         this.entered_gamestate();
         this
     }

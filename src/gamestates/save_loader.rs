@@ -12,7 +12,7 @@ impl SaveLoaderState {
     pub fn try_load(user: String) -> Box<dyn GameState> {
         let profile = save_system::load_profile(&user);
         match profile {
-            Ok(p) => box MainMenuState::new(Arc::new(p)),
+            Ok(p) => box MainMenuState::new(Arc::new(p), true),
             // Save corrupted
             Err(err) => {
                 SFX::Wrong.play();

@@ -43,6 +43,10 @@ impl GameState for RunningSolutionState {
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
         if let Ok(results) = self.receiver.try_recv() {
             if get_result(&results).is_success() {
+                #[cfg(feature = "steam")]
+                if let Some(client) = data.steam_client.clone() {
+                    crate::utils::steam::update_all_achievements(client, self.save_profile.clone());
+                }
                 SFX::Win.play();
             } else {
                 SFX::Wrong.play();

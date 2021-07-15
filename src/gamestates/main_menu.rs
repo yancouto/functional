@@ -71,12 +71,13 @@ impl MenuItem {
 }
 
 pub struct MainMenuState {
-    items:        VecWithCursor<MenuItem>,
-    save_profile: Arc<SaveProfile>,
+    items:               VecWithCursor<MenuItem>,
+    save_profile:        Arc<SaveProfile>,
+    reload_achievements: bool,
 }
 
 impl MainMenuState {
-    pub fn new(save_profile: Arc<SaveProfile>) -> Self {
+    pub fn new(save_profile: Arc<SaveProfile>, reload_achievements: bool) -> Self {
         Self {
             items: vec1![
                 MenuItem::Play,
@@ -89,6 +90,7 @@ impl MainMenuState {
             ]
             .into(),
             save_profile,
+            reload_achievements,
         }
     }
 }
@@ -101,6 +103,13 @@ impl GameState for MainMenuState {
     fn name(&self) -> &'static str { "MainMenu" }
 
     fn tick(&mut self, mut data: TickData) -> GameStateEvent {
+        if self.reload_achievements {
+            self.reload_achievements = false;
+            #[cfg(feature = "steam")]
+            if let Some(client) = data.steam_client.clone() {
+                crate::utils::steam::update_all_achievements(client, self.save_profile.clone());
+            }
+        }
         data.print(
             Pos::new(2, CURSOR_J),
             &format!("Hello, {}.", self.save_profile.name()),

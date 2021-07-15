@@ -28,7 +28,7 @@ simplelog = "0.10.0"
 vec1 = {version = "1", features = ["serde"]}
 savefile = "0.7"
 savefile-derive = "0.7"
-parking_lot = "0.11"
+parking_lot = {version = "0.11", features = ["nightly"]}
 thiserror = "1"
 xi-core-lib = "0.3"
 xi-rpc = "0.3"
@@ -49,7 +49,7 @@ ears = { git = "https://github.com/yancouto/ears" }
 # Needs to be same version as on bracket-lib
 winit = "0.24.0"
 # I have some unmerged additions to this crate
-steamworks = { git = "https://github.com/yancouto/steamworks-rs", optional = true }
+steamworks = { git = "https://github.com/Noxime/steamworks-rs", rev = "d102d3f7076f3cb0bd5b8ffdfbabc789499f01f0", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "0.7"

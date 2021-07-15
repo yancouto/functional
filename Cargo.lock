@@ -2666,7 +2666,7 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 [[package]]
 name = "steamworks"
 version = "0.7.0"
-source = "git+https://github.com/yancouto/steamworks-rs#97084720ceef03b3de22908fc7fc21ede10b90af"
+source = "git+https://github.com/Noxime/steamworks-rs?rev=d102d3f7076f3cb0bd5b8ffdfbabc789499f01f0#d102d3f7076f3cb0bd5b8ffdfbabc789499f01f0"
 dependencies = [
  "bitflags",
  "lazy_static",
@@ -2677,7 +2677,7 @@ dependencies = [
 [[package]]
 name = "steamworks-sys"
 version = "0.7.0"
-source = "git+https://github.com/yancouto/steamworks-rs#97084720ceef03b3de22908fc7fc21ede10b90af"
+source = "git+https://github.com/Noxime/steamworks-rs?rev=d102d3f7076f3cb0bd5b8ffdfbabc789499f01f0#d102d3f7076f3cb0bd5b8ffdfbabc789499f01f0"
 dependencies = [
  "bindgen",
 ]
