@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Bivectors, i.e. oriented areas."><meta name="keywords" content="rust, rustlang, rust-lang, bivec"><title>ultraviolet::bivec - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../ultraviolet/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a><p class="location">Module bivec</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li></ul></div><div id="sidebar-vars" data-name="bivec" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">ultraviolet</a>::<wbr><a class="mod" href="#">bivec</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../../clipboard.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/ultraviolet/bivec.rs.html#1-606" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Bivectors, i.e. oriented areas.</p>
+<p>A bivector is an <em>oriented area</em>, and is equivalent
+to the result of the exterior (wedge) product of two vectors, i.e.
+<code>u ∧ v</code>. This means it is the <em>oriented area</em> of the parallelogram
+created by attaching two vectors and then extending them into a parallelogram.</p>
+<p>This may be hard to visualize at first, but bivectors are as fundamental as vectors. If vectors
+are a representation of <em>lines</em>, then bivectors are a representation of <em>planes</em>.</p>
+<p>A normalized bivector can be thought of as representing a plane of rotation and the <em>direction of rotation</em>
+inside that plane such that a <em>positive</em> rotation follows the orientation of the bivector. When
+you obtain a bivector by taking the exterior product of two vectors, the positive direction of rotation
+is defined as the one that <em>brings the first vector closer to the second</em>. For example, a bivector
+created by taking the exterior product <code>x ∧ y</code> of the x and y basis vectors will create a unit
+bivector that represents the xy plane, with orientation such that a positive rotation of <code>x</code> inside
+the plane would bring <code>x</code> closer to <code>y</code>. This is why positive rotation is generally defined as
+“counter clockwise” in 2d, since such a rotation brings <code>x</code> to <code>y</code>.</p>
+<p>Much like vectors can be represented as a linear combination of <em>basis vectors</em>, i.e.
+a vector “component representation,” bivectors can be represented as a linear combination
+of <em>basis bivectors</em>. If the basis vectors are the unit vectors in the direction of each
+canonical axis of a space, then the basis bivectors are the <em>unit area planes</em> in each of the
+canonical planes.</p>
+<p>In 2d, there is only one basis plane, the xy plane, which represents all of 2d space. As such, in 2d
+there is only <em>one</em> basis bivector, while there are <em>two</em> basis vectors. This means that a 2d bivector
+has only one component.</p>
+<p>In 3d, there are three basis planes, the xy plane, the xz plane, and the yz plane, which are respectively
+the planes parallel to those combinations of the x, y, and z basis vectors. Therefore, a 3d bivector has
+three components, each of which represents the <em>projected area</em> of that bivector onto one of the three
+basis bivectors. This is analogous to how vector components represent the <em>projected length</em> of that vector
+onto each unit vector.</p>
+</div></details><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<div class="item-table"><div class="item-left module-item"><a class="struct" href="struct.Bivec2.html" title="ultraviolet::bivec::Bivec2 struct">Bivec2</a></div><div class="item-right docblock-short"><p>A bivector in 2d space.</p>
+</div><div class="item-left module-item"><a class="struct" href="struct.Bivec2x4.html" title="ultraviolet::bivec::Bivec2x4 struct">Bivec2x4</a></div><div class="item-right docblock-short"><p>A bivector in 2d space.</p>
+</div><div class="item-left module-item"><a class="struct" href="struct.Bivec2x8.html" title="ultraviolet::bivec::Bivec2x8 struct">Bivec2x8</a></div><div class="item-right docblock-short"><p>A bivector in 2d space.</p>
+</div><div class="item-left module-item"><a class="struct" href="struct.Bivec3.html" title="ultraviolet::bivec::Bivec3 struct">Bivec3</a></div><div class="item-right docblock-short"><p>A bivector in 3d space.</p>
+</div><div class="item-left module-item"><a class="struct" href="struct.Bivec3x4.html" title="ultraviolet::bivec::Bivec3x4 struct">Bivec3x4</a></div><div class="item-right docblock-short"><p>A bivector in 3d space.</p>
+</div><div class="item-left module-item"><a class="struct" href="struct.Bivec3x8.html" title="ultraviolet::bivec::Bivec3x8 struct">Bivec3x8</a></div><div class="item-right docblock-short"><p>A bivector in 3d space.</p>
+</div></div></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ultraviolet" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
+    <script src="../../main.js"></script>
+</body></html>

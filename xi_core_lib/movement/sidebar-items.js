@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Movement","The specification of a movement."]],"fn":[["region_movement","Compute the result of movement on one selection region."],["selection_movement","Compute a new selection by applying a movement to an existing selection."]]});

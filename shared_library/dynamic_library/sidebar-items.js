@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["SpecialHandles","Special handles to be used with the `symbol_special` function. These are  provided by a GNU only extension and are not included as part of the POSIX  standard. "]],"struct":[["DynamicLibrary",""]]});

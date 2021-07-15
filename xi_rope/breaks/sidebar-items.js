@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BreakBuilder",""],["BreaksBaseMetric",""],["BreaksInfo","The number of breaks."],["BreaksLeaf",""],["BreaksMetric",""]],"type":[["Breaks","A set of indexes. A motivating use is storing line breaks."]]});

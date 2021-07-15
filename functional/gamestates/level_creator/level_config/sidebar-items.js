@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["UserLevelConfig","UserLevelConfig is the format in which the JSON level config file must be specified. See the field descriptions belows for more information."]]});

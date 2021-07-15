@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Interval","A fancy version of Range, representing a closed-open range; the interval [5, 7) is the set {5, 6}."]],"trait":[["IntervalBounds","A trait for types that represent unbounded ranges; they need an explicit upper bound in order to be converted to `Interval`s."]]});

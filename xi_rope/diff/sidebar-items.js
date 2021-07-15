@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["DiffBuilder","Keeps track of copy ops during diff construction."],["LineHashDiff","A line-oriented, hash based diff algorithm."]],"trait":[["Diff","A trait implemented by various diffing strategies."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["ne_idx","Returns the lowest `i` for which `one[i] != two[i]`, if one exists."],["ne_idx_rev","Returns the lowest `i` such that `one[one.len()-i] != two[two.len()-i]`, if one exists."]],"struct":[["RopeScanner","Utility for efficiently comparing two ropes."]]});

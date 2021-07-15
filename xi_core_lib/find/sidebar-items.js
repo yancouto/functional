@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Find","Contains logic to search text"],["FindStatus","Information about search queries and number of matches for find"]]});

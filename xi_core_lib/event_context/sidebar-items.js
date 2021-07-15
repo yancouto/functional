@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["MAX_SIZE_LIMIT",""]],"struct":[["EventContext","A collection of all the state relevant for handling a particular event."]]});

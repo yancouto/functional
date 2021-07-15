@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Layers","A collection of layers containing scope information."],["ScopeLayer","A collection of scope spans from a single source."]]});

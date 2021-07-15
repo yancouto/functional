@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["XiCore","A reference to the main core state."]],"struct":[["WeakXiCore","A weak reference to the main state. This is passed to plugin threads."]]});

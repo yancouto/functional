@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["CONFIG_FILE",""],["INSTRUCTIONS",""],["INST_BUTTONS",""],["RELOAD",""],["SAVE",""],["VALIDATE",""],["WORKSHOP_FILE",""]],"enum":[["Editors",""]],"fn":[["inside_consider_border",""]],"struct":[["EditorState",""],["WorkshopConfig",""]]});

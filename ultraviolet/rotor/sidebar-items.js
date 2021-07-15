@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Rotor2","A Rotor in 2d space."],["Rotor2x4","A Rotor in 2d space."],["Rotor2x8","A Rotor in 2d space."],["Rotor3","A Rotor in 3d space."],["Rotor3x4","A Rotor in 3d space."],["Rotor3x8","A Rotor in 3d space."]]});

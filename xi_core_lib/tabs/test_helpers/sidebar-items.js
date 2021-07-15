@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["new_buffer_id",""],["new_view_id",""]]});

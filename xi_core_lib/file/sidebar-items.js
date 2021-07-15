@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["CharacterEncoding",""],["FileError",""]],"struct":[["FileInfo",""],["FileManager","Tracks all state related to open files."]]});

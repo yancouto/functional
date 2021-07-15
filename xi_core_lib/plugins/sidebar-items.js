@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["manifest","Structured representation of a plugin’s features and capabilities."],["rpc","RPC types, corresponding to protocol requests, notifications & responses."]],"struct":[["Plugin",""],["PluginPid","A process-unique identifier for a running plugin."]],"type":[["PluginId",""],["PluginName",""]]});

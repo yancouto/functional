@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Indentation","An enumeration of legal indentation types."]],"struct":[["MixedIndentError","A struct representing the mixed indentation error."]]});

@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Adds or updates an inotify watch"><meta name="keywords" content="rust, rustlang, rust-lang, inotify_add_watch"><title>inotify_add_watch in inotify_sys - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings" ></script><script src="../storage.js"></script><script src="../crates.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg"><link rel="alternate icon" type="image/png" href="../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../inotify_sys/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><div class="sidebar-elems"><p class="location">Other items in<br><a href="index.html">inotify_sys</a></p><div id="sidebar-vars" data-name="inotify_add_watch" data-ty="fn" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../wheel.svg"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Function <a href="index.html">inotify_sys</a>::<wbr><a class="fn" href="#">inotify_add_watch</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/inotify_sys/lib.rs.html#693" title="goto source code">[src]</a></span></h1><pre class="rust fn">pub unsafe extern &quot;C&quot; fn inotify_add_watch(<br>&nbsp;&nbsp;&nbsp;&nbsp;fd: <a class="type" href="../libc/unix/type.c_int.html" title="type libc::unix::c_int">c_int</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;pathname: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*const </a><a class="type" href="../libc/unix/linux_like/linux/gnu/b64/x86_64/type.c_char.html" title="type libc::unix::linux_like::linux::gnu::b64::x86_64::c_char">c_char</a>, <br>&nbsp;&nbsp;&nbsp;&nbsp;mask: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a><br>) -&gt; <a class="type" href="../libc/unix/type.c_int.html" title="type libc::unix::c_int">c_int</a></pre><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Adds or updates an inotify watch</p>
+<p>Adds an item to the watch list of an inotify instance, or modifies an
+item on that list. This function takes the following arguments:</p>
+<ul>
+<li><code>fd</code> is the file descriptor of the inotify instance (created by
+<a href="fn.inotify_init.html"><code>inotify_init</code></a> or <a href="fn.inotify_init1.html"><code>inotify_init1</code></a>)</li>
+<li><code>pathname</code> is the path of the file or directory watch</li>
+<li><code>mask</code> defines the behavior of this function and configures the watch</li>
+</ul>
+<p>The following flags in <code>mask</code> control the type of events to watch for:</p>
+<ul>
+<li><a href="constant.IN_ACCESS.html"><code>IN_ACCESS</code></a></li>
+<li><a href="constant.IN_ATTRIB.html"><code>IN_ATTRIB</code></a></li>
+<li><a href="constant.IN_CLOSE_NOWRITE.html"><code>IN_CLOSE_NOWRITE</code></a></li>
+<li><a href="constant.IN_CLOSE_WRITE.html"><code>IN_CLOSE_WRITE</code></a></li>
+<li><a href="constant.IN_CREATE.html"><code>IN_CREATE</code></a></li>
+<li><a href="constant.IN_DELETE.html"><code>IN_DELETE</code></a></li>
+<li><a href="constant.IN_DELETE_SELF.html"><code>IN_DELETE_SELF</code></a></li>
+<li><a href="constant.IN_MODIFY.html"><code>IN_MODIFY</code></a></li>
+<li><a href="constant.IN_MOVED_FROM.html"><code>IN_MOVED_FROM</code></a></li>
+<li><a href="constant.IN_MOVED_TO.html"><code>IN_MOVED_TO</code></a></li>
+<li><a href="constant.IN_MOVE_SELF.html"><code>IN_MOVE_SELF</code></a></li>
+<li><a href="constant.IN_OPEN.html"><code>IN_OPEN</code></a></li>
+</ul>
+<p>The following constants can be used as shortcuts to set multiple event
+flags:</p>
+<ul>
+<li><a href="constant.IN_ALL_EVENTS.html"><code>IN_ALL_EVENTS</code></a></li>
+<li><a href="constant.IN_CLOSE.html"><code>IN_CLOSE</code></a></li>
+<li><a href="constant.IN_MOVE.html"><code>IN_MOVE</code></a></li>
+</ul>
+<p>In addition, the following flags can be set to control the behaviors of
+the watch and this function:</p>
+<ul>
+<li><a href="constant.IN_DONT_FOLLOW.html"><code>IN_DONT_FOLLOW</code></a></li>
+<li><a href="constant.IN_EXCL_UNLINK.html"><code>IN_EXCL_UNLINK</code></a></li>
+<li><a href="constant.IN_MASK_ADD.html"><code>IN_MASK_ADD</code></a></li>
+<li><a href="constant.IN_ONESHOT.html"><code>IN_ONESHOT</code></a></li>
+<li><a href="constant.IN_ONLYDIR.html"><code>IN_ONLYDIR</code></a></li>
+</ul>
+<p>The function returns <code>-1</code> if an error occured. Otherwise, it returns a
+watch descriptor that can be used to remove the watch using
+<a href="fn.inotify_rm_watch.html"><code>inotify_rm_watch</code></a> or identify the watch via <a href="struct.inotify_event.html"><code>inotify_event</code></a>’s [wd`]
+field.</p>
+<p>Please refer to the <a href="http://man7.org/linux/man-pages/man2/inotify_add_watch.2.html">man page</a> for additional details.</p>
+</div></details></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="inotify_sys" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
+    <script src="../main.js"></script>
+</body></html>

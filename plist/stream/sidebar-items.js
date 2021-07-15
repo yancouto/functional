@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Event","An encoding of a plist as a flat structure."]],"struct":[["BinaryReader",""],["Reader",""],["XmlReader",""],["XmlWriter",""]],"trait":[["Writer","Supports writing event streams in different plist encodings."]]});

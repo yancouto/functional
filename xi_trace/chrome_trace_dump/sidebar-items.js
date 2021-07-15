@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Error",""]],"fn":[["decode",""],["deserialize",""],["serialize","This serializes the samples into the Chrome trace event format."],["to_value",""]]});

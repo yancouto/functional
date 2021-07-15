@@ -1,0 +1,1 @@
+initSidebarItems({"derive":[["Enum","Procedural derive generating `enum_map::Enum` implementation."]]});

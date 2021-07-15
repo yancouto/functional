@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Pos",""],["Rect","A rectangle that’s a single point is represented as a rectangle with size (1, 1)"],["Size",""]]});

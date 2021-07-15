@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["LineEnding","An enumeration of valid line endings"]],"struct":[["MixedLineEndingError","A struct representing a mixed line ending error."]]});
