@@ -45,7 +45,12 @@ impl GameState for RunningSolutionState {
             if get_result(&results).is_success() {
                 #[cfg(feature = "steam")]
                 if let Some(client) = data.steam_client.clone() {
-                    crate::utils::steam::update_all_achievements(client, self.save_profile.clone());
+                    use crate::utils::steam::*;
+                    if matches!(self.level, Level::GameLevel(..)) {
+                        update_section_achievements(client, self.save_profile.clone());
+                    } else {
+                        get_single_achievement(client, ManualAchievements::PlayWorkshop);
+                    }
                 }
                 SFX::Win.play();
             } else {

@@ -107,7 +107,7 @@ impl GameState for MainMenuState {
             self.reload_achievements = false;
             #[cfg(feature = "steam")]
             if let Some(client) = data.steam_client.clone() {
-                crate::utils::steam::update_all_achievements(client, self.save_profile.clone());
+                crate::utils::steam::update_section_achievements(client, self.save_profile.clone());
             }
         }
         data.print(

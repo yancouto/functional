@@ -124,12 +124,22 @@ fn upload_level(
     #[cfg(feature = "steam")]
     {
         std::thread::spawn(move || {
-            match upload_level_impl(id_sender, state_sender.clone(), level, client, config) {
+            match upload_level_impl(
+                id_sender,
+                state_sender.clone(),
+                level,
+                client.clone(),
+                config,
+            ) {
                 Err(err) => {
                     log::error!("Failed to upload: {}", err);
                     state_sender.send(State::Error(err)).debug_unwrap();
                 },
-                Ok(id) => state_sender.send(State::Finished(id)).debug_unwrap(),
+                Ok(id) => {
+                    use crate::utils::steam::*;
+                    get_single_achievement(client, ManualAchievements::UploadWorkshop);
+                    state_sender.send(State::Finished(id)).debug_unwrap();
+                },
             }
         });
     }
