@@ -16,7 +16,9 @@ local pl = import '../pair_and_list/lib.libsonnet';
   extra_info: |||
     We call this process accumulation, and it is used to condense the values of a list to a single value.
     
-    In the examples, we're taking the OR of a list of booleans, but this can be much generic than that.
+    In the examples, we're taking the OR of a list of booleans, but this can be much more generic than that.
+
+    Read the hint in the level "empty" if you're stuck.
   |||,
   test_cases: [
     bool.test_true('f: f %s OR FALSE' % [pl.list(['TRUE', 'FALSE'])]),
