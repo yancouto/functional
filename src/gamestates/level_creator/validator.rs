@@ -343,8 +343,7 @@ impl GameState for ValidationState {
 
 #[cfg(test)]
 mod test {
-    use std::io::Write;
-    use std::assert_matches::assert_matches;
+    use std::{assert_matches::assert_matches, io::Write};
 
     use super::*;
 

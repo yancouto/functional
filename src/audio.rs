@@ -73,7 +73,11 @@ impl AudioManager {
         })
     }
 
-    fn tick(&mut self) { self.playing.extract_if(|s| !s.is_playing()).for_each(std::mem::drop); }
+    fn tick(&mut self) {
+        self.playing
+            .extract_if(|s| !s.is_playing())
+            .for_each(std::mem::drop);
+    }
 }
 
 pub fn tick() { MANAGER.lock().tick(); }

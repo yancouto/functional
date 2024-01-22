@@ -55,7 +55,7 @@ fn for_each_unbound_req<F: Fn(&mut usize) -> () + Copy>(
                 f(&mut v.depth);
             }
             1
-        }
+        },
         Node::Function { variable: _, body } => for_each_unbound_req(body, cur_depth + 1, f) + 1,
         Node::Apply { left, right } =>
             for_each_unbound_req(left, cur_depth, f) + for_each_unbound_req(right, cur_depth, f),
