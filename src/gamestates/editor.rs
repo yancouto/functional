@@ -122,17 +122,17 @@ impl<Editor: 'static + TextEditor> GameState for EditorState<Editor> {
             || (data.ctrl && matches!(data.pressed_key, Some(Key::Return)))
         {
             self.save_current_solution(data.time);
-            return GameStateEvent::Push(box RunningSolutionState::new(
+            return GameStateEvent::Push(Box::new(RunningSolutionState::new(
                 self.level.clone(),
                 self.editor.to_string(),
                 self.save_profile.clone(),
-            ));
+            )));
         } else if data.button(OPEN, Pos::new(H - 3, 2 + RUN.len() as i32 + 3), black()) {
             SFX::Select.play();
-            return GameStateEvent::Push(box PlaygroundState::<Editor>::new(
+            return GameStateEvent::Push(Box::new(PlaygroundState::<Editor>::new(
                 self.editor.to_string(),
                 ConstantProvider::new(self.level.clone(), Some(self.save_profile.clone())),
-            ));
+            )));
         }
 
         data.instructions(&[

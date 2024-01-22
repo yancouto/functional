@@ -41,7 +41,7 @@ pub fn try_load_default_profile() -> Box<dyn GameState> {
     match common.default_profile {
         Some(user) => SaveLoaderState::try_load(user),
         // Maybe also go to ProfileSelection if the save was deleted
-        None => box ProfileSelectionState::new(),
+        None => Box::new(ProfileSelectionState::new()),
     }
 }
 

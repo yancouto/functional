@@ -6,7 +6,7 @@ use crate::{levels::LEVELS, prelude::*, save_system::SaveProfile};
 static LOADED: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
 
 pub fn configure_user_stats(client: Arc<Client>) {
-    let handle = box client
+    let handle = Box::new(client
         .clone()
         .register_callback(move |s: UserStatsReceived| {
             *LOADED.0.lock() = true;
@@ -16,7 +16,7 @@ pub fn configure_user_stats(client: Arc<Client>) {
             } else {
                 log::info!("Successfully loaded user stats");
             }
-        });
+        }));
     // It's fine for this to live forever
     Box::leak(handle);
     client.user_stats().request_current_stats();

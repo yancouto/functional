@@ -9,6 +9,7 @@ use crate::{
 // Simple text box, sends text back when gamestate is closed
 // If ESC is pressed, returns None. Disallows empty string otherwise.
 pub struct StringReaderState {
+    #[allow(unused)]
     max_width: i32,
     sender:    Sender<Option<String>>,
     editor:    BasicTextEditor,

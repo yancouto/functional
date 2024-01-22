@@ -1,14 +1,11 @@
 #![feature(div_duration)]
-#![feature(box_syntax)]
 #![feature(try_blocks)]
-#![feature(generators, generator_trait)]
+#![feature(coroutines, coroutine_trait)]
 #![feature(iter_advance_by)]
-#![feature(map_first_last)]
 #![feature(trait_alias)]
-#![feature(backtrace)]
 #![feature(assert_matches)]
 #![feature(option_zip)]
-#![feature(drain_filter)]
+#![feature(extract_if)]
 #[macro_use]
 extern crate lazy_static;
 
@@ -93,7 +90,8 @@ fn maybe_load_icon() {
         .context_wrapper
         .as_ref()
         .map(|wrapped_ctx| {
-            bmp::from_reader(&mut ICON_DATA.clone()).map(|img| {
+            #[allow(const_item_mutation)]
+            bmp::from_reader(&mut ICON_DATA).map(|img| {
                 let mut data =
                     Vec::with_capacity((img.get_height() * img.get_width() * 4) as usize);
                 for (x, y) in img.coordinates() {
@@ -164,7 +162,7 @@ fn main() -> bl::BError {
             if opt.skip_intro || cfg!(debug_assertions) {
                 first_state()
             } else {
-                box gamestates::intro::IntroState::new(first_state)
+                Box::new(gamestates::intro::IntroState::new(first_state))
             },
             clients.0,
         ),

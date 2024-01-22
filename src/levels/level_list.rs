@@ -125,7 +125,7 @@ lazy_static! {
 
 #[cfg(test)]
 mod test {
-    use std::{collections::HashSet, time::Duration};
+    use std::{collections::HashSet, time::Duration, assert_matches::assert_matches};
 
     use rayon::prelude::*;
     use strum::IntoEnumIterator;
@@ -278,6 +278,7 @@ mod test {
             post_scanlines:         false,
             post_screenburn:        false,
             screen_burn_color:      bl::RGB::from_u8(0, 1, 1),
+            mouse_visible: true,
         }
     }
 
@@ -295,13 +296,13 @@ mod test {
             .lock()
             .consoles
             .push(bl::DisplayConsole {
-                console:      box bl::VirtualConsole::new(bl::Point::new(W, H)),
+                console:      Box::new(bl::VirtualConsole::new(bl::Point::new(W, H))),
                 shader_index: 0,
                 font_index:   0,
             });
         LEVELS.iter().flat_map(|s| &s.levels).for_each(|l| {
             let mut gs_data = GSData {
-                cur:  box EditorState::<BasicTextEditor>::new(l.into(), fake_profile.clone()),
+                cur:  Box::new(EditorState::<BasicTextEditor>::new(l.into(), fake_profile.clone())),
                 time: Duration::new(0, 0),
             };
             with_current_console(0, |mut c| {

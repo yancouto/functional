@@ -10,6 +10,7 @@ use crate::{
 pub struct RunningSolutionState {
     level:        Level,
     save_profile: Arc<SaveProfile>,
+    #[allow(unused)]
     handle:       thread::JoinHandle<()>,
     receiver:     channel::Receiver<TestRunResults>,
 }
@@ -56,11 +57,11 @@ impl GameState for RunningSolutionState {
             } else {
                 SFX::Wrong.play();
             }
-            GameStateEvent::Switch(box ShowResultsState::new(
+            GameStateEvent::Switch(Box::new(ShowResultsState::new(
                 self.level.clone(),
                 results,
                 self.save_profile.clone(),
-            ))
+            )))
         } else if data.pressed_key == Some(bl::VirtualKeyCode::Escape) {
             SFX::Back.play();
             GameStateEvent::Pop(1)

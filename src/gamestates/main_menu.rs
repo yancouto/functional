@@ -43,26 +43,26 @@ impl MenuItem {
         SFX::Select.play();
         match self {
             MenuItem::Play =>
-                GameStateEvent::Switch(box LevelSelectionState::new(menu.save_profile.clone())),
-            MenuItem::Settings => GameStateEvent::Push(box SettingsState::new()),
-            MenuItem::ChangeProfile => GameStateEvent::Switch(box ProfileSelectionState::new()),
-            MenuItem::Playground => GameStateEvent::Push(box PlaygroundState::<XiEditor>::new(
+                GameStateEvent::Switch(Box::new(LevelSelectionState::new(menu.save_profile.clone()))),
+            MenuItem::Settings => GameStateEvent::Push(Box::new(SettingsState::new())),
+            MenuItem::ChangeProfile => GameStateEvent::Switch(Box::new(ProfileSelectionState::new())),
+            MenuItem::Playground => GameStateEvent::Push(Box::new(PlaygroundState::<XiEditor>::new(
                 String::new(),
                 ConstantProvider::all(),
-            )),
+            ))),
             #[cfg(not(feature = "demo"))]
-            MenuItem::LevelCreator => GameStateEvent::Push(box LevelCreatorLevelListState::new(
+            MenuItem::LevelCreator => GameStateEvent::Push(Box::new(LevelCreatorLevelListState::new(
                 menu.save_profile.clone(),
-            )),
+            ))),
             MenuItem::Quit => {
                 data.quit();
                 GameStateEvent::None
             },
             #[cfg(not(feature = "demo"))]
-            MenuItem::UserCreatedLevels => GameStateEvent::Push(box UserCreatedLevelsState::new(
+            MenuItem::UserCreatedLevels => GameStateEvent::Push(Box::new(UserCreatedLevelsState::new(
                 menu.save_profile.clone(),
                 data.steam_client.as_deref(),
-            )),
+            ))),
             #[cfg(feature = "demo")]
             _ => {
                 SFX::Wrong.play();

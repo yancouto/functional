@@ -102,10 +102,10 @@ impl GameState for UserCreatedLevelsState {
                 match levels.get() {
                     Ok(lvl) => {
                         SFX::Select.play();
-                        GameStateEvent::Push(box EditorState::<XiEditor>::new(
+                        GameStateEvent::Push(Box::new(EditorState::<XiEditor>::new(
                             Level::UserCreatedLevel(lvl.clone()),
                             self.save_profile.clone(),
-                        ))
+                        )))
                     },
                     Err(_) => {
                         SFX::Wrong.play();

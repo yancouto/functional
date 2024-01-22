@@ -214,7 +214,7 @@ impl<Editor: TextEditor> GameState for EditorState<Editor> {
                 workshop,
             );
             self.id_recv = Some(recv);
-            return GameStateEvent::Push(box validator);
+            return GameStateEvent::Push(Box::new(validator));
         }
 
         data.text_box("Instructions", INSTRUCTIONS, self.tips_screen.clone(), true);

@@ -12,11 +12,11 @@ impl SaveLoaderState {
     pub fn try_load(user: String) -> Box<dyn GameState> {
         let profile = save_system::load_profile(&user);
         match profile {
-            Ok(p) => box MainMenuState::new(Arc::new(p), true),
+            Ok(p) => Box::new(MainMenuState::new(Arc::new(p), true)),
             // Save corrupted
             Err(err) => {
                 SFX::Wrong.play();
-                box Self {
+                Box::new(Self {
                 user,
                 err_text: format!(
                     "Got the following error:\n{}\n\n These are your options:\n\n
@@ -26,7 +26,7 @@ impl SaveLoaderState {
                     err
                 ),
                 last_selected: 0,
-            }
+            })
             },
         }
     }

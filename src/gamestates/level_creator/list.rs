@@ -51,10 +51,10 @@ impl LevelCreatorLevelListState {
     fn go_to_level(&mut self, name: &str) -> GameStateEvent {
         SFX::Select.play();
         let dir = self.root.join(name);
-        GameStateEvent::Push(box level_creator::EditorState::<XiEditor>::new(
+        GameStateEvent::Push(Box::new(level_creator::EditorState::<XiEditor>::new(
             dir,
             self.save_profile.clone(),
-        ))
+        )))
     }
 
     fn create_level(&mut self, title: String) -> GameStateEvent {
@@ -105,7 +105,7 @@ impl GameState for LevelCreatorLevelListState {
         {
             let (state, recv) = StringReaderState::new("Level title".to_string(), 15);
             self.title_recv = Some(recv);
-            return GameStateEvent::Push(box state);
+            return GameStateEvent::Push(Box::new(state));
         }
         // Receiver should be ready after one tick, so we can steal the option
         if let Some(title) = self.title_recv.take().and_then(|r| r.try_recv().ok()) {

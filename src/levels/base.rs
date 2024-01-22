@@ -116,10 +116,10 @@ impl TestCase {
     }
 
     fn test_expression(&self, expression: Box<Node>) -> Box<Node> {
-        box Node::Apply {
+        Box::new(Node::Apply {
             left:  self.application.clone(),
             right: expression,
-        }
+        })
     }
 
     pub fn test(&self, expression: Box<Node>, provider: ConstantProvider) -> TestCaseRun {

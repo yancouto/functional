@@ -253,7 +253,7 @@ pub mod test {
 
     impl From<(usize, char)> for Box<Node> {
         fn from((depth, original): (usize, char)) -> Self {
-            box Node::Variable(Variable { depth, original })
+            Box::new(Node::Variable(Variable { depth, original }))
         }
     }
 

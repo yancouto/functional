@@ -299,10 +299,10 @@ impl GameState for ValidationState {
                 || (data.ctrl && data.pressed_key == Some(Key::Return))
             {
                 if let Ok(level) = uc.clone().try_into() {
-                    return GameStateEvent::Push(box EditorState::<XiEditor>::new(
+                    return GameStateEvent::Push(Box::new(EditorState::<XiEditor>::new(
                         level,
                         self.save_profile.clone(),
-                    ));
+                    )));
                 } else {
                     debug_unreachable!("Should not be error");
                 }
@@ -318,7 +318,7 @@ impl GameState for ValidationState {
                     let (state, recv) =
                         UploadingLevelState::new(uc.clone(), client, self.config.clone());
                     self.id_recv = Some(recv);
-                    return GameStateEvent::Push(box state);
+                    return GameStateEvent::Push(Box::new(state));
                 }
             }
             instructions.push("Press CTRL+ENTER or PLAY to test play level");
@@ -344,6 +344,7 @@ impl GameState for ValidationState {
 #[cfg(test)]
 mod test {
     use std::io::Write;
+    use std::assert_matches::assert_matches;
 
     use super::*;
 

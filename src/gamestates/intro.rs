@@ -6,6 +6,7 @@ const OPENING_STR: &str = "this is functional.";
 pub trait GameStateBuilder = Fn() -> Box<dyn GameState>;
 #[derive(Debug)]
 pub struct IntroState<F: GameStateBuilder> {
+    #[allow(unused)]
     time_since_creation_ms: f32,
     next:                   F,
 }

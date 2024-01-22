@@ -1,5 +1,5 @@
 use std::{
-    ops::{Generator, GeneratorState}, sync::atomic::{AtomicU32, Ordering}
+    ops::{Coroutine as Generator, CoroutineState as GeneratorState}, sync::atomic::{AtomicU32, Ordering}
 };
 
 use thiserror::Error;
@@ -67,7 +67,7 @@ fn replace_req(root: Box<Node>, cur_depth: usize, value: &Node) -> (u32, Box<Nod
     match *root {
         Node::Variable(mut v) =>
             if v.depth == cur_depth {
-                let mut value = box value.clone();
+                let mut value = Box::new(value.clone());
                 // We need to increase the depth for unbound vars so they keep being unbound
                 let size = for_each_unbound_req(value.as_mut(), 0, |depth| *depth += cur_depth);
                 (size, value)
@@ -77,18 +77,18 @@ fn replace_req(root: Box<Node>, cur_depth: usize, value: &Node) -> (u32, Box<Nod
                     // we need to decrease depth by one
                     v.depth -= 1;
                 }
-                (1, box Node::Variable(v))
+                (1, Box::new(Node::Variable(v)))
             },
         Node::Function { variable, body } => {
             let (size, body) = replace_req(body, cur_depth + 1, value);
-            (size + 1, box Node::Function { variable, body })
+            (size + 1, Box::new(Node::Function { variable, body }))
         },
         Node::Apply { left, right } => {
             let (sizel, left) = replace_req(left, cur_depth, value);
             let (sizer, right) = replace_req(right, cur_depth, value);
-            (sizel + sizer, box Node::Apply { left, right })
+            (sizel + sizer, Box::new(Node::Apply { left, right }))
         },
-        node @ Node::Constant(_) => (1, box node),
+        node @ Node::Constant(_) => (1, Box::new(node)),
     }
 }
 
@@ -175,17 +175,17 @@ impl Interpreter {
             Ok(match *root {
                 Node::Apply { left, right } => {
                     let left = yield_from!(self.clone().interpret(level + 1, left), |left| {
-                        box Node::Apply {
+                        Box::new(Node::Apply {
                             left,
                             right: right.clone(),
-                        }
+                        })
                     })?;
                     let right = if fully_resolve {
                         yield_from!(self.clone().interpret(level + 1, right), |right| {
-                            box Node::Apply {
+                            Box::new(Node::Apply {
                                 left: left.clone(),
                                 right,
-                            }
+                            })
                         })?
                     } else {
                         right
@@ -202,17 +202,17 @@ impl Interpreter {
                             }
                             yield_from!(self.interpret(level + 1, body))?
                         },
-                        _ => box Node::Apply { left, right },
+                        _ => Box::new(Node::Apply { left, right }),
                     }
                 },
-                Node::Variable(v) => box Node::Variable(v),
+                Node::Variable(v) => Box::new(Node::Variable(v)),
                 Node::Function { variable, body } => {
                     let inner = if fully_resolve {
                         yield_from!(self.interpret(level + 1, body), |inner| {
-                            box Node::Function {
+                            Box::new(Node::Function {
                                 variable,
                                 body: inner,
-                            }
+                            })
                         })?
                     } else {
                         body
@@ -226,7 +226,7 @@ impl Interpreter {
                     if let Some(term) = self.provider.get(&c) {
                         yield_from!(self.interpret(level + 1, term))?
                     } else {
-                        box Node::Constant(c)
+                        Box::new(Node::Constant(c))
                     },
             })
         })

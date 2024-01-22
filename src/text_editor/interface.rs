@@ -16,6 +16,7 @@ use serde::de::Error;
 #[derive(Debug, Deserialize)]
 pub struct ConfigChanges {
     #[serde(flatten)]
+    #[allow(unused)]
     extra: HashMap<String, Json>,
 }
 
