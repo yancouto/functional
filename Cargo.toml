@@ -26,8 +26,8 @@ directories = "3"
 log = "0.4"
 simplelog = "0.10.0"
 vec1 = {version = "1", features = ["serde"]}
-savefile = "0.8"
-savefile-derive = "0.7"
+savefile = "0.16"
+savefile-derive = "0.16"
 parking_lot = {version = "*", features = ["nightly"]}
 thiserror = "1"
 xi-core-lib = "0.3"
