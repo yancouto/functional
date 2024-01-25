@@ -1,3 +1,4 @@
+
 use serde::Deserialize;
 
 use super::{BaseLevel, GameLevel, TestCase};
@@ -43,14 +44,20 @@ pub fn raw_load_level_config() -> JLevelConfig {
     serde_json::from_slice(RAW_LEVEL_CONFIG).expect("Invalid json")
 }
 
+fn has_trees_dlc() -> bool {
+    std::fs::try_exists("tree_dlc_installed").unwrap_or(false)
+}
+
 fn load_all() -> Vec1<Section> {
     let config = raw_load_level_config();
-    config.sections.mapped(|s| {
+    Vec1::try_from_vec(config.sections.into_iter().filter_map(|s| {
         let section_name = s.name;
-        Section {
+        Some(Section {
             name:   s.name,
             levels: {
-                if cfg!(feature = "demo") && s.name > SectionName::Boolean {
+                if s.name == SectionName::Trees && !has_trees_dlc() {
+                    return None
+                } else if cfg!(feature = "demo") && s.name > SectionName::Boolean {
                     vec![]
                 } else {
                     let mut idx = 0;
@@ -82,8 +89,8 @@ fn load_all() -> Vec1<Section> {
                         .into()
                 }
             },
-        }
-    })
+        })
+    }).collect()).unwrap()
 }
 
 #[derive(
@@ -112,6 +119,7 @@ pub enum SectionName {
     #[strum(serialize = "more numerals")]
     #[serde(rename = "more numerals")]
     MoreNumerals,
+    Trees,
 }
 
 pub struct Section {
@@ -240,7 +248,8 @@ mod test {
         Numerals,
         PairAndList,
         Recursion,
-        MoreNumerals
+        MoreNumerals,
+        Trees
     );
 
     #[test]

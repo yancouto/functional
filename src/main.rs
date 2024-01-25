@@ -6,6 +6,7 @@
 #![feature(assert_matches)]
 #![feature(option_zip)]
 #![feature(extract_if)]
+#![feature(fs_try_exists)]
 #[macro_use]
 extern crate lazy_static;
 
