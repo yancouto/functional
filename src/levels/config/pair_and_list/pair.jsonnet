@@ -6,7 +6,7 @@
 
     That is, a pair of two elements is a function that receives one argument and applies both elements to it.
 
-    Write PAIR, a function that receives two arguments and returns a pair made of both elements.
+    Write function PAIR that receives two arguments and returns a pair made of both elements.
 
     For example:
     - PAIR A B -> (A, B) = f: f A B

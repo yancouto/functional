@@ -1,7 +1,7 @@
 {
   name: 'fst',
   description: |||
-    Write function FST, a function that receives a pair and returns the first element.
+    Write function FST that receives a pair and returns the first element.
     
     For example:
     - FST (A, B) -> A
