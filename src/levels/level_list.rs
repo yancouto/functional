@@ -1,4 +1,3 @@
-
 use serde::Deserialize;
 
 use super::{BaseLevel, GameLevel, TestCase};
@@ -44,53 +43,58 @@ pub fn raw_load_level_config() -> JLevelConfig {
     serde_json::from_slice(RAW_LEVEL_CONFIG).expect("Invalid json")
 }
 
-fn has_trees_dlc() -> bool {
-    std::fs::try_exists("tree_dlc_installed").unwrap_or(false)
-}
+fn has_trees_dlc() -> bool { std::fs::try_exists("tree_dlc_installed").unwrap_or(false) }
 
 fn load_all() -> Vec1<Section> {
     let config = raw_load_level_config();
-    Vec1::try_from_vec(config.sections.into_iter().filter_map(|s| {
-        let section_name = s.name;
-        Some(Section {
-            name:   s.name,
-            levels: {
-                if s.name == SectionName::Trees && !has_trees_dlc() {
-                    return None
-                } else if cfg!(feature = "demo") && s.name > SectionName::Boolean {
-                    vec![]
-                } else {
-                    let mut idx = 0;
-                    s.levels
-                        .mapped(|l| {
-                            if l.extra_info_is_hint {
-                                debug_assert!(l.extra_info.is_some());
-                            }
-                            let level = GameLevel {
-                                base: BaseLevel {
-                                    name:        l.name,
-                                    description: l.description,
-                                    extra_info:  l.extra_info,
-                                    test_cases:  l
-                                        .test_cases
-                                        .mapped(|t| TestCase::from_or_fail(&t.0, &t.1)),
+    Vec1::try_from_vec(
+        config
+            .sections
+            .into_iter()
+            .filter_map(|s| {
+                let section_name = s.name;
+                Some(Section {
+                    name:   s.name,
+                    levels: {
+                        if s.name == SectionName::Trees && !has_trees_dlc() {
+                            return None;
+                        } else if cfg!(feature = "demo") && s.name > SectionName::Boolean {
+                            vec![]
+                        } else {
+                            let mut idx = 0;
+                            s.levels
+                                .mapped(|l| {
+                                    if l.extra_info_is_hint {
+                                        debug_assert!(l.extra_info.is_some());
+                                    }
+                                    let level = GameLevel {
+                                        base: BaseLevel {
+                                            name:        l.name,
+                                            description: l.description,
+                                            extra_info:  l.extra_info,
+                                            test_cases:  l
+                                                .test_cases
+                                                .mapped(|t| TestCase::from_or_fail(&t.0, &t.1)),
 
-                                    extra_info_is_hint: l.extra_info_is_hint,
-                                },
-                                idx,
-                                section: section_name,
-                                solutions: l.solutions,
-                                wrong_solutions: l.wrong_solutions,
-                                show_constants: l.show_constants,
-                            };
-                            idx += 1;
-                            level
-                        })
-                        .into()
-                }
-            },
-        })
-    }).collect()).unwrap()
+                                            extra_info_is_hint: l.extra_info_is_hint,
+                                        },
+                                        idx,
+                                        section: section_name,
+                                        solutions: l.solutions,
+                                        wrong_solutions: l.wrong_solutions,
+                                        show_constants: l.show_constants,
+                                    };
+                                    idx += 1;
+                                    level
+                                })
+                                .into()
+                        }
+                    },
+                })
+            })
+            .collect(),
+    )
+    .unwrap()
 }
 
 #[derive(
