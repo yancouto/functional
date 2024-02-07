@@ -4,7 +4,7 @@ local bool = import '../boolean/lib.libsonnet';
   description: |||
     A binary tree is a data structure made of tree nodes. Each node may have a left and a right child (the L and R terms in it) and always contains a value (the term V). We use FALSE to indicate an empty binary tree, or to show that a node doesn't have a left or right child.
     
-    Write a function BEMPTY that givena binary tree returns whether it is empty or not.
+    Write a function BEMPTY that given a binary tree returns whether it is empty or not.
     
     For example:
     - BEMPTY (FALSE 1 FALSE) -> FALSE

@@ -7,5 +7,6 @@
         import 'val.jsonnet',
         import 'binary_tree.jsonnet',
         import 'bsize.jsonnet',
+        import 'build.jsonnet',
     ],
 }
