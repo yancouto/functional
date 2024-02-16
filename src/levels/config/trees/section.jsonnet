@@ -8,6 +8,7 @@
         import 'binary_tree.jsonnet',
         import 'bsize.jsonnet',
         import 'build.jsonnet',
+        import 'split.jsonnet',
         import 'inverse6.jsonnet',
     ],
 }
