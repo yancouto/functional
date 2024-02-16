@@ -2,7 +2,7 @@ local bool = import '../boolean/lib.libsonnet';
 local lib = import 'lib.libsonnet';
 local pl = import '../pair_and_list/lib.libsonnet';
 local test_build(list) =
-  lib.test_bst('f: f %s' % [pl.list(list)], list);
+  lib.test_bst_shape('f: f %s' % [pl.list(list)], list);
 {
   name: 'build',
   description: |||
