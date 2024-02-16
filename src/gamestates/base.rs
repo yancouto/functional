@@ -57,6 +57,7 @@ impl<'a> TickData<'a> {
 
     /// ALWAYS CALL THIS TO QUIT
     pub fn quit_game(ctx: &mut bl::BTerm) {
+        #[cfg(feature = "audio")]
         ears::cleanup();
         ctx.quit();
     }

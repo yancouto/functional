@@ -1,5 +1,6 @@
 use std::{convert::TryFrom, iter::FromIterator, path::PathBuf, time::Duration};
 
+#[cfg(feature = "clipboard")]
 use clipboard::{ClipboardContext, ClipboardProvider};
 use xi_core_lib::rpc::{
     EditCommand, EditNotification, EditRequest, GestureType, LineRange, SelectionGranularity
@@ -30,6 +31,7 @@ pub struct XiEditor {
     view_id:           xi_core_lib::ViewId,
     send:              ClientMessageSender,
     recv:              ServerMessageReceiver,
+    #[cfg(feature = "clipboard")]
     #[derivative(Debug = "ignore")]
     clipboard:         Option<ClipboardContext>,
     backup_clipboard:  String,
@@ -61,6 +63,7 @@ impl TextEditor for XiEditor {
         )
         .unwrap();
 
+        #[cfg(feature = "clipboard")]
         #[cfg(debug_assertions)]
         ClipboardContext::new().expect("Failed to get clipboard provider");
 
@@ -75,6 +78,7 @@ impl TextEditor for XiEditor {
             recv,
             view_id: resp.0,
             selections: vec![],
+            #[cfg(feature = "clipboard")]
             clipboard: ClipboardContext::new().ok(),
             backup_clipboard: String::new(),
         };
@@ -299,14 +303,20 @@ impl TextEditorInner for XiEditor {
 
 impl XiEditor {
     fn read_clipboard(&mut self) -> String {
-        self.clipboard
-            .as_mut()
-            .and_then(|w| w.get_contents().ok())
-            .unwrap_or_else(|| self.backup_clipboard.clone())
+        #[cfg(feature = "clipboard")]
+        {
+            self.clipboard
+                .as_mut()
+                .and_then(|w| w.get_contents().ok())
+                .unwrap_or_else(|| self.backup_clipboard.clone())
+        }
+        #[cfg(not(feature = "clipboard"))]
+        "".to_string()
     }
 
     fn write_clipboard(&mut self, str: String) {
         self.backup_clipboard = str.clone();
+        #[cfg(feature = "clipboard")]
         if let Some(w) = self.clipboard.as_mut() {
             w.set_contents(str).debug_unwrap();
         }

@@ -20,6 +20,7 @@ extern crate derivative;
 #[macro_use]
 extern crate maplit;
 
+#[cfg_attr(not(feature = "audio"), path = "fake_audio.rs")]
 mod audio;
 mod drawables;
 mod gamestates;
@@ -85,6 +86,7 @@ const APP_ID: u32 = 1636730;
 
 const ICON_DATA: &[u8] = include_bytes!("inlined_assets/icon.bmp");
 
+#[cfg(not(feature = "crossterm"))]
 fn maybe_load_icon() {
     let result = bl::BACKEND
         .lock()
@@ -108,6 +110,8 @@ fn maybe_load_icon() {
         err @ _ => log::warn!("Failed to set icon correctly: {:?}", err),
     }
 }
+#[cfg(feature = "crossterm")]
+fn maybe_load_icon() {}
 
 fn main() -> bl::BError {
     let opt = &CMD_LINE_OPTIONS;
@@ -127,6 +131,7 @@ fn main() -> bl::BError {
         ),
     ])
     .expect("Failed to set up logger.");
+    #[cfg(feature = "audio")]
     ears::init().unwrap();
 
     let clients = if opt.steam || opt.steam_dev {

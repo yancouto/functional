@@ -44,3 +44,9 @@ To publish package, you need to copy the libsndfile and libopenal dylibs, and re
 cargo run
 ```
 
+## How to test in codespace
+You can minimally test this code in a Codespace, using:
+```
+cargo test --no-default-features --features crossterm
+```
+This will disable all the unecessary stuff (for tests) that need fancy setting up.

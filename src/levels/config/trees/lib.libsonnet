@@ -13,7 +13,7 @@ local bool = import '../boolean/lib.libsonnet';
         ),
     # TODO: INCOMPLETE
     bst_to_arr()::
-        'b: () b FALSE'
+        'b: () b FALSE',
     # Usage: b test_bst_values where b is a supposed bst
     test_bst_values(list)::
         if std.length(list) == 0 then
