@@ -68,16 +68,12 @@ impl MenuItem {
                     data.steam_client.as_deref(),
                 ))),
             MenuItem::Liquidum => {
+                const URL: &str =
+                    "https://store.steampowered.com/app/2716690/Liquidum/?utm_source=functional";
                 if let Some(client) = data.steam_client.as_deref() {
-                    client.friends().activate_game_overlay_to_store(
-                        steamworks::AppId(2716690),
-                        steamworks::OverlayToStoreFlag::None,
-                    )
+                    client.friends().activate_game_overlay_to_web_page(URL)
                 } else {
-                    open::that(
-                        "https://store.steampowered.com/app/2716690/Liquidum/?utm_source=functional",
-                    )
-                    .debug_unwrap();
+                    open::that(URL).debug_unwrap();
                 }
                 GameStateEvent::None
             },
