@@ -190,7 +190,7 @@ mod test {
                 if l.section < section {
                     return;
                 }
-                l.solutions.par_iter().for_each(|s| {
+                l.solutions.par_iter().enumerate().for_each(|(idx_sol, s)| {
                     let r = Level::GameLevel(l)
                         .test(
                             s.chars(),
@@ -205,10 +205,12 @@ mod test {
                             l.base.name, s
                         ));
 
-                    r.runs.iter().for_each(|r| {
+                    r.runs.iter().enumerate().for_each(|(idx_test, r)| {
                         assert!(
                         r.is_correct(),
-                        "Code '{}' does not reduce to '{}' on level '{}', instead reduced to {:?}",
+                        "[solution {}, test {}] Code '{}' does not reduce to '{}' on level '{}', instead reduced to {:?}",
+                        idx_sol + 1,
+                        idx_test + 1,
                         r.test_expression,
                         r.expected_result,
                         l.base.name,
