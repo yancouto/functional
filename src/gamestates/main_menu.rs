@@ -11,6 +11,7 @@ enum MenuItem {
     UserCreatedLevels,
     ChangeProfile,
     Playground,
+    Liquidum,
     Quit,
 }
 
@@ -36,6 +37,7 @@ impl MenuItem {
                 } else {
                     "user created levels (FULL GAME ONLY)"
                 },
+            MenuItem::Liquidum => "our new game liquidum",
         }
     }
 
@@ -65,6 +67,20 @@ impl MenuItem {
                     menu.save_profile.clone(),
                     data.steam_client.as_deref(),
                 ))),
+            MenuItem::Liquidum => {
+                if let Some(client) = data.steam_client.as_deref() {
+                    client.friends().activate_game_overlay_to_store(
+                        steamworks::AppId(2716690),
+                        steamworks::OverlayToStoreFlag::None,
+                    )
+                } else {
+                    open::that(
+                        "https://store.steampowered.com/app/2716690/Liquidum/?utm_source=functional",
+                    )
+                    .debug_unwrap();
+                }
+                GameStateEvent::None
+            },
             #[cfg(feature = "demo")]
             _ => {
                 SFX::Wrong.play();
@@ -90,6 +106,7 @@ impl MainMenuState {
                 MenuItem::LevelCreator,
                 MenuItem::Settings,
                 MenuItem::ChangeProfile,
+                MenuItem::Liquidum,
                 MenuItem::Quit
             ]
             .into(),

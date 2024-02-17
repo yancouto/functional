@@ -1,6 +1,6 @@
 [package]
 name = "functional"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["Yan Couto <yancouto@gmail.com>"]
 edition = "2018"
 default-run = "functional"
@@ -54,6 +54,7 @@ winit = "0.27"
 # I have some unmerged additions to this crate
 steamworks = { git = "https://github.com/Noxime/steamworks-rs", rev = "a204e81084c50490160123d6eaadbc4f509b276d", optional = true }
 #steamworks = { version = "0.10", optional = true }
+open = "5"
 
 [dev-dependencies]
 pretty_assertions = "0.7"
