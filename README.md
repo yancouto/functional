@@ -23,6 +23,8 @@ If using steam, you need clang installed. The easiest way to install it is throu
 
 Install OpenAL as in [ears README](https://github.com/nickbrowne/ears#before-you-start), but use `nightly-gnu` rust toolchain version instead. You might need to copy several `.dll`s to this directory, check the errors when running and look in the `msys64` directory.
 
+To publish, I use [this tool](https://learn.microsoft.com/en-gb/sysinternals/downloads/process-explorer) to find out which DLLs it loads, and everything that's from MSYS folder I copy next to the binary.
+
 ### Linux
 
 For the clipboard integration, you need some x11 dependencies. You might already have some or all of them, if not, on Ubuntu-like systems you can install them with:
