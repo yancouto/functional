@@ -30,7 +30,7 @@ local num = import '../numerals/lib.libsonnet';
       'BEMPTY'
     else
       '(b: b ' + self.inner_test_bst_shape_func(list) + ')',
-  bst_to_arr()::
+  bst_to_preorder()::
     '(b: (Y (f: b:p: b (l:v:r:p: f l (PUSH v (f r p))) p)) b FALSE)',
   bst_to_inorder()::
     '(b: (Y (f: b:p: b (l:v:r:p: PUSH v (f l (f r p))) p)) b FALSE)',

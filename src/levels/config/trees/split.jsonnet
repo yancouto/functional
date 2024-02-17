@@ -37,7 +37,7 @@ local test_split(orig, x) =
   provides_constant: true,
   solutions: [
     'Y (f: b:x: b (l:v:r:z: (ZERO (SUB x v)) ((f l x) (a:b: (PAIR a (NODE b v r)))) ((f r x) (a:b: (PAIR (NODE l v a) b) ))) (PAIR FALSE FALSE))',
-    'b:x: (a: (PAIR (BUILD (FILTER a (y: ZERO (SUB y x)))) (BUILD (FILTER a (y: ZERO (SUB x y)))))) (%s b)' % [lib.bst_to_inorder()],
+    'b:x: (a: (PAIR (BUILD (FILTER a (y: ZERO (SUB y x)))) (BUILD (FILTER a (y: ZERO (SUB x y)))))) (INORDER b)',
   ],
   wrong_solutions: [
     'b:x: PAIR FALSE b',
