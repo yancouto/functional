@@ -1,6 +1,4 @@
 local bool = import '../boolean/lib.libsonnet';
-local num = import '../numerals/lib.libsonnet';
-local pl = import '../pair_and_list/lib.libsonnet';
 local lib = import 'lib.libsonnet';
 
 local test_split(orig, x) =

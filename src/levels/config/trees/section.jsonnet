@@ -12,6 +12,7 @@
     import 'preorder.jsonnet',
     import 'inorder.jsonnet',
     import 'split.jsonnet',
+    import 'kth.jsonnet',
     import 'inverse6.jsonnet',
   ],
 }
