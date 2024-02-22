@@ -1,6 +1,6 @@
 [package]
 name = "functional"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["Yan Couto <yancouto@gmail.com>"]
 edition = "2018"
 default-run = "functional"
@@ -31,7 +31,7 @@ simplelog = "0.10.0"
 vec1 = { version = "1", features = ["serde"] }
 savefile = "0.16"
 savefile-derive = "0.16"
-parking_lot = { version = "*", features = ["nightly"] }
+parking_lot = { version = "0.12", features = ["nightly"] }
 thiserror = "1"
 xi-core-lib = "0.3"
 xi-rpc = "0.3"
@@ -50,7 +50,7 @@ rand = "0.8"
 # Until https://github.com/nickbrowne/ears/pull/20 is merged
 ears = { git = "https://github.com/yancouto/ears", optional = true }
 # Needs to be same version as on bracket-lib
-winit = "0.27"
+winit = "~0.27"
 # I have some unmerged additions to this crate
 steamworks = { git = "https://github.com/Noxime/steamworks-rs", rev = "a204e81084c50490160123d6eaadbc4f509b276d", optional = true }
 #steamworks = { version = "0.10", optional = true }
@@ -61,5 +61,5 @@ pretty_assertions = "0.7"
 tempfile = "3"
 
 [dependencies.bracket-lib]
-version = "0.8.1"
+version = "0.8.7"
 default-features = false

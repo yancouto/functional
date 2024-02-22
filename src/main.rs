@@ -93,6 +93,9 @@ fn maybe_load_icon() {
         .context_wrapper
         .as_ref()
         .map(|wrapped_ctx| {
+            let window = wrapped_ctx.wc.window();
+            window.set_resizable(true);
+            window.set_min_inner_size(Some(winit::dpi::PhysicalSize::new(300, 300)));
             #[allow(const_item_mutation)]
             bmp::from_reader(&mut ICON_DATA).map(|img| {
                 let mut data =
@@ -102,7 +105,7 @@ fn maybe_load_icon() {
                     data.append(&mut vec![r, g, b, 255]);
                 }
                 winit::window::Icon::from_rgba(data, img.get_width(), img.get_height())
-                    .map(|icon| wrapped_ctx.wc.window().set_window_icon(Some(icon)))
+                    .map(|icon| window.set_window_icon(Some(icon)))
             })
         });
     match result {

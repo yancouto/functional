@@ -17,7 +17,7 @@ local test_split(orig, x) =
     It is guaranteed that X is NOT present in T.
 
     Examples:
-    - SPLIT ((1) 3 (4)) -> ((1), (3 (4)))
+    - SPLIT ((1) 3 (4)) 2 -> ((1), (3 (4)))
     - SPLIT (5) 3 -> (FALSE, (5))
   |||,
   extra_info: |||

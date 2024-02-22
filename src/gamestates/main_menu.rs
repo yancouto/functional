@@ -71,6 +71,7 @@ impl MenuItem {
                 const URL: &str =
                     "https://store.steampowered.com/app/2716690/Liquidum/?utm_source=functional";
                 if let Some(client) = data.steam_client.as_deref() {
+                    #[cfg(feature = "steam")]
                     client.friends().activate_game_overlay_to_web_page(URL)
                 } else {
                     open::that(URL).debug_unwrap();

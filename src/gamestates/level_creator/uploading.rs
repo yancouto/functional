@@ -104,6 +104,7 @@ fn upload_level_impl(
         .title(&config.title)
         .description(&config.description)
         .content_path(&cache)
+        .visibility(PublishedFileVisibility::Public)
         .submit(
             Some(&format!("Updating by {}", client.user().steam_id().raw())),
             move |r| send.send(r).debug_unwrap(),
