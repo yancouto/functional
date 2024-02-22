@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_surface_outputs","get_surface_scale_factor"],"macro":["default_environment","environment","new_default_environment"],"mod":["data_device","environment","output","primary_selection","reexports","seat","shell","shm","window"],"struct":["MissingGlobal","WaylandSource"]};

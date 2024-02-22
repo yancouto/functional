@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["HostNotification","HostRequest","PluginNotification","PluginRequest","TextUnit"],"struct":["ClientPluginInfo","DataSpan","EmptyStruct","GetDataResponse","Hover","PluginBufferInfo","PluginCommand","PluginEdit","PluginUpdate","Range","ScopeSpan"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Isometry2","Isometry2x4","Isometry2x8","Isometry3","Isometry3x4","Isometry3x8","Similarity2","Similarity2x4","Similarity2x8","Similarity3","Similarity3x4","Similarity3x8"]};

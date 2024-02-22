@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error","Value"],"fn":["from_file","from_reader","from_reader_xml","to_writer_xml"],"mod":["stream"],"struct":["Date","Deserializer","Serializer"]};

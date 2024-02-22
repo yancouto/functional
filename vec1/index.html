@@ -1,0 +1,95 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="This crate provides a `Vec` wrapper (`Vec1`) which guarantees to have at least 1 element."><title>vec1 - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="vec1" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3406ada96 2024-02-21)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-4c98445ec4002617.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../vec1/index.html">vec1</a><span class="version">1.10.1</span></h2></div><div class="sidebar-elems"><ul class="block">
+            <li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#macros">Macros</a></li><li><a href="#structs">Structs</a></li></ul></section></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../vec1/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">vec1</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../src/vec1/lib.rs.html#1-1987">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>This crate provides a <code>Vec</code> wrapper (<code>Vec1</code>) which guarantees to have at least 1 element.</p>
+<p>This can be useful if you have a API which accepts one ore more ofe a kind.
+Instead of accepting a <code>Vec</code> and returning an error if it’s empty a <code>Vec1</code>
+can be used assuring there is at least 1 element and through this reducing
+the number of possible error causes.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>vec1;
+
+<span class="kw">use </span>vec1::Vec1;
+
+<span class="kw">fn </span>main() {
+    <span class="comment">// vec1![] makes sure at compiler time
+    // there is at least one element
+    //let names = vec1! [ ];
+    </span><span class="kw">let </span>names = <span class="macro">vec1! </span>[ <span class="string">"Liz" </span>];
+    greet(names);
+}
+
+<span class="kw">fn </span>greet(names: Vec1&lt;<span class="kw-2">&amp;</span>str&gt;) {
+    <span class="comment">// methods like first/last which return a Option on Vec do
+    // directly return the value, we know it's possible
+    </span><span class="kw">let </span>first = names.first();
+    <span class="macro">println!</span>(<span class="string">"hallo {}"</span>, first);
+    <span class="kw">for </span>name <span class="kw">in </span>names.iter().skip(<span class="number">1</span>) {
+        <span class="macro">println!</span>(<span class="string">"  who is also know as {}"</span>, name)
+    }
+}
+</code></pre></div>
+<h2 id="features"><a class="doc-anchor" href="#features">§</a>Features</h2>
+<ul>
+<li>
+<p><code>std</code> (default): If disabled this crate will only use <code>core</code> and <code>alloc</code> but not <code>std</code> as dependencies.
+Because of this some traits and method are not available if it is disabled.</p>
+</li>
+<li>
+<p><code>serde</code>: Implements <code>Serialize</code> and <code>Deserialize</code> for <code>Vec1</code>. Also implements it for
+<code>SmallVec1</code> if both <code>serde</code> and <code>smallvec-v1</code> features are enabled. Note that
+enabling both <code>serde</code> and <code>smallvec-v1</code> implements <code>Serialize</code> and <code>Deserialize</code>
+for <code>SmallVec1</code> but will <em>not</em> enable <code>smallvec/serde</code> and as such will not
+implement the <code>serde</code> traits for <code>smallvec::SmallVec</code>.</p>
+</li>
+<li>
+<p><code>smallvec-v1</code> : Adds support for a vec1 variation backed by the smallvec crate
+version 1.x.y. (In the future there will likely be a additional <code>smallvec-v2</code>.).
+Works with no_std, i.e. if the default features are disabled.</p>
+</li>
+<li>
+<p><code>smallvec-v1-write</code>: Enables <code>smallvec/write</code>, this requires std. As we can’t tell cargo to
+automatically enable <code>smallvec/write</code> if and only if <code>smallvec-v1</code> and
+<code>std</code> are both enabled this needs to be an extra feature.</p>
+</li>
+<li>
+<p><code>unstable-nightly-try-from-impl</code> (deprecated) : Was used to enable <code>TryFrom</code>/<code>TryInto</code> implementations
+before the traits became stable. Doesn’t do anything by
+now, but still exist for compatibility reasons.</p>
+</li>
+</ul>
+<h2 id="rustdoc"><a class="doc-anchor" href="#rustdoc">§</a>Rustdoc</h2>
+<p>To have all intra-(and inter-) doc links working properly it is
+recommended to generate the documentation with nightly rustdoc.
+This is <em>only</em> for the links in the documentation, library code
+and test should run at least on stable-2 (a two versions old stable)
+and might work on older versions too.</p>
+<h2 id="rust-version--stability"><a class="doc-anchor" href="#rust-version--stability">§</a>Rust Version / Stability</h2>
+<p>Besides intra-doc links everything else is supposed to work on a
+two versions old stable release and everything newer, through it
+might work on older releases.</p>
+<p>Features which require nightly/beta will be prefixed with <code>unstable-</code>.</p>
+<p>For forwards compatibility the prefixed feature will be kept even if
+it’s no longer unstable, through the code it feature gated is now also
+either always available or behind a non-prefixed feature gate which the
+<code>unstable-</code> prefixed feature gate enables.</p>
+<p>While I do try to keep <code>unstable-</code> features API stable this might not
+always be possible so enabling a <code>unstable-</code> prefixed features does
+exclude the stability guarantees normally expected from SemVer for
+code related to that feature. Still no patch version change will
+be pushed which brakes any code, even if it’s <code>unstable-</code> prefixed!</p>
+<p>Updating dependencies follows following rules</p>
+<div><table><thead><tr><th>SemVer Dep. Update Kind</th><th>Publicly exposed dep?</th><th>Update of this Crate</th></tr></thead><tbody>
+<tr><td>patch update</td><td>yes</td><td>patch (or minor)</td></tr>
+<tr><td>minor update</td><td>yes</td><td>minor</td></tr>
+<tr><td>major update</td><td>yes</td><td>won’t happen, smallvec gets a second feature for v2</td></tr>
+<tr><td>patch update</td><td>no</td><td>patch (or minor)</td></tr>
+<tr><td>minor update</td><td>no</td><td>minor</td></tr>
+<tr><td>major update</td><td>no</td><td>minor</td></tr>
+</tbody></table>
+</div>
+<p>If <code>smallvec</code> gets a major update a additional feature will be added supporting
+both major versions of it <em>without</em> introducing a major update for this crate.</p>
+<p>I do my best so that I will never have to release a major version update for this crate as
+this would lead to API incompatibilities for other crates using this crate in their public API.</p>
+</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.vec1.html" title="macro vec1::vec1">vec1</a></div><div class="desc docblock-short">A macro similar to <code>vec!</code> to create a <code>Vec1</code>.</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Size0Error.html" title="struct vec1::Size0Error">Size0Error</a></div><div class="desc docblock-short">Error returned by operations which would cause <code>Vec1</code> to have a length of 0.</div></li><li><div class="item-name"><a class="struct" href="struct.Splice.html" title="struct vec1::Splice">Splice</a></div></li><li><div class="item-name"><a class="struct" href="struct.Vec1.html" title="struct vec1::Vec1">Vec1</a></div><div class="desc docblock-short"><code>std::vec::Vec</code> wrapper which guarantees to have at least 1 element.</div></li></ul></section></div></main></body></html>

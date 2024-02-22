@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["derive_default_identity"],"mod":["bivec","interp","mat","projection","rotor","transform","vec"],"struct":["f32x4","f32x8","f64x2","f64x4","m32x4","m32x8","m64x2","m64x4"]};

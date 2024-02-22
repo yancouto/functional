@@ -1,0 +1,621 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/xi-rope-0.3.0/src/diff.rs`."><title>diff.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="xi_rope" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3406ada96 2024-02-21)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../xi_rope/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<a href="#2" id="2">2</a>
+<a href="#3" id="3">3</a>
+<a href="#4" id="4">4</a>
+<a href="#5" id="5">5</a>
+<a href="#6" id="6">6</a>
+<a href="#7" id="7">7</a>
+<a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
+<a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+<a href="#12" id="12">12</a>
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+</pre></div><pre class="rust"><code><span class="comment">// Copyright 2018 The xi-editor Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+</span><span class="doccomment">//! Computing deltas between two ropes.
+
+</span><span class="kw">use </span>std::borrow::Cow;
+<span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span><span class="kw">crate</span>::compare::RopeScanner;
+<span class="kw">use </span><span class="kw">crate</span>::delta::{Delta, DeltaElement};
+<span class="kw">use </span><span class="kw">crate</span>::interval::Interval;
+<span class="kw">use </span><span class="kw">crate</span>::rope::{LinesMetric, Rope, RopeDelta, RopeInfo};
+<span class="kw">use </span><span class="kw">crate</span>::tree::{Node, NodeInfo};
+
+<span class="doccomment">/// A trait implemented by various diffing strategies.
+</span><span class="kw">pub trait </span>Diff&lt;N: NodeInfo&gt; {
+    <span class="kw">fn </span>compute_delta(base: <span class="kw-2">&amp;</span>Node&lt;N&gt;, target: <span class="kw-2">&amp;</span>Node&lt;N&gt;) -&gt; Delta&lt;N&gt;;
+}
+
+<span class="doccomment">/// The minimum length of non-whitespace characters in a line before
+/// we consider it for diffing purposes.
+</span><span class="kw">const </span>MIN_SIZE: usize = <span class="number">32</span>;
+
+<span class="doccomment">/// A line-oriented, hash based diff algorithm.
+///
+/// This works by taking a hash of each line in either document that
+/// has a length, ignoring leading whitespace, above some threshold.
+///
+/// Lines in the target document are matched against lines in the
+/// base document. When a match is found, it is extended forwards
+/// and backwards as far as possible.
+///
+/// This runs in O(n+m) in the lengths of the two ropes, and produces
+/// results on a variety of workloads that are comparable in quality
+/// (measured in terms of serialized diff size) with the results from
+/// using a suffix array, while being an order of magnitude faster.
+</span><span class="kw">pub struct </span>LineHashDiff;
+
+<span class="kw">impl </span>Diff&lt;RopeInfo&gt; <span class="kw">for </span>LineHashDiff {
+    <span class="kw">fn </span>compute_delta(base: <span class="kw-2">&amp;</span>Rope, target: <span class="kw-2">&amp;</span>Rope) -&gt; RopeDelta {
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = DiffBuilder::default();
+
+        <span class="comment">// before doing anything, scan top down and bottom up for like-ness.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>scanner = RopeScanner::new(base, target);
+        <span class="kw">let </span>(start_offset, diff_end) = scanner.find_min_diff_range();
+        <span class="kw">let </span>target_end = target.len() - diff_end;
+
+        <span class="kw">if </span>start_offset &gt; <span class="number">0 </span>{
+            builder.copy(<span class="number">0</span>, <span class="number">0</span>, start_offset);
+        }
+
+        <span class="comment">// if our preliminary scan finds no differences we're done
+        </span><span class="kw">if </span>start_offset == base.len() &amp;&amp; target.len() == base.len() {
+            <span class="kw">return </span>builder.to_delta(base, target);
+        }
+
+        <span class="kw">let </span>line_hashes = make_line_hashes(<span class="kw-2">&amp;</span>base, MIN_SIZE);
+
+        <span class="kw">let </span>line_count = target.measure::&lt;LinesMetric&gt;() + <span class="number">1</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>matches = Vec::with_capacity(line_count);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>targ_line_offset = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>prev_base = <span class="number">0</span>;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>needs_subseq = <span class="bool-val">false</span>;
+        <span class="kw">for </span>line <span class="kw">in </span>target.lines_raw(start_offset..target_end) {
+            <span class="kw">let </span>non_ws = non_ws_offset(<span class="kw-2">&amp;</span>line);
+            <span class="kw">if </span>line.len() - non_ws &gt;= MIN_SIZE {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(base_off) = line_hashes.get(<span class="kw-2">&amp;</span>line[non_ws..]) {
+                    <span class="kw">let </span>targ_off = targ_line_offset + non_ws;
+                    matches.push((start_offset + targ_off, <span class="kw-2">*</span>base_off));
+                    <span class="kw">if </span><span class="kw-2">*</span>base_off &lt; prev_base {
+                        needs_subseq = <span class="bool-val">true</span>;
+                    }
+                    prev_base = <span class="kw-2">*</span>base_off;
+                }
+            }
+            targ_line_offset += line.len();
+        }
+
+        <span class="comment">// we now have an ordered list of matches and their positions.
+        // to ensure that our delta only copies non-decreasing base regions,
+        // we take the longest increasing subsequence.
+        // TODO: a possible optimization here would be to expand matches
+        // to adjacent lines first? this would be at best a small win though..
+
+        </span><span class="kw">let </span>longest_subseq =
+            <span class="kw">if </span>needs_subseq { longest_increasing_region_set(<span class="kw-2">&amp;</span>matches) } <span class="kw">else </span>{ matches };
+
+        <span class="comment">// for each matching region, we extend it forwards and backwards.
+        // we keep track of how far forward we extend it each time, to avoid
+        // having a subsequent scan extend backwards over the same region.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>prev_end = start_offset;
+
+        <span class="kw">for </span>(targ_off, base_off) <span class="kw">in </span>longest_subseq {
+            <span class="kw">if </span>targ_off &lt;= prev_end {
+                <span class="kw">continue</span>;
+            }
+            <span class="kw">let </span>(left_dist, <span class="kw-2">mut </span>right_dist) =
+                expand_match(base, target, base_off, targ_off, prev_end);
+
+            <span class="comment">// don't let last match expand past target_end
+            </span>right_dist = right_dist.min(target_end - targ_off);
+
+            <span class="kw">let </span>targ_start = targ_off - left_dist;
+            <span class="kw">let </span>base_start = base_off - left_dist;
+            <span class="kw">let </span>len = left_dist + right_dist;
+            prev_end = targ_start + len;
+
+            builder.copy(base_start, targ_start, len);
+        }
+
+        <span class="kw">if </span>diff_end &gt; <span class="number">0 </span>{
+            builder.copy(base.len() - diff_end, target.len() - diff_end, diff_end);
+        }
+
+        builder.to_delta(base, target)
+    }
+}
+
+<span class="doccomment">/// Given two ropes and the offsets of two equal bytes, finds the largest
+/// identical substring shared between the two ropes which contains the offset.
+///
+/// The return value is a pair of offsets, each of which represents an absolute
+/// distance. That is to say, the position of the start and end boundaries
+/// relative to the input offset.
+</span><span class="kw">fn </span>expand_match(
+    base: <span class="kw-2">&amp;</span>Rope,
+    target: <span class="kw-2">&amp;</span>Rope,
+    base_off: usize,
+    targ_off: usize,
+    prev_match_targ_end: usize,
+) -&gt; (usize, usize) {
+    <span class="kw">let </span><span class="kw-2">mut </span>scanner = RopeScanner::new(base, target);
+    <span class="kw">let </span>max_left = targ_off - prev_match_targ_end;
+    <span class="kw">let </span>start = scanner.find_ne_char_back(base_off, targ_off, max_left);
+    <span class="macro">debug_assert!</span>(start &lt;= max_left, <span class="string">"{} &lt;= {}"</span>, start, max_left);
+    <span class="kw">let </span>end = scanner.find_ne_char(base_off, targ_off, <span class="prelude-val">None</span>);
+    (start.min(max_left), end)
+}
+
+<span class="doccomment">/// Finds the longest increasing subset of copyable regions. This is essentially
+/// the longest increasing subsequence problem. This implementation is adapted
+/// from https://codereview.stackexchange.com/questions/187337/longest-increasing-subsequence-algorithm
+</span><span class="kw">fn </span>longest_increasing_region_set(items: <span class="kw-2">&amp;</span>[(usize, usize)]) -&gt; Vec&lt;(usize, usize)&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="macro">vec!</span>[<span class="number">0</span>];
+    <span class="kw">let </span><span class="kw-2">mut </span>prev_chain = <span class="macro">vec!</span>[<span class="number">0</span>; items.len()];
+
+    <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..items.len() {
+        <span class="comment">// If the next item is greater than the last item of the current longest
+        // subsequence, push its index at the end of the result and continue.
+        </span><span class="kw">let </span>last_idx = <span class="kw-2">*</span>result.last().unwrap();
+        <span class="kw">if </span>items[last_idx].<span class="number">1 </span>&lt; items[i].<span class="number">1 </span>{
+            prev_chain[i] = last_idx;
+            result.push(i);
+            <span class="kw">continue</span>;
+        }
+
+        <span class="kw">let </span>next_idx = <span class="kw">match </span>result.binary_search_by(|<span class="kw-2">&amp;</span>j| items[j].<span class="number">1</span>.cmp(<span class="kw-2">&amp;</span>items[i].<span class="number">1</span>)) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="kw">continue</span>, <span class="comment">// we ignore duplicates
+            </span><span class="prelude-val">Err</span>(idx) =&gt; idx,
+        };
+
+        <span class="kw">if </span>items[i].<span class="number">1 </span>&lt; items[result[next_idx]].<span class="number">1 </span>{
+            <span class="kw">if </span>next_idx &gt; <span class="number">0 </span>{
+                prev_chain[i] = result[next_idx - <span class="number">1</span>];
+            }
+            result[next_idx] = i;
+        }
+    }
+
+    <span class="comment">// walk backwards from the last item in result to build the final sequence
+    </span><span class="kw">let </span><span class="kw-2">mut </span>u = result.len();
+    <span class="kw">let </span><span class="kw-2">mut </span>v = <span class="kw-2">*</span>result.last().unwrap();
+    <span class="kw">while </span>u != <span class="number">0 </span>{
+        u -= <span class="number">1</span>;
+        result[u] = v;
+        v = prev_chain[v];
+    }
+    result.iter().map(|i| items[<span class="kw-2">*</span>i]).collect()
+}
+
+<span class="attr">#[inline]
+</span><span class="kw">fn </span>non_ws_offset(s: <span class="kw-2">&amp;</span>str) -&gt; usize {
+    s.as_bytes().iter().take_while(|b| <span class="kw-2">**</span>b == <span class="string">b' ' </span>|| <span class="kw-2">**</span>b == <span class="string">b'\t'</span>).count()
+}
+
+<span class="doccomment">/// Represents copying `len` bytes from base to target.
+</span><span class="attr">#[derive(Debug, Clone, Copy)]
+</span><span class="kw">struct </span>DiffOp {
+    target_idx: usize,
+    base_idx: usize,
+    len: usize,
+}
+
+<span class="doccomment">/// Keeps track of copy ops during diff construction.
+</span><span class="attr">#[derive(Debug, Clone, Default)]
+</span><span class="kw">pub struct </span>DiffBuilder {
+    ops: Vec&lt;DiffOp&gt;,
+}
+
+<span class="kw">impl </span>DiffBuilder {
+    <span class="kw">fn </span>copy(<span class="kw-2">&amp;mut </span><span class="self">self</span>, base: usize, target: usize, len: usize) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(prev) = <span class="self">self</span>.ops.last_mut() {
+            <span class="kw">let </span>prev_end = prev.target_idx + prev.len;
+            <span class="kw">let </span>base_end = prev.base_idx + prev.len;
+            <span class="macro">assert!</span>(prev_end &lt;= target, <span class="string">"{} &lt;= {} prev {:?}"</span>, prev_end, target, prev);
+            <span class="kw">if </span>prev_end == target &amp;&amp; base_end == base {
+                prev.len += len;
+                <span class="kw">return</span>;
+            }
+        }
+        <span class="self">self</span>.ops.push(DiffOp { target_idx: target, base_idx: base, len })
+    }
+
+    <span class="kw">fn </span>to_delta(<span class="self">self</span>, base: <span class="kw-2">&amp;</span>Rope, target: <span class="kw-2">&amp;</span>Rope) -&gt; RopeDelta {
+        <span class="kw">let </span><span class="kw-2">mut </span>els = Vec::with_capacity(<span class="self">self</span>.ops.len() * <span class="number">2</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>targ_pos = <span class="number">0</span>;
+        <span class="kw">for </span>DiffOp { base_idx, target_idx, len } <span class="kw">in </span><span class="self">self</span>.ops {
+            <span class="kw">if </span>target_idx &gt; targ_pos {
+                <span class="kw">let </span>iv = Interval::new(targ_pos, target_idx);
+                els.push(DeltaElement::Insert(target.subseq(iv)));
+            }
+            els.push(DeltaElement::Copy(base_idx, base_idx + len));
+            targ_pos = target_idx + len;
+        }
+
+        <span class="kw">if </span>targ_pos &lt; target.len() {
+            <span class="kw">let </span>iv = Interval::new(targ_pos, target.len());
+            els.push(DeltaElement::Insert(target.subseq(iv)));
+        }
+
+        Delta { els, base_len: base.len() }
+    }
+}
+
+<span class="doccomment">/// Creates a map of lines to offsets, ignoring trailing whitespace, and only for those lines
+/// where line.len() &gt;= min_size. Offsets refer to the first non-whitespace byte in the line.
+</span><span class="kw">fn </span>make_line_hashes&lt;<span class="lifetime">'a</span>&gt;(base: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Rope, min_size: usize) -&gt; HashMap&lt;Cow&lt;<span class="lifetime">'a</span>, str&gt;, usize&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">0</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>line_hashes = HashMap::with_capacity(base.len() / <span class="number">60</span>);
+    <span class="kw">for </span>line <span class="kw">in </span>base.lines_raw(..) {
+        <span class="kw">let </span>non_ws = non_ws_offset(<span class="kw-2">&amp;</span>line);
+        <span class="kw">if </span>line.len() - non_ws &gt;= min_size {
+            <span class="kw">let </span>cow = <span class="kw">match </span>line {
+                Cow::Owned(<span class="kw-2">ref </span>s) =&gt; Cow::Owned(s[non_ws..].to_string()),
+                Cow::Borrowed(s) =&gt; Cow::Borrowed(<span class="kw-2">&amp;</span>s[non_ws..]),
+            };
+            line_hashes.insert(cow, offset + non_ws);
+        }
+        offset += line.len();
+    }
+    line_hashes
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">static </span>SMALL_ONE: <span class="kw-2">&amp;</span>str = <span class="string">"This adds FixedSizeAdler32, that has a size set at construction, and keeps bytes in a cyclic buffer of that size to be removed when it fills up.
+
+Current logic (and implementing Write) might be too much, since bytes will probably always be fed one by one anyway. Otherwise a faster way of removing a sequence might be needed (one by one is inefficient)."</span>;
+
+    <span class="kw">static </span>SMALL_TWO: <span class="kw-2">&amp;</span>str = <span class="string">"This adds some function, I guess?, that has a size set at construction, and keeps bytes in a cyclic buffer of that size to be ground up and injested when it fills up.
+
+Currently my sense of smell (and the pain of implementing Write) might be too much, since bytes will probably always be fed one by one anyway. Otherwise crying might be needed (one by one is inefficient)."</span>;
+
+    <span class="kw">static </span>INTERVAL_STR: <span class="kw-2">&amp;</span>str = <span class="macro">include_str!</span>(<span class="string">"../src/interval.rs"</span>);
+    <span class="kw">static </span>BREAKS_STR: <span class="kw-2">&amp;</span>str = <span class="macro">include_str!</span>(<span class="string">"../src/breaks.rs"</span>);
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>diff_smoke_test() {
+        <span class="kw">let </span>one = SMALL_ONE.into();
+        <span class="kw">let </span>two = SMALL_TWO.into();
+
+        <span class="kw">let </span>delta = LineHashDiff::compute_delta(<span class="kw-2">&amp;</span>one, <span class="kw-2">&amp;</span>two);
+        <span class="macro">println!</span>(<span class="string">"delta: {:?}"</span>, <span class="kw-2">&amp;</span>delta);
+
+        <span class="kw">let </span>result = delta.apply(<span class="kw-2">&amp;</span>one);
+        <span class="macro">assert_eq!</span>(result, two);
+
+        <span class="kw">let </span>delta = LineHashDiff::compute_delta(<span class="kw-2">&amp;</span>one, <span class="kw-2">&amp;</span>two);
+        <span class="macro">println!</span>(<span class="string">"delta: {:?}"</span>, <span class="kw-2">&amp;</span>delta);
+
+        <span class="kw">let </span>result = delta.apply(<span class="kw-2">&amp;</span>one);
+        <span class="macro">assert_eq!</span>(result, two);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_larger_diff() {
+        <span class="kw">let </span>one = INTERVAL_STR.into();
+        <span class="kw">let </span>two = BREAKS_STR.into();
+
+        <span class="kw">let </span>delta = LineHashDiff::compute_delta(<span class="kw-2">&amp;</span>one, <span class="kw-2">&amp;</span>two);
+        <span class="kw">let </span>result = delta.apply(<span class="kw-2">&amp;</span>one);
+        <span class="macro">assert_eq!</span>(String::from(result), String::from(two));
+    }
+}
+</code></pre></div></section></main></body></html>

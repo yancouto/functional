@@ -1,0 +1,75 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Cross-platform file system notification library"><title>notify - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="notify" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3406ada96 2024-02-21)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-4c98445ec4002617.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../notify/index.html">notify</a><span class="version">4.0.17</span></h2></div><div class="sidebar-elems"><ul class="block">
+            <li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Aliases</a></li></ul></section></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../notify/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">notify</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../src/notify/lib.rs.html#1-667">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Cross-platform file system notification library</p>
+<p>Source is on GitHub: https://github.com/notify-rs/notify</p>
+<h2 id="installation"><a class="doc-anchor" href="#installation">§</a>Installation</h2><div class="example-wrap"><pre class="language-toml"><code>[dependencies]
+notify = &quot;4.0.17&quot;
+</code></pre></div><h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>Notify provides two APIs. The default API <em>debounces</em> events (if the backend reports two
+similar events in close succession, Notify will only report one). The raw API emits file
+changes as soon as they happen. For more details, see
+<a href="trait.Watcher.html#tymethod.new_raw"><code>Watcher::new_raw</code></a> and
+<a href="trait.Watcher.html#tymethod.new"><code>Watcher::new</code></a>.</p>
+<h3 id="default-debounced-api"><a class="doc-anchor" href="#default-debounced-api">§</a>Default (debounced) API</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>notify;
+
+<span class="kw">use </span>notify::{Watcher, RecursiveMode, watcher};
+<span class="kw">use </span>std::sync::mpsc::channel;
+<span class="kw">use </span>std::time::Duration;
+
+<span class="kw">fn </span>main() {
+    <span class="comment">// Create a channel to receive the events.
+    </span><span class="kw">let </span>(tx, rx) = channel();
+
+    <span class="comment">// Create a watcher object, delivering debounced events.
+    // The notification back-end is selected based on the platform.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>watcher = watcher(tx, Duration::from_secs(<span class="number">10</span>)).unwrap();
+
+    <span class="comment">// Add a path to be watched. All files and directories at that path and
+    // below will be monitored for changes.
+    </span>watcher.watch(<span class="string">"/home/test/notify"</span>, RecursiveMode::Recursive).unwrap();
+
+    <span class="kw">loop </span>{
+        <span class="kw">match </span>rx.recv() {
+           <span class="prelude-val">Ok</span>(event) =&gt; <span class="macro">println!</span>(<span class="string">"{:?}"</span>, event),
+           <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">println!</span>(<span class="string">"watch error: {:?}"</span>, e),
+        }
+    }
+}</code></pre></div>
+<p>Using the default API is easy, all possible events are described in the
+<a href="enum.DebouncedEvent.html"><code>DebouncedEvent</code></a> documentation. But in order to understand the
+subtleties of the event delivery, you should read the <a href="op/index.html"><code>op</code></a> documentation as
+well.</p>
+<h3 id="raw-api"><a class="doc-anchor" href="#raw-api">§</a>Raw API</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>notify;
+
+<span class="kw">use </span>notify::{Watcher, RecursiveMode, RawEvent, raw_watcher};
+<span class="kw">use </span>std::sync::mpsc::channel;
+
+<span class="kw">fn </span>main() {
+    <span class="comment">// Create a channel to receive the events.
+    </span><span class="kw">let </span>(tx, rx) = channel();
+
+    <span class="comment">// Create a watcher object, delivering raw events.
+    // The notification back-end is selected based on the platform.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>watcher = raw_watcher(tx).unwrap();
+
+    <span class="comment">// Add a path to be watched. All files and directories at that path and
+    // below will be monitored for changes.
+    </span>watcher.watch(<span class="string">"/home/test/notify"</span>, RecursiveMode::Recursive).unwrap();
+
+    <span class="kw">loop </span>{
+        <span class="kw">match </span>rx.recv() {
+           <span class="prelude-val">Ok</span>(RawEvent{path: <span class="prelude-val">Some</span>(path), op: <span class="prelude-val">Ok</span>(op), cookie}) =&gt; {
+               <span class="macro">println!</span>(<span class="string">"{:?} {:?} ({:?})"</span>, op, path, cookie)
+           },
+           <span class="prelude-val">Ok</span>(event) =&gt; <span class="macro">println!</span>(<span class="string">"broken event: {:?}"</span>, event),
+           <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">println!</span>(<span class="string">"watch error: {:?}"</span>, e),
+        }
+    }
+}</code></pre></div>
+<p>The event structure is described in the <a href="struct.RawEvent.html"><code>RawEvent</code></a> documentation,
+all possible operations delivered in an event are described in the <a href="op/index.html"><code>op</code></a>
+documentation.</p>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name" id="reexport.Op"><code>pub use self::op::<a class="struct" href="op/struct.Op.html" title="struct notify::op::Op">Op</a>;</code></div></li><li><div class="item-name" id="reexport.INotifyWatcher"><code>pub use self::inotify::<a class="struct" href="inotify/struct.INotifyWatcher.html" title="struct notify::inotify::INotifyWatcher">INotifyWatcher</a>;</code></div></li><li><div class="item-name" id="reexport.NullWatcher"><code>pub use self::null::<a class="struct" href="null/struct.NullWatcher.html" title="struct notify::null::NullWatcher">NullWatcher</a>;</code></div></li><li><div class="item-name" id="reexport.PollWatcher"><code>pub use self::poll::<a class="struct" href="poll/struct.PollWatcher.html" title="struct notify::poll::PollWatcher">PollWatcher</a>;</code></div></li></ul><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="inotify/index.html" title="mod notify::inotify">inotify</a></div><div class="desc docblock-short">Watcher implementation for the inotify Linux API</div></li><li><div class="item-name"><a class="mod" href="null/index.html" title="mod notify::null">null</a></div><div class="desc docblock-short">Stub Watcher implementation</div></li><li><div class="item-name"><a class="mod" href="op/index.html" title="mod notify::op">op</a></div><div class="desc docblock-short">Contains the <code>Op</code> type which describes the actions for an event.</div></li><li><div class="item-name"><a class="mod" href="poll/index.html" title="mod notify::poll">poll</a></div><div class="desc docblock-short">Generic Watcher implementation based on polling</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.RawEvent.html" title="struct notify::RawEvent">RawEvent</a></div><div class="desc docblock-short">Event delivered when action occurs on a watched path in <em>raw</em> mode</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.DebouncedEvent.html" title="enum notify::DebouncedEvent">DebouncedEvent</a></div><div class="desc docblock-short">Event delivered when action occurs on a watched path in debounced mode</div></li><li><div class="item-name"><a class="enum" href="enum.Error.html" title="enum notify::Error">Error</a></div><div class="desc docblock-short">Errors generated from the <code>notify</code> crate</div></li><li><div class="item-name"><a class="enum" href="enum.RecursiveMode.html" title="enum notify::RecursiveMode">RecursiveMode</a></div><div class="desc docblock-short">Indicates whether only the provided directory or its sub-directories as well should be watched</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Watcher.html" title="trait notify::Watcher">Watcher</a></div><div class="desc docblock-short">Type that can deliver file activity notifications</div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.raw_watcher.html" title="fn notify::raw_watcher">raw_watcher</a></div><div class="desc docblock-short">Convenience method for creating the <code>RecommendedWatcher</code> for the current platform in <em>raw</em> mode.</div></li><li><div class="item-name"><a class="fn" href="fn.watcher.html" title="fn notify::watcher">watcher</a></div><div class="desc docblock-short">Convenience method for creating the <code>RecommendedWatcher</code> for the current
+platform in default (debounced) mode.</div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.RecommendedWatcher.html" title="type notify::RecommendedWatcher">RecommendedWatcher</a></div><div class="desc docblock-short">The recommended <code>Watcher</code> implementation for the current platform</div></li><li><div class="item-name"><a class="type" href="type.Result.html" title="type notify::Result">Result</a></div><div class="desc docblock-short">Type alias to use this library’s <code>Error</code> type in a Result</div></li></ul></section></div></main></body></html>

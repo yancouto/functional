@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Span","SpanIter","SpansBuilder","SpansInfo","SpansLeaf"],"type":["Spans"]};

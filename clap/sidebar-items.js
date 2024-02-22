@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AppSettings","ArgSettings","ErrorKind","Shell"],"macro":["_clap_count_exprs","app_from_crate","arg_enum","clap_app","crate_authors","crate_description","crate_name","crate_version","value_t","value_t_or_exit","values_t","values_t_or_exit"],"struct":["App","Arg","ArgGroup","ArgMatches","Error","OsValues","SubCommand","Values"],"type":["Result"]};

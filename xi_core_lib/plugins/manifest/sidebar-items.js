@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ArgumentType","PluginActivation","PluginScope","RpcType"],"struct":["ArgumentOption","Command","CommandArgument","PlaceholderRpc","PluginDescription"]};

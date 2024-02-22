@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EVT_DATA_OFFER_SINCE","EVT_DROP_SINCE","EVT_ENTER_SINCE","EVT_LEAVE_SINCE","EVT_MOTION_SINCE","EVT_SELECTION_SINCE","REQ_RELEASE_SINCE","REQ_SET_SELECTION_SINCE","REQ_START_DRAG_SINCE"],"enum":["Error","Event","Request"],"static":["wl_data_device_events","wl_data_device_interface","wl_data_device_requests"],"struct":["WlDataDevice"]};

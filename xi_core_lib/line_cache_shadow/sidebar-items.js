@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ALL_VALID","CURSOR_VALID","INVALID","STYLES_VALID","TEXT_VALID"],"enum":["RenderTactic"],"struct":["Builder","LineCacheShadow","PlanIterator","PlanSegment","RenderPlan","Span"]};

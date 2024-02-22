@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Curve"],"struct":["ContourIterator","CurveIterator","Outline"]};

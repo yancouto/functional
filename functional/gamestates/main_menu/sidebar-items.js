@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CURSOR_J","LINES_PER_SECTION","START_I","VERSION"],"enum":["MenuItem"],"struct":["MainMenuState"]};

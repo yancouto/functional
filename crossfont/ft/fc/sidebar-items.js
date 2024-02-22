@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["HintStyle","LcdFilter","MatchKind","Rgba","SetName","Slant","Weight","Width"],"fn":["font_list","font_match","font_sort","update_config"],"mod":["char_set","config","font_set","object_set","pattern"]};

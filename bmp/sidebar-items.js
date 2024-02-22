@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BmpErrorKind"],"fn":["from_reader","open"],"macro":["px"],"mod":["consts"],"struct":["BmpError","Image","ImageIndex","Pixel"],"type":["BmpResult"]};

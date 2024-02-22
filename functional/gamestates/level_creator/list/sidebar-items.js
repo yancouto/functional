@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CURSOR_J","CUSTOM_LEVELS","START_I","STEP_I"],"struct":["LevelCreatorLevelListState"]};

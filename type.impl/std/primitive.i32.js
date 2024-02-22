@@ -1,0 +1,11 @@
+(function() {var type_impls = {
+"freetype_sys":[],
+"glutin":[["<details class=\"toggle implementors-toggle\" open><summary><section id=\"impl-Pixel-for-i32\" class=\"impl\"><a class=\"src rightside\" href=\"src/winit/dpi.rs.html#139\">source</a><a href=\"#impl-Pixel-for-i32\" class=\"anchor\">§</a><h3 class=\"code-header\">impl <a class=\"trait\" href=\"glutin/dpi/trait.Pixel.html\" title=\"trait glutin::dpi::Pixel\">Pixel</a> for <a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.i32.html\">i32</a></h3></section></summary><div class=\"impl-items\"><section id=\"method.from_f64\" class=\"method trait-impl\"><a class=\"src rightside\" href=\"src/winit/dpi.rs.html#140\">source</a><a href=\"#method.from_f64\" class=\"anchor\">§</a><h4 class=\"code-header\">fn <a href=\"glutin/dpi/trait.Pixel.html#tymethod.from_f64\" class=\"fn\">from_f64</a>(f: <a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.f64.html\">f64</a>) -&gt; <a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.i32.html\">i32</a></h4></section><section id=\"method.cast\" class=\"method trait-impl\"><a class=\"src rightside\" href=\"src/winit/dpi.rs.html#109\">source</a><a href=\"#method.cast\" class=\"anchor\">§</a><h4 class=\"code-header\">fn <a href=\"glutin/dpi/trait.Pixel.html#method.cast\" class=\"fn\">cast</a>&lt;P&gt;(self) -&gt; P<div class=\"where\">where\n    P: <a class=\"trait\" href=\"glutin/dpi/trait.Pixel.html\" title=\"trait glutin::dpi::Pixel\">Pixel</a>,</div></h4></section></div></details>","Pixel","glutin::platform::unix::x11::ffi::XcursorBool","glutin::platform::unix::x11::ffi::Bool","glutin::platform::unix::x11::ffi::Status","glutin::platform::unix::x11::ffi::XContext","glutin::platform::unix::x11::ffi::XICCEncodingStyle","glutin::platform::unix::x11::ffi::XOrientation","glutin::platform::unix::x11::ffi::XrmBinding","glutin::platform::unix::x11::ffi::XrmOptionKind","glutin::platform::unix::x11::ffi::XFixed"]],
+"glutin_egl_sys":[],
+"glutin_glx_sys":[],
+"serde":[],
+"wayland_client":[],
+"wayland_sys":[],
+"winit":[],
+"x11_dl":[]
+};if (window.register_type_impls) {window.register_type_impls(type_impls);} else {window.pending_type_impls = type_impls;}})()

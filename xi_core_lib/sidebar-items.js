@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["annotations","backspace","client","config","core","edit_types","editor","event_context","file","find","index_set","layers","line_cache_shadow","line_ending","linewrap","movement","plugins","recorder","rpc","selection","styles","syntax","tabs","view","watcher","whitespace","width_cache","word_boundaries"]};

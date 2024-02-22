@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DiscoveryMethod","Numerals"],"fn":["parse_constant","raw_load_constants"],"struct":["ALL_CONSTANTS","CompletionData","ConstantNode","ConstantProvider"]};

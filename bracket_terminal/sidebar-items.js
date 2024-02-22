@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["add_wasm_support","embedded_resource","gl_error_wrap","link_resource"],"mod":["console","prelude","rex"],"struct":["EMBED"],"type":["BResult","FontCharType"]};

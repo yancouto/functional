@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REQ_DESTROY_SINCE","REQ_GET_SUBSURFACE_SINCE"],"enum":["Error","Event","Request"],"static":["wl_subcompositor_interface","wl_subcompositor_requests"],"struct":["WlSubcompositor"]};

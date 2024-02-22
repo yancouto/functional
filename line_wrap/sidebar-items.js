@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["crlf","lf","line_wrap"],"struct":["ByteLineEnding","SliceLineEnding","TwoByteLineEnding"],"trait":["LineEnding"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["XNotSupported"],"mod":["ffi","util"],"struct":["DeviceId","EventLoop","EventLoopProxy","EventLoopWindowTarget","MonitorHandle","UnownedWindow","VideoMode","Window","XConnection","XError"]};

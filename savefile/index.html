@@ -1,0 +1,631 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="This is the documentation for `savefile`"><title>savefile - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="savefile" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (3406ada96 2024-02-21)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-4c98445ec4002617.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-c37d3936c59ababd.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../savefile/index.html">savefile</a><span class="version">0.16.5</span></h2></div><div class="sidebar-elems"><ul class="block">
+            <li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></section></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../savefile/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">savefile</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../src/savefile/lib.rs.html#1-6082">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>This is the documentation for <code>savefile</code></p>
+<h2 id="introduction"><a class="doc-anchor" href="#introduction">§</a>Introduction</h2>
+<p>Savefile is a rust library to conveniently, quickly and correctly
+serialize and deserialize arbitrary rust structs and enums into
+an efficient and compact binary version controlled format.</p>
+<p>The design use case is any application that needs to save large
+amounts of data to disk, and support loading files from previous
+versions of that application (but not from later versions!).</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>Here is a small example where data about a player in a hypothetical
+computer game is saved to disk using Savefile.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>savefile;
+<span class="kw">use </span>savefile::prelude::<span class="kw-2">*</span>;
+
+<span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>savefile_derive;
+
+
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Player {
+    name : String,
+    strength : u32,
+    inventory : Vec&lt;String&gt;,
+}
+
+<span class="kw">fn </span>save_player(player:<span class="kw-2">&amp;</span>Player) {
+    save_file(<span class="string">"save.bin"</span>, <span class="number">0</span>, player).unwrap();
+}
+
+<span class="kw">fn </span>load_player() -&gt; Player {
+    load_file(<span class="string">"save.bin"</span>, <span class="number">0</span>).unwrap()
+}
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>player = Player { name: <span class="string">"Steve"</span>.to_string(), strength: <span class="number">42</span>,
+        inventory: <span class="macro">vec!</span>(
+            <span class="string">"wallet"</span>.to_string(),
+            <span class="string">"car keys"</span>.to_string(),
+            <span class="string">"glasses"</span>.to_string())};
+
+    save_player(<span class="kw-2">&amp;</span>player);
+
+    <span class="kw">let </span>reloaded_player = load_player();
+
+    <span class="macro">assert_eq!</span>(reloaded_player.name,<span class="string">"Steve"</span>.to_string());
+}
+</code></pre></div>
+<h2 id="limitations-of-savefile"><a class="doc-anchor" href="#limitations-of-savefile">§</a>Limitations of Savefile</h2>
+<p>Savefile does make a few tradeoffs:</p>
+<p>1: It only supports the “savefile-format”. It does not support any sort of pluggable
+architecture with different formats. This format is generally pretty ‘raw’, data is mostly
+formatted the same way as it is in RAM. There is support for bzip2, but this is just a simple
+post-processing step.</p>
+<p>2: It does not support serializing ‘graphs’. I.e, it does not have a concept of object identity,
+and cannot handle situations where the same object is reachable through many paths. If two
+objects both have a reference to a common object, it will be serialized twice and deserialized
+twice.</p>
+<p>3: Since it doesn’t support ‘graphs’, it doesn’t do well with recursive data structures. When
+schema serialization is activated (which is the default), it also doesn’t support ‘potentially
+recursive’ data structures. I.e, serializing a tree-object where the same node type can occur
+on different levels is not possible, even if the actual links in the tree do not cause any cycles.
+This is because the serialized schema is very detailed, and tries to describe exactly what
+types may be contained in each node. In a tree, it will determine that children of the node
+may be another node, which may itself have children of the same type, which may have children
+of the same type, and so on.</p>
+<h2 id="handling-old-versions"><a class="doc-anchor" href="#handling-old-versions">§</a>Handling old versions</h2>
+<p>Let’s expand the above example, by creating a 2nd version of the Player struct. Let’s say
+you decide that your game mechanics don’t really need to track the strength of the player, but
+you do wish to have a set of skills per player as well as the inventory.</p>
+<p>Mark the struct like so:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>savefile;
+<span class="kw">use </span>savefile::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::path::Path;
+<span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>savefile_derive;
+
+<span class="kw">const </span>GLOBAL_VERSION:u32 = <span class="number">1</span>;
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Player {
+    name : String,
+    <span class="attr">#[savefile_versions=<span class="string">"0..0"</span>] </span><span class="comment">//Only version 0 had this field
+    </span>strength : Removed&lt;u32&gt;,
+    inventory : Vec&lt;String&gt;,
+    <span class="attr">#[savefile_versions=<span class="string">"1.."</span>] </span><span class="comment">//Only versions 1 and later have this field
+    </span>skills : Vec&lt;String&gt;,
+}
+
+<span class="kw">fn </span>save_player(file:<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, player:<span class="kw-2">&amp;</span>Player) {
+    <span class="comment">// Save current version of file.
+    </span>save_file(file, GLOBAL_VERSION, player).unwrap();
+}
+
+<span class="kw">fn </span>load_player(file:<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; Player {
+    <span class="comment">// The GLOBAL_VERSION means we have that version of our data structures,
+    // but we can still load any older version.
+    </span>load_file(file, GLOBAL_VERSION).unwrap()
+}
+
+<span class="kw">fn </span>main() {
+    <span class="kw">if </span>Path::new(<span class="string">"save.bin"</span>).exists() == <span class="bool-val">false </span>{ <span class="comment">/* error handling */ </span><span class="kw">return</span>;}
+
+    <span class="kw">let </span><span class="kw-2">mut </span>player = load_player(<span class="string">"save.bin"</span>); <span class="comment">//Load from previous save
+    </span><span class="macro">assert_eq!</span>(<span class="string">"Steve"</span>,<span class="kw-2">&amp;</span>player.name); <span class="comment">//The name from the previous version saved will remain
+    </span><span class="macro">assert_eq!</span>(<span class="number">0</span>,player.skills.len()); <span class="comment">//Skills didn't exist when this was saved
+    </span>player.skills.push(<span class="string">"Whistling"</span>.to_string());
+    save_player(<span class="string">"newsave.bin"</span>, <span class="kw-2">&amp;</span>player); <span class="comment">//The version saved here will have the vec of skills
+</span>}</code></pre></div>
+<h2 id="behind-the-scenes"><a class="doc-anchor" href="#behind-the-scenes">§</a>Behind the scenes</h2>
+<p>For Savefile to be able to load and save a type T, that type must implement traits
+<a href="trait.WithSchema.html" title="trait savefile::WithSchema">crate::WithSchema</a>, <a href="trait.Serialize.html" title="trait savefile::Serialize">crate::Serialize</a> and <a href="trait.Deserialize.html" title="trait savefile::Deserialize">crate::Deserialize</a> . The custom derive macro Savefile derives
+all of these.</p>
+<p>You can also implement these traits manually. Manual implementation can be good for:</p>
+<p>1: Complex types for which the Savefile custom derive function does not work. For
+example, trait objects or objects containing pointers.</p>
+<p>2: Objects for which not all fields should be serialized, or which need complex
+initialization (like running arbitrary code during deserialization).</p>
+<p>Note that the three trait implementations for a particular type must be in sync.
+That is, the Serialize and Deserialize traits must follow the schema defined
+by the WithSchema trait for the type.</p>
+<h3 id="withschema"><a class="doc-anchor" href="#withschema">§</a>WithSchema</h3>
+<p>The <a href="trait.WithSchema.html" title="trait savefile::WithSchema">crate::WithSchema</a> trait represents a type which knows which data layout it will have
+when saved.</p>
+<h3 id="serialize"><a class="doc-anchor" href="#serialize">§</a>Serialize</h3>
+<p>The <a href="trait.Serialize.html" title="trait savefile::Serialize">crate::Serialize</a> trait represents a type which knows how to write instances of itself to
+a <code>Serializer</code>.</p>
+<h3 id="deserialize"><a class="doc-anchor" href="#deserialize">§</a>Deserialize</h3>
+<p>The <a href="trait.Deserialize.html" title="trait savefile::Deserialize">crate::Deserialize</a> trait represents a type which knows how to read instances of itself from a <code>Deserializer</code>.</p>
+<h2 id="rules-for-managing-versions"><a class="doc-anchor" href="#rules-for-managing-versions">§</a>Rules for managing versions</h2>
+<p>The basic rule is that the Deserialize trait implementation must be able to deserialize data from any previous version.</p>
+<p>The WithSchema trait implementation must be able to return the schema for any previous verison.</p>
+<p>The Serialize trait implementation only needs to support the latest version.</p>
+<h2 id="versions-and-derive"><a class="doc-anchor" href="#versions-and-derive">§</a>Versions and derive</h2>
+<p>The derive macro used by Savefile supports multiple versions of structs. To make this work,
+you have to add attributes whenever fields are removed, added or have their types changed.</p>
+<p>When adding or removing fields, use the #[savefile_versions] attribute.</p>
+<p>The syntax is one of the following:</p>
+<div class="example-wrap"><pre class="language-text"><code>#[savefile_versions = &quot;N..&quot;]  //A field added in version N
+#[savefile_versions = &quot;..N&quot;]  //A field removed in version N+1. That is, it existed up to and including version N.
+#[savefile_versions = &quot;N..M&quot;] //A field that was added in version N and removed in M+1. That is, a field which existed in versions N .. up to and including M.
+</code></pre></div>
+<p>Removed fields must keep their deserialization type. This is easiest accomplished by substituting their previous type
+using the <code>Removed&lt;T&gt;</code> type. <code>Removed&lt;T&gt;</code> uses zero space in RAM, but deserializes equivalently to T (with the
+result of the deserialization thrown away).</p>
+<p>Savefile tries to validate that the <code>Removed&lt;T&gt;</code> type is used correctly. This validation is based on string
+matching, so it may trigger false positives for other types named Removed. Please avoid using a type with
+such a name. If this becomes a problem, please file an issue on github.</p>
+<p>Using the #[savefile_versions] tag is critically important. If this is messed up, data corruption is likely.</p>
+<p>When a field is added, its type must implement the Default trait (unless the default_val or default_fn attributes
+are used).</p>
+<p>There also exists a savefile_default_val, a default_fn and a savefile_versions_as attribute. More about these below:</p>
+<h3 id="the-versions-attribute"><a class="doc-anchor" href="#the-versions-attribute">§</a>The versions attribute</h3>
+<p>Rules for using the #[savefile_versions] attribute:</p>
+<p>You must keep track of what the current version of your data is. Let’s call this version N.
+You may only save data using version N (supply this number when calling <code>save</code>)
+When data is loaded, you must supply version N as the memory-version number to <code>load</code>. Load will
+still adapt the deserialization operation to the version of the serialized data.
+The version number N is “global” (called GLOBAL_VERSION in the previous source example). All components of the saved data must have the same version.
+Whenever changes to the data are to be made, the global version number N must be increased.
+You may add a new field to your structs, iff you also give it a #[savefile_versions = “N..”] attribute. N must be the new version of your data.
+You may remove a field from your structs. If previously it had no #[savefile_versions] attribute, you must
+add a #[savefile_versions = “..N-1”] attribute. If it already had an attribute #[savefile_versions = “M..”], you must close
+its version interval using the current version of your data: #[savefile_versions = “M..N-1”]. Whenever a field is removed,
+its type must simply be changed to Removed<T> where T is its previous type. You may never completely remove
+items from your structs. Doing so removes backward-compatibility with that version. This will be detected at load.
+For example, if you remove a field in version 3, you should add a #[savefile_versions=“..2”] attribute.
+You may not change the type of a field in your structs, except when using the savefile_versions_as-macro.</p>
+<h3 id="the-default_val-attribute"><a class="doc-anchor" href="#the-default_val-attribute">§</a>The default_val attribute</h3>
+<p>The default_val attribute is used to provide a custom default value for
+primitive types, when fields are added.</p>
+<p>Example:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>SomeType {
+    old_field: u32,
+    <span class="attr">#[savefile_default_val=<span class="string">"42"</span>]
+    #[savefile_versions=<span class="string">"1.."</span>]
+    </span>new_field: u32
+}
+
+</code></pre></div>
+<p>In the above example, the field <code>new_field</code> will have the value 42 when
+deserializing from version 0 of the protocol. If the default_val attribute
+is not used, new_field will have u32::default() instead, which is 0.</p>
+<p>The default_val attribute only works for simple types.</p>
+<h3 id="the-default_fn-attribute"><a class="doc-anchor" href="#the-default_fn-attribute">§</a>The default_fn attribute</h3>
+<p>The default_fn attribute allows constructing more complex values as defaults.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="kw">fn </span>make_hello_pair() -&gt; (String,String) {
+    (<span class="string">"Hello"</span>.to_string(),<span class="string">"World"</span>.to_string())
+}
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>SomeType {
+    old_field: u32,
+    <span class="attr">#[savefile_default_fn=<span class="string">"make_hello_pair"</span>]
+    #[savefile_versions=<span class="string">"1.."</span>]
+    </span>new_field: (String,String)
+}
+</code></pre></div>
+<h3 id="the-savefile_ignore-attribute"><a class="doc-anchor" href="#the-savefile_ignore-attribute">§</a>The savefile_ignore attribute</h3>
+<p>The savefile_ignore attribute can be used to exclude certain fields from serialization. They still
+need to be constructed during deserialization (of course), so you need to use one of the
+default-attributes to make sure the field can be constructed. If none of the  default-attributes
+(described above) are used, savefile will attempt to use the Default trait.</p>
+<p>Here is an example, where a cached value is not to be deserialized.
+In this example, the value will be 0.0 after deserialization, regardless
+of the value when serializing.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>IgnoreExample {
+    a: f64,
+    b: f64,
+    <span class="attr">#[savefile_ignore]
+    </span>cached_product: f64
+}
+</code></pre></div>
+<p>savefile_ignore does not stop the generator from generating an implementation for <a href="trait.Introspect.html" title="trait savefile::Introspect">Introspect</a> for the given field. To stop
+this as well, also supply the attribute savefile_introspect_ignore .</p>
+<h3 id="the-savefile_versions_as-attribute"><a class="doc-anchor" href="#the-savefile_versions_as-attribute">§</a>The savefile_versions_as attribute</h3>
+<p>The savefile_versions_as attribute can be used to support changing the type of a field.</p>
+<p>Let’s say the first version of our protocol uses the following struct:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Employee {
+    name : String,
+    phone_number : u64
+}
+</code></pre></div>
+<p>After a while, we realize that a u64 is a really bad choice for datatype for a phone number,
+since it can’t represent a number with leading 0, and also can’t represent special characters
+which sometimes appear in phone numbers, like ‘+’ or ‘-’ etc.</p>
+<p>So, we change the type of phone_number to String:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="kw">fn </span>convert(phone_number:u64) -&gt; String {
+    phone_number.to_string()
+}
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Employee {
+    name : String,
+    <span class="attr">#[savefile_versions_as=<span class="string">"0..0:convert:u64"</span>]
+    #[savefile_versions=<span class="string">"1.."</span>]
+    </span>phone_number : String
+}
+</code></pre></div>
+<p>This will cause version 0 of the protocol to be deserialized expecting a u64 for the phone number,
+which will then be converted using the provided function <code>convert</code> into a String.</p>
+<p>Note, that conversions which are supported by the From trait are done automatically, and the
+function need not be specified in these cases.</p>
+<p>Let’s say we have the following struct:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Racecar {
+    max_speed_kmh : u8,
+}</code></pre></div>
+<p>We realize that we need to increase the range of the max_speed_kmh variable, and change it like this:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Racecar {
+    <span class="attr">#[savefile_versions_as=<span class="string">"0..0:u8"</span>]
+    #[savefile_versions=<span class="string">"1.."</span>]
+    </span>max_speed_kmh : u16,
+}</code></pre></div>
+<p>Note that in this case we don’t need to tell Savefile how the deserialized u8 is to be converted
+to an u16.</p>
+<h2 id="speeding-things-up"><a class="doc-anchor" href="#speeding-things-up">§</a>Speeding things up</h2>
+<p>Now, let’s say we want to add a list of all positions that our player have visited,
+so that we can provide a instant-replay function to our game. The list can become
+really long, so we want to make sure that the overhead when serializing this is
+as low as possible.</p>
+<p>Savefile has an unsafe trait <a href="trait.ReprC.html" title="trait savefile::ReprC">crate::ReprC</a> that you must implement for each T. This trait
+has an unsafe function <a href="trait.ReprC.html#method.repr_c_optimization_safe" title="associated function savefile::ReprC::repr_c_optimization_safe">crate::ReprC::repr_c_optimization_safe</a> which answers the question:</p>
+<ul>
+<li>Is this type such that it can safely be copied byte-per-byte?
+Answering yes for a specific type T, causes savefile to optimize serialization of Vec<T> into being
+a very fast, raw memory copy.</li>
+</ul>
+<p>Most of the time, the user doesn’t need to implement ReprC, as it can be derived automatically
+by the savefile derive macro.</p>
+<p>However, implementing it manually can be done, but requires care. You, as implementor of the <code>ReprC</code>
+trait ()  take full responsibility that all the following rules are upheld:</p>
+<ul>
+<li>The type T is Copy</li>
+<li>The host platform is little endian. The savefile disk format uses little endian.</li>
+<li>The type is represented in memory in an ordered, packed representation. Savefile is not
+clever enough to inspect the actual memory layout and adapt to this, so the memory representation
+has to be all the types of the struct fields in a consecutive sequence without any gaps. Note
+that the #[repr(C)] attribute is not enough to do this - it will include padding if needed for alignment
+reasons. You should not use #[repr(packed)], since that may lead to unaligned struct fields.
+Instead, you should use #[repr(C)] combined with manual padding, if necessary.
+If the type is an enum, it must be #[repr(u8)]. Enums with fields should work, as long as they
+are #[repr(u8,C)], but this has not been tested.</li>
+</ul>
+<p>Now, for example, don’t do:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[repr(C)]
+</span><span class="kw">struct </span>Bad {
+    f1 : u8,
+    f2 : u32,
+}</code></pre></div>
+<p>Since the compiler is likely to insert 3 bytes of padding after f1, to ensure that f2 is aligned to 4 bytes.</p>
+<p>Instead, do this:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[repr(C)]
+</span><span class="kw">struct </span>Good {
+    f1 : u8,
+    pad1 :u8,
+    pad2 :u8,
+    pad3 :u8,
+    f2 : u32,
+}</code></pre></div>
+<p>And simpy don’t use the pad1, pad2 and pad3 fields. Note, at time of writing, Savefile requires that the struct
+be free of all padding. Even padding at the end is not allowed. This means that the following does not work:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[repr(C)]
+</span><span class="kw">struct </span>Bad2 {
+    f1 : u32,
+    f2 : u8,
+}</code></pre></div>
+<p>This restriction may be lifted at a later time.</p>
+<p>Note that having a struct with bad alignment will be detected, at runtime, for debug-builds. It may not be
+detected in release builds. Serializing or deserializing each optimized type at least once somewhere in your test suite
+is recommended.</p>
+<p>When deriving the savefile-traits automatically, specify the attribute <code>#[savefile_unsafe_and_fast]</code> to require
+the optimized behaviour. If the type doesn’t fulfill the required characteristics, a diagnostic will be printed in
+many situations. Using ‘savefile_unsafe_and_fast’ is not actually unsafe, althought it used to be in an old version.
+Since the speedups it produces are now produced regardless, it is mostly recommended to not use savefile_unsafe_and_fast
+anymore.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>savefile;
+<span class="kw">use </span>savefile::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>std::path::Path;
+
+<span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>savefile_derive;
+
+<span class="attr">#[derive(Clone, Copy, Savefile)]
+#[repr(C)]
+</span><span class="kw">struct </span>Position {
+    x : u32,
+    y : u32,
+}
+
+<span class="kw">const </span>GLOBAL_VERSION:u32 = <span class="number">2</span>;
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Player {
+    name : String,
+    <span class="attr">#[savefile_versions=<span class="string">"0..0"</span>] </span><span class="comment">//Only version 0 had this field
+    </span>strength : Removed&lt;u32&gt;,
+    inventory : Vec&lt;String&gt;,
+    <span class="attr">#[savefile_versions=<span class="string">"1.."</span>] </span><span class="comment">//Only versions 1 and later have this field
+    </span>skills : Vec&lt;String&gt;,
+    <span class="attr">#[savefile_versions=<span class="string">"2.."</span>] </span><span class="comment">//Only versions 2 and later have this field
+    </span>history : Vec&lt;Position&gt;
+}
+
+<span class="kw">fn </span>save_player(file:<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, player:<span class="kw-2">&amp;</span>Player) {
+    save_file(file, GLOBAL_VERSION, player).unwrap();
+}
+
+<span class="kw">fn </span>load_player(file:<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; Player {
+    load_file(file, GLOBAL_VERSION).unwrap()
+}
+
+<span class="kw">fn </span>main() {
+
+    <span class="kw">if </span>Path::new(<span class="string">"newsave.bin"</span>).exists() == <span class="bool-val">false </span>{ <span class="comment">/* error handling */ </span><span class="kw">return</span>;}
+
+    <span class="kw">let </span><span class="kw-2">mut </span>player = load_player(<span class="string">"newsave.bin"</span>); <span class="comment">//Load from previous save
+    </span>player.history.push(Position{x:<span class="number">1</span>,y:<span class="number">1</span>});
+    player.history.push(Position{x:<span class="number">2</span>,y:<span class="number">1</span>});
+    player.history.push(Position{x:<span class="number">2</span>,y:<span class="number">2</span>});
+    save_player(<span class="string">"newersave.bin"</span>, <span class="kw-2">&amp;</span>player);
+}</code></pre></div>
+<h2 id="custom-serialization"><a class="doc-anchor" href="#custom-serialization">§</a>Custom serialization</h2>
+<p>For most user types, the savefile-derive crate can be used to automatically derive serializers
+and deserializers. This is not always possible, however.</p>
+<p>By implementing the traits Serialize, Deserialize and WithSchema, it’s possible to create custom
+serializers for any type.</p>
+<p>Let’s create a custom serializer for an object MyPathBuf, as an example (this is just an example, because of
+the rust ‘orphan rules’, only Savefile can actually implement the Savefile-traits for PathBuf. However,
+you can implement the Savefile traits for your own data types in your own crates!)</p>
+<p>The first thing we need to do is implement WithSchema. This trait requires us to return an instance
+of Schema. The Schema is used to ‘sanity-check’ stored data, so that an attempt to deserialize a
+file which was serialized using a different schema will fail predictably.</p>
+<p>Schema is an enum, with a few built-in variants. See documentation: <a href="enum.Schema.html" title="enum savefile::Schema">crate::Schema</a> .</p>
+<p>In our case, we choose to handle a MyPathBuf as a string, so we choose Schema::Primitive, with the
+argument SchemaPrimitive::schema_string . If your data is a collection of some sort, Schema::Vector
+may be appropriate.</p>
+<p>Note that the implementor of Serialize and Deserialize have total freedom to serialize data
+to/from the binary stream. The Schema is meant as an extra sanity check, not as an exact format
+specification. The quality of this sanity check will depend on the implementation.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>savefile;
+<span class="kw">pub struct </span>MyPathBuf {
+    path: String,
+}
+<span class="kw">use </span>savefile::prelude::<span class="kw-2">*</span>;
+<span class="kw">impl </span>WithSchema <span class="kw">for </span>MyPathBuf {
+    <span class="kw">fn </span>schema(_version: u32) -&gt; Schema {
+        Schema::Primitive(SchemaPrimitive::schema_string)
+    }
+}
+<span class="kw">impl </span>ReprC <span class="kw">for </span>MyPathBuf {
+}
+<span class="kw">impl </span>Serialize <span class="kw">for </span>MyPathBuf {
+    <span class="kw">fn </span>serialize&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: <span class="kw-2">&amp;mut </span>Serializer&lt;<span class="kw">impl </span>std::io::Write&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), SavefileError&gt; {
+        <span class="self">self</span>.path.serialize(serializer)
+    }
+}
+<span class="kw">impl </span>Deserialize <span class="kw">for </span>MyPathBuf {
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="kw">impl </span>std::io::Read&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, SavefileError&gt; {
+        <span class="prelude-val">Ok</span>(MyPathBuf { path : String::deserialize(deserializer)<span class="question-mark">? </span>} )
+    }
+}
+</code></pre></div>
+<h2 id="introspection"><a class="doc-anchor" href="#introspection">§</a>Introspection</h2>
+<p>The Savefile crate also provides an introspection feature, meant for diagnostics. This is implemented
+through the trait <a href="trait.Introspect.html" title="trait savefile::Introspect">Introspect</a>. Any type implementing this can be introspected.</p>
+<p>The savefile-derive crate supports automatically generating an implementation for most types.</p>
+<p>The introspection is purely ‘read only’. There is no provision for using the framework to mutate
+data.</p>
+<p>Here is an example of using the trait directly:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">extern crate </span>savefile;
+<span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>savefile_derive;
+<span class="kw">use </span>savefile::Introspect;
+<span class="kw">use </span>savefile::IntrospectItem;
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Weight {
+    value: u32,
+    unit: String
+}
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Person {
+    name : String,
+    age: u16,
+    weight: Weight,
+}
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>a_person = Person {
+        name: <span class="string">"Leo"</span>.into(),
+        age: <span class="number">8</span>,
+        weight: Weight { value: <span class="number">26</span>, unit: <span class="string">"kg"</span>.into() }
+    };
+    <span class="macro">assert_eq!</span>(a_person.introspect_len(), <span class="number">3</span>); <span class="comment">//There are three fields
+    </span><span class="macro">assert_eq!</span>(a_person.introspect_value(), <span class="string">"Person"</span>); <span class="comment">//Value of structs is the struct type, per default
+    </span><span class="macro">assert_eq!</span>(a_person.introspect_child(<span class="number">0</span>).unwrap().key(), <span class="string">"name"</span>); <span class="comment">//Each child has a name and a value. The value is itself a &amp;dyn Introspect, and can be introspected recursively
+    </span><span class="macro">assert_eq!</span>(a_person.introspect_child(<span class="number">0</span>).unwrap().val().introspect_value(), <span class="string">"Leo"</span>); <span class="comment">//In this case, the child (name) is a simple string with value "Leo".
+    </span><span class="macro">assert_eq!</span>(a_person.introspect_child(<span class="number">1</span>).unwrap().key(), <span class="string">"age"</span>);
+    <span class="macro">assert_eq!</span>(a_person.introspect_child(<span class="number">1</span>).unwrap().val().introspect_value(), <span class="string">"8"</span>);
+    <span class="macro">assert_eq!</span>(a_person.introspect_child(<span class="number">2</span>).unwrap().key(), <span class="string">"weight"</span>);
+    <span class="kw">let </span>weight = a_person.introspect_child(<span class="number">2</span>).unwrap();
+    <span class="macro">assert_eq!</span>(weight.val().introspect_child(<span class="number">0</span>).unwrap().key(), <span class="string">"value"</span>); <span class="comment">//Here the child 'weight' has an introspectable weight obj as value
+    </span><span class="macro">assert_eq!</span>(weight.val().introspect_child(<span class="number">0</span>).unwrap().val().introspect_value(), <span class="string">"26"</span>);
+    <span class="macro">assert_eq!</span>(weight.val().introspect_child(<span class="number">1</span>).unwrap().key(), <span class="string">"unit"</span>);
+    <span class="macro">assert_eq!</span>(weight.val().introspect_child(<span class="number">1</span>).unwrap().val().introspect_value(), <span class="string">"kg"</span>);
+}</code></pre></div>
+<h3 id="introspect-details"><a class="doc-anchor" href="#introspect-details">§</a>Introspect Details</h3>
+<p>By using #[derive(SavefileIntrospectOnly)] it is possible to have only the Introspect-trait implemented,
+and not the serialization traits. This can be useful for types which aren’t possible to serialize,
+but you still wish to have introspection for.</p>
+<p>By using the #[savefile_introspect_key] attribute on a field, it is possible to make the
+generated <a href="trait.Introspect.html#tymethod.introspect_value" title="method savefile::Introspect::introspect_value">crate::Introspect::introspect_value</a> return the string representation of the field.
+This can be useful, to have the primary key (name) of an object more prominently visible in the
+introspection output.</p>
+<p>Example:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">pub struct </span>StructWithName {
+    <span class="attr">#[savefile_introspect_key]
+    </span>name: String,
+    value: String
+}</code></pre></div>
+<h3 id="higher-level-introspection-functions"><a class="doc-anchor" href="#higher-level-introspection-functions">§</a>Higher level introspection functions</h3>
+<p>There is a helper called <a href="struct.Introspector.html" title="struct savefile::Introspector">crate::Introspector</a> which allows to get a structured representation
+of parts of an introspectable object. The Introspector has a ‘path’ which looks in to the
+introspection tree and shows values for this tree. The advantage of using this compared to
+just using <code>format!(&quot;{:#?}&quot;,mystuff)</code> is that for very large data structures, unconditionally
+dumping all data may be unwieldy. The author has a struct which becomes hundreds of megabytes
+when formatted using the Debug-trait in this way.</p>
+<p>An example:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>
+<span class="kw">extern crate </span>savefile;
+<span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>savefile_derive;
+<span class="kw">use </span>savefile::Introspect;
+<span class="kw">use </span>savefile::IntrospectItem;
+<span class="kw">use </span>savefile::prelude::<span class="kw-2">*</span>;
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Weight {
+    value: u32,
+    unit: String
+}
+<span class="attr">#[derive(Savefile)]
+</span><span class="kw">struct </span>Person {
+    name : String,
+    age: u16,
+    weight: Weight,
+}
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>a_person = Person {
+        name: <span class="string">"Leo"</span>.into(),
+        age: <span class="number">8</span>,
+        weight: Weight { value: <span class="number">26</span>, unit: <span class="string">"kg"</span>.into() }
+    };
+
+    <span class="kw">let </span><span class="kw-2">mut </span>introspector = Introspector::new();
+
+    <span class="kw">let </span>result = introspector.do_introspect(<span class="kw-2">&amp;</span>a_person,
+        IntrospectorNavCommand::SelectNth{select_depth:<span class="number">0</span>, select_index: <span class="number">2</span>}).unwrap();
+
+    <span class="macro">println!</span>(<span class="string">"{}"</span>,result);
+    <span class="comment">/*
+    Output is:
+
+   Introspectionresult:
+       name = Leo
+       age = 8
+       eight = Weight
+       value = 26
+       unit = kg
+
+     */
+    // Note, that there is no point in using the Introspection framework just to get
+    // a debug output like above, the point is that for larger data structures, the
+    // introspection data can be programmatically used and shown in a live updating GUI,
+    // or possibly command line interface or similar. The [crate::IntrospectionResult] does
+    // implement Display, but this is just for convenience.
+
+</span>}
+
+</code></pre></div>
+<h3 id="navigating-using-the-introspector"><a class="doc-anchor" href="#navigating-using-the-introspector">§</a>Navigating using the Introspector</h3>
+<p>The <a href="struct.Introspector.html" title="struct savefile::Introspector">crate::Introspector</a> object can be used to navigate inside an object being introspected.
+A GUI-program could allow an operator to use arrow keys to navigate the introspected object.</p>
+<p>Every time <a href="struct.Introspector.html#method.do_introspect" title="method savefile::Introspector::do_introspect">crate::Introspector::do_introspect</a> is called, a <a href="enum.IntrospectorNavCommand.html" title="enum savefile::IntrospectorNavCommand">crate::IntrospectorNavCommand</a> is given
+which can traverse the tree downward or upward. In the example in the previous chapter,
+SelectNth is used to select the 2nd children at the 0th level in the tree.</p>
+<h2 id="troubleshooting"><a class="doc-anchor" href="#troubleshooting">§</a>Troubleshooting</h2><h3 id="the-compiler-complains-that-it-cannot-find-item-deserialize-on-a-type"><a class="doc-anchor" href="#the-compiler-complains-that-it-cannot-find-item-deserialize-on-a-type">§</a>The compiler complains that it cannot find item ‘deserialize’ on a type</h3>
+<p>Maybe you get an error like:</p>
+<p><code>the function or associated item `deserialize` exists for struct `Vec&lt;T&gt;`, but its trait bounds were not satisfied</code></p>
+<p>First, check that you’ve derived ‘Savefile’ for the type in question. If you’ve implemented the Savefile traits
+manually, check that you’ve implemented both <code>[crate::prelude::Deserialize]</code> and <code>[crate::prelude::ReprC]</code>.
+Without ReprC, vectors cannot be deserialized, since savefile can’t determine if they are safe to serialize
+through simple copying of bytes.</p>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="prelude/index.html" title="mod savefile::prelude">prelude</a></div><div class="desc docblock-short">The prelude contains all definitions thought to be needed by typical users of the library</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Canary1.html" title="struct savefile::Canary1">Canary1</a></div><div class="desc docblock-short">Useful zero-sized marker. It serializes to a magic value,
+and verifies this value on deserialization. Does not consume memory
+data structure. Useful to troubleshoot broken Serialize/Deserialize implementations.</div></li><li><div class="item-name"><a class="struct" href="struct.Deserializer.html" title="struct savefile::Deserializer">Deserializer</a></div><div class="desc docblock-short">Object from which bytes to be deserialized are read.
+This is basically just a wrapped <code>std::io::Read</code> object,
+the version number of the file being read, and the
+current version number of the data structures in memory.</div></li><li><div class="item-name"><a class="struct" href="struct.Field.html" title="struct savefile::Field">Field</a></div><div class="desc docblock-short">A field is serialized according to its value.
+The name is just for diagnostics.</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectItemMutex.html" title="struct savefile::IntrospectItemMutex">IntrospectItemMutex</a></div><div class="desc docblock-short">Type of single child of introspector for Mutex</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectItemRwLock.html" title="struct savefile::IntrospectItemRwLock">IntrospectItemRwLock</a></div><div class="desc docblock-short">Type of single child of introspector for RwLock</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectItemSimple.html" title="struct savefile::IntrospectItemSimple">IntrospectItemSimple</a></div><div class="desc docblock-short">Standard child for Introspect trait. Simply owned key string and reference to dyn Introspect</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectItemStdMutex.html" title="struct savefile::IntrospectItemStdMutex">IntrospectItemStdMutex</a></div><div class="desc docblock-short">Type of single child of introspector for std::sync::Mutex</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectedElement.html" title="struct savefile::IntrospectedElement">IntrospectedElement</a></div><div class="desc docblock-short">A node in the introspection tree</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectedElementKey.html" title="struct savefile::IntrospectedElementKey">IntrospectedElementKey</a></div><div class="desc docblock-short">Identifies an introspected element somewhere in the introspection tree
+of an object.</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectionFrame.html" title="struct savefile::IntrospectionFrame">IntrospectionFrame</a></div><div class="desc docblock-short">All fields at a specific depth in the introspection tree</div></li><li><div class="item-name"><a class="struct" href="struct.IntrospectionResult.html" title="struct savefile::IntrospectionResult">IntrospectionResult</a></div><div class="desc docblock-short">An introspection tree. Note that each node in the tree can only have
+one expanded field, and thus at most one child (a bit of a boring ‘tree’ :-) ).</div></li><li><div class="item-name"><a class="struct" href="struct.Introspector.html" title="struct savefile::Introspector">Introspector</a></div><div class="desc docblock-short">A helper which allows navigating an introspected object.
+It remembers a path down into the guts of the object.</div></li><li><div class="item-name"><a class="struct" href="struct.IsReprC.html" title="struct savefile::IsReprC">IsReprC</a></div><div class="desc docblock-short">Marker used to promise that some type fulfills all rules
+for the “ReprC”-optimization.</div></li><li><div class="item-name"><a class="struct" href="struct.Removed.html" title="struct savefile::Removed">Removed</a></div><div class="desc docblock-short">Helper struct which represents a field which has been removed</div></li><li><div class="item-name"><a class="struct" href="struct.SchemaArray.html" title="struct savefile::SchemaArray">SchemaArray</a></div><div class="desc docblock-short">An array is serialized by serializing its items one by one,
+without any padding.
+The dbg_name is just for diagnostics.</div></li><li><div class="item-name"><a class="struct" href="struct.SchemaEnum.html" title="struct savefile::SchemaEnum">SchemaEnum</a></div><div class="desc docblock-short">An enum is serialized as its u8 variant discriminator
+followed by all the field for that variant.
+The name of each variant, as well as its order in
+the enum (the discriminator), is significant.</div></li><li><div class="item-name"><a class="struct" href="struct.SchemaStruct.html" title="struct savefile::SchemaStruct">SchemaStruct</a></div><div class="desc docblock-short">A struct is serialized by serializing its fields one by one,
+without any padding.
+The dbg_name is just for diagnostics.</div></li><li><div class="item-name"><a class="struct" href="struct.Serializer.html" title="struct savefile::Serializer">Serializer</a></div><div class="desc docblock-short">Object to which serialized data is to be written.
+This is basically just a wrapped <code>std::io::Write</code> object
+and a file protocol version number.
+In versions prior to 0.15, ‘Serializer’ did not accept a type parameter.
+It now requires a type parameter with the type of writer to operate on.</div></li><li><div class="item-name"><a class="struct" href="struct.Variant.html" title="struct savefile::Variant">Variant</a></div><div class="desc docblock-short">An enum variant is serialized as its fields, one by one,
+without any padding.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.IntrospectionError.html" title="enum savefile::IntrospectionError">IntrospectionError</a></div><div class="desc docblock-short">Ways in which introspection may fail</div></li><li><div class="item-name"><a class="enum" href="enum.IntrospectorNavCommand.html" title="enum savefile::IntrospectorNavCommand">IntrospectorNavCommand</a></div><div class="desc docblock-short">A command to navigate within an introspected object</div></li><li><div class="item-name"><a class="enum" href="enum.SavefileError.html" title="enum savefile::SavefileError">SavefileError</a></div><div class="desc docblock-short">This object represents an error in deserializing or serializing
+an item.</div></li><li><div class="item-name"><a class="enum" href="enum.Schema.html" title="enum savefile::Schema">Schema</a></div><div class="desc docblock-short">The schema represents the save file format
+of your data structure. It is an AST (Abstract Syntax Tree)
+for consisting of various types of nodes in the savefile
+format. Custom Serialize-implementations cannot add new types to
+this tree, but must reuse these existing ones.
+See the various enum variants for more information:</div></li><li><div class="item-name"><a class="enum" href="enum.SchemaPrimitive.html" title="enum savefile::SchemaPrimitive">SchemaPrimitive</a></div><div class="desc docblock-short">A primitive is serialized as the little endian
+representation of its type, except for string,
+which is serialized as an usize length followed
+by the string in utf8.</div></li></ul><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="constant" href="constant.MAX_CHILDREN.html" title="constant savefile::MAX_CHILDREN">MAX_CHILDREN</a></div><div class="desc docblock-short">As a sort of guard against infinite loops, the default ‘len’-implementation only
+ever iterates this many times. This is so that broken ‘introspect_child’-implementations
+won’t cause introspect_len to iterate forever.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Deserialize.html" title="trait savefile::Deserialize">Deserialize</a></div><div class="desc docblock-short">This trait must be implemented for all data structures you wish to
+be able to deserialize.</div></li><li><div class="item-name"><a class="trait" href="trait.Introspect.html" title="trait savefile::Introspect">Introspect</a></div><div class="desc docblock-short">Gives the ability to look into an object, inspecting any children (fields).</div></li><li><div class="item-name"><a class="trait" href="trait.IntrospectItem.html" title="trait savefile::IntrospectItem">IntrospectItem</a></div><div class="desc docblock-short">A child of an object implementing Introspect. Is a key-value pair. The only reason this is not
+simply (String, &amp;dyn Introspect) is that Mutex wouldn’t be introspectable in that case.
+Mutex needs something like (String, MutexGuard<T>). By having this a trait,
+different types can have whatever reference holder needed (MutexGuard, RefMut etc).</div></li><li><div class="item-name"><a class="trait" href="trait.ReprC.html" title="trait savefile::ReprC">ReprC</a></div><div class="desc docblock-short">This trait describes whether a type is such that it can just be blitted.
+See method repr_c_optimization_safe.</div></li><li><div class="item-name"><a class="trait" href="trait.Serialize.html" title="trait savefile::Serialize">Serialize</a></div><div class="desc docblock-short">This trait must be implemented for all data structures you wish to be
+able to serialize. To actually serialize data: create a <a href="struct.Serializer.html" title="struct savefile::Serializer">Serializer</a>,
+then call serialize on your data to save, giving the Serializer
+as an argument.</div></li><li><div class="item-name"><a class="trait" href="trait.WithSchema.html" title="trait savefile::WithSchema">WithSchema</a></div><div class="desc docblock-short">This trait must be implemented by all data structures you wish to be able to save.
+It must encode the schema for the datastructure when saved using the given version number.
+When files are saved, the schema is encoded into the file.
+when loading, the schema is inspected to make sure that the load will safely succeed.
+This is only for increased safety, the file format does not in fact use the schema for any other
+purpose, the design is schema-less at the core, the schema is just an added layer of safety (which
+can be disabled).</div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.introspect_item.html" title="fn savefile::introspect_item">introspect_item</a></div><div class="desc docblock-short">Create a default IntrospectItem with the given key and Introspect.</div></li><li><div class="item-name"><a class="fn" href="fn.load.html" title="fn savefile::load">load</a></div><div class="desc docblock-short">Deserialize an instance of type T from the given <code>reader</code> .
+The current type of T in memory must be equal to <code>version</code>.
+The deserializer will use the actual protocol version in the
+file to do the deserialization.</div></li><li><div class="item-name"><a class="fn" href="fn.load_file.html" title="fn savefile::load_file">load_file</a></div><div class="desc docblock-short">Like <a href="fn.load.html" title="fn savefile::load">crate::load</a> , except it deserializes from the given file in the filesystem.
+This is a pure convenience function.</div></li><li><div class="item-name"><a class="fn" href="fn.load_file_noschema.html" title="fn savefile::load_file_noschema">load_file_noschema</a></div><div class="desc docblock-short">Like <a href="fn.load_noschema.html" title="fn savefile::load_noschema">crate::load_noschema</a> , except it deserializes from the given file in the filesystem.
+This is a pure convenience function.</div></li><li><div class="item-name"><a class="fn" href="fn.load_from_mem.html" title="fn savefile::load_from_mem">load_from_mem</a></div><div class="desc docblock-short">Deserialize an instance of type T from the given u8 slice .
+The current type of T in memory must be equal to <code>version</code>.
+The deserializer will use the actual protocol version in the
+file to do the deserialization.</div></li><li><div class="item-name"><a class="fn" href="fn.load_noschema.html" title="fn savefile::load_noschema">load_noschema</a></div><div class="desc docblock-short">Like <a href="fn.load.html" title="fn savefile::load">crate::load</a> , but used to open files saved without schema,
+by one of the _noschema versions of the save functions.</div></li><li><div class="item-name"><a class="fn" href="fn.save.html" title="fn savefile::save">save</a></div><div class="desc docblock-short">Write the given <code>data</code> to the <code>writer</code>.
+The current version of data must be <code>version</code>.</div></li><li><div class="item-name"><a class="fn" href="fn.save_compressed.html" title="fn savefile::save_compressed">save_compressed</a></div><div class="desc docblock-short">Write the given <code>data</code> to the <code>writer</code>. Compresses data using ‘bzip2’ compression format.
+The current version of data must be <code>version</code>.
+The resultant data can be loaded using the regular load-function (it autodetects if compressions was
+active or not).
+Note, this function will fail if the bzip2-feature is not enabled.</div></li><li><div class="item-name"><a class="fn" href="fn.save_file.html" title="fn savefile::save_file">save_file</a></div><div class="desc docblock-short">Like <a href="fn.save.html" title="fn savefile::save">crate::save</a> , except it opens a file on the filesystem and writes
+the data to it. This is a pure convenience function.</div></li><li><div class="item-name"><a class="fn" href="fn.save_file_noschema.html" title="fn savefile::save_file_noschema">save_file_noschema</a></div><div class="desc docblock-short">Like <a href="fn.save_noschema.html" title="fn savefile::save_noschema">crate::save_noschema</a> , except it opens a file on the filesystem and writes
+the data to it. This is a pure convenience function.</div></li><li><div class="item-name"><a class="fn" href="fn.save_noschema.html" title="fn savefile::save_noschema">save_noschema</a></div><div class="desc docblock-short">Write the given <code>data</code> to the <code>writer</code>.
+The current version of data must be <code>version</code>.
+Do this write without writing any schema to disk.
+As long as all the serializers and deserializers
+are correctly written, the schema is not necessary.
+Omitting the schema saves some space in the saved file,
+but means that any mistake in implementation of the
+Serialize or Deserialize traits will cause hard-to-troubleshoot
+data corruption instead of a nice error message.</div></li><li><div class="item-name"><a class="fn" href="fn.save_to_mem.html" title="fn savefile::save_to_mem">save_to_mem</a></div><div class="desc docblock-short">Serialize the given data and return as a Vec<u8>
+The current version of data must be <code>version</code>.</div></li></ul></section></div></main></body></html>

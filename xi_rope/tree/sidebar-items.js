@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Cursor","CursorIter","Node","TreeBuilder"],"trait":["DefaultMetric","Leaf","Metric","NodeInfo"]};

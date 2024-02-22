@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CoreNotification","CoreRequest","EditNotification","EditRequest","GestureType","PluginNotification","SelectionGranularity","SelectionModifier"],"struct":["EditCommand","FindQuery","LineRange","MouseAction","Position"]};

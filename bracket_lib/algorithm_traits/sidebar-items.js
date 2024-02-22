@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["smallvec"],"struct":["SmallVec"],"trait":["Algorithm2D","Algorithm3D","BaseMap"]};

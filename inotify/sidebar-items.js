@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Event","EventMask","Events","Inotify","WatchDescriptor","WatchMask"],"type":["EventOwned"]};

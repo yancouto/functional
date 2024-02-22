@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Vec2","Vec2x4","Vec2x8","Vec3","Vec3x4","Vec3x8","Vec4","Vec4x4","Vec4x8"]};

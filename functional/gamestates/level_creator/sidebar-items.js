@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["editor","level_config","list","uploading","validator"]};

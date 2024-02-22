@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["misc","presentation_time","staging","unstable","viewporter","wlr","xdg_shell"]};

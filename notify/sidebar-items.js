@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DebouncedEvent","Error","RecursiveMode"],"fn":["raw_watcher","watcher"],"mod":["inotify","null","op","poll"],"struct":["RawEvent"],"trait":["Watcher"],"type":["RecommendedWatcher","Result"]};

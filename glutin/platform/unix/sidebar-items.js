@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RawHandle","Theme","XNotSupported","XWindowType"],"fn":["register_xlib_error_hook"],"mod":["x11"],"trait":["EventLoopBuilderExtUnix","EventLoopWindowTargetExtUnix","HeadlessContextExt","MonitorHandleExtUnix","RawContextExt","WindowBuilderExtUnix","WindowExtUnix"],"type":["EGLContext","GLXContext","XlibErrorHook"]};

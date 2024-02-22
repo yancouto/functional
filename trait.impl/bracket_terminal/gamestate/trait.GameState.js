@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"functional":[["impl <a class=\"trait\" href=\"functional/prelude/bl/trait.GameState.html\" title=\"trait functional::prelude::bl::GameState\">GameState</a> for <a class=\"struct\" href=\"functional/struct.MainState.html\" title=\"struct functional::MainState\">MainState</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

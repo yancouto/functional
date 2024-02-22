@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ATOM_LEN_BITS"],"enum":["BasicScopeStackOp","ClearAmount","ParseScopeError","ScopeStackOp"],"struct":["MatchPower","SCOPE_REPO","Scope","ScopeRepository","ScopeStack"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConfigDomain","ConfigDomainExternal","ConfigError"],"struct":["BufferItems","Config","ConfigManager","ConfigPair"],"type":["BufferConfig","Table"]};

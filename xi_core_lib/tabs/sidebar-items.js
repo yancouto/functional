@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["OPEN_FILE_EVENT_TOKEN"],"mod":["test_helpers"],"struct":["BufferId","CoreState","Iter","ViewId"],"type":["BufferIdentifier","PluginId"]};

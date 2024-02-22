@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["WrapAlgorithm"],"fn":["break_words","display_width","find_words","split_words","wrap_first_fit"],"struct":["Word"],"trait":["Fragment"]};

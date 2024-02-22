@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ClientMessage","CoreNotification","CoreRequest","ServerMessage","ServerNotification","ServerRequest","UpdateAnnotation","UpdateOp","UpdateOpType","ViewIdParseError"],"fn":["start_xi_thread"],"struct":["ClientMessageSender","ConfigChanges","InsLine","JsonReceiver","JsonSender","ServerMessageReceiver","Update","ViewId"],"type":["ServerResponse"]};

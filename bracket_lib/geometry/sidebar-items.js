@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DistanceAlg","LineAlg"],"fn":["line2d","line2d_bresenham","line2d_vector","project_angle"],"struct":["Bresenham","BresenhamCircle","BresenhamCircleNoDiag","BresenhamInclusive","Degrees","Point","Point3","Radians","Rect","RectF","VectorLine"],"type":["PointF"]};

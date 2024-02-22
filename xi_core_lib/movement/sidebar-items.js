@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Movement"],"fn":["region_movement","selection_movement"]};
